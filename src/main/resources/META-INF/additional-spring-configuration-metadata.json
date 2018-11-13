@@ -1,0 +1,12 @@
+{"properties": [
+  {
+    "name": "sp.base-uri",
+    "type": "java.lang.String",
+    "description": "The base URI for the SP application"
+  },
+  {
+    "name": "sp.entity-id",
+    "type": "java.lang.String",
+    "description": "The SAML entityID for the Service Provider"
+  }
+]}
