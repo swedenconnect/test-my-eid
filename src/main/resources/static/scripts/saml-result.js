@@ -6,10 +6,7 @@ jQuery(function($) {
     $('.drop-down > p').click(function() {
       $(this).parent('.drop-down').toggleClass('open');
     });
-    
-    // Init tooltips
-    // $("body").tooltip({ selector: '[data-toggle=tooltip]' });
-    
+        
     // Init popovers
     $('body').popover({ selector: '[data-toggle=popover]'});
     

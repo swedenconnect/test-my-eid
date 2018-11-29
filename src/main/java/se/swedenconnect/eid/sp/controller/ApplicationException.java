@@ -20,7 +20,7 @@ import org.springframework.util.Assert;
 /**
  * Exception class for errors during processing. Holds a message code for the error UI.
  * 
- * @author Martin Lindström (martin.lindstrom@litsec.se)
+ * @author Martin Lindström (martin.lindstrom@idsec.se)
  */
 public class ApplicationException extends Exception {
 

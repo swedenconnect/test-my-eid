@@ -16,8 +16,11 @@
 package se.swedenconnect.eid.sp.config;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
@@ -30,6 +33,11 @@ import lombok.Data;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Configuration class for statically configured IdPs.
+ * 
+ * @author Martin Lindström (martin@idsec.se)
+ */
 @Component
 @PropertySource(ignoreResourceNotFound = true, value = "${sp.discovery.static-idp-configuration}")
 @ConfigurationProperties
@@ -41,14 +49,21 @@ public class StaticIdpConfiguration {
   /** Should IdP:s not listed in this configuration be part of the IdP Selection page? */
   private Boolean includeUnlisted = Boolean.TRUE;
 
-  /** List of statically defined IdP:s. */
-  private List<StaticIdpDiscoEntry> idp;
+  /** Statically defined IdP:s. */
+  private Map<String, StaticIdpDiscoEntry> idp;
 
   /** List of black listed IdPs. */
   private List<String> blackList;
 
+  /**
+   * Returns a list of IdP discovery info objects based on their sortOrder property.
+   * 
+   * @return a (possibly empty) list of discovery objects
+   */
   public List<StaticIdpDiscoEntry> getIdps() {
-    return this.idp != null ? this.idp : Collections.emptyList();
+    return this.idp != null
+        ? this.idp.values().stream().sorted(Comparator.comparing(StaticIdpDiscoEntry::getSortOrder)).collect(Collectors.toList())
+        : Collections.emptyList();
   }
 
   /**
@@ -62,16 +77,31 @@ public class StaticIdpConfiguration {
     return this.blackList != null ? this.blackList.contains(entityID) : false;
   }
 
+  /**
+   * Returns the IdP discovery information for the given entityID.
+   * 
+   * @param entityID
+   *          the IdP entityID
+   * @return an optional to a {@code StaticIdpDiscoEntry} object
+   */
   public Optional<StaticIdpDiscoEntry> getIdpDiscoInformation(String entityID) {
     Assert.notNull(entityID, "entityID must not be null");
-    return this.getIdps().stream().filter(i -> entityID.equals(i.getEntityId())).findFirst();
+    return this.idp != null 
+        ? this.idp.values().stream().filter(i -> entityID.equals(i.getEntityId())).findFirst()
+        : Optional.empty();
   }
 
+  /**
+   * Logs the static IdP configuration.
+   */
   @PostConstruct
   public void init() {
-    log.info("StaticIdpConfiguration: {}", this.toString());
+    log.info("Static IdP configuration: {}", this.toString());
   }
 
+  /**
+   * Represents a IdP discovery info entry.
+   */
   @Data
   @ToString
   public static class StaticIdpDiscoEntry {
@@ -84,13 +114,24 @@ public class StaticIdpConfiguration {
     private String logoUrl;
     private Integer logoWidth;
     private Integer logoHeight;
+    private Boolean mobileUse;
     private Boolean enabled = Boolean.TRUE;
     private Boolean skipEntityCategoryMatching = Boolean.FALSE;
-    
+
+    /**
+     * Predicate that tells if the IdP is enabled.
+     * 
+     * @return {@code true} if the IdP is enabled, and {@code false} otherwise
+     */
     public boolean isEnabled() {
       return this.enabled != null ? this.enabled.booleanValue() : true;
     }
-    
+
+    /**
+     * Predicate that tells whether we should skip discovery entity category matching for the entry.
+     * 
+     * @return {@code true} if matching should be skipped, and {@code false} otherwise
+     */
     public boolean isSkipEntityCategoryMatching() {
       return this.skipEntityCategoryMatching != null ? this.skipEntityCategoryMatching.booleanValue() : false;
     }

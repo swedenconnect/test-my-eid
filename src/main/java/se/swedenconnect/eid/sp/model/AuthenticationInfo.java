@@ -25,7 +25,7 @@ import lombok.ToString;
 /**
  * Model class for the information to display about an authentication.
  * 
- * @author Martin Lindström (martin.lindstrom@litsec.se)
+ * @author Martin Lindström (martin.lindstrom@idsec.se)
  */
 @ToString
 public class AuthenticationInfo {

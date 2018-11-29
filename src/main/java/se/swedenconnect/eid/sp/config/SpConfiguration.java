@@ -52,7 +52,7 @@ import se.litsec.swedisheid.opensaml.saml2.validation.SwedishEidResponseProcesso
 /**
  * Configuration for the eIDAS Test SP.
  * 
- * @author Martin Lindström (martin.lindstrom@litsec.se)
+ * @author Martin Lindström (martin.lindstrom@idsec.se)
  */
 @Configuration
 @DependsOn("openSAML")
@@ -218,7 +218,7 @@ public class SpConfiguration {
   }
 
   @Bean("encryptCredential")
-  @ConfigurationProperties(prefix = "sp.credential.encrypt")
+  @ConfigurationProperties(prefix = "sp.credential.decrypt")
   public SpCredential encryptCredential() {
     return new SpCredential();
   }

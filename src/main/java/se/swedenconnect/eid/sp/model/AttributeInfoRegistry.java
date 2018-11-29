@@ -31,7 +31,7 @@ import se.litsec.opensaml.saml2.attribute.AttributeUtils;
  * Registry holding information about attributes. This information is used when a listing of received attributes are
  * displayed.
  * 
- * @author Martin Lindström (martin@litsec.se)
+ * @author Martin Lindström (martin@idsec.se)
  */
 @Component
 @ConfigurationProperties(prefix = "sp.ui")

@@ -22,7 +22,7 @@ import se.swedenconnect.eid.sp.model.IdpDiscoveryInformation;
 /**
  * Interface for the list of IdP:s that should be displayed for the user.
  * 
- * @author Martin Lindström (martin@litsec.se)
+ * @author Martin Lindström (martin@idsec.se)
  */
 public interface IdpListConfiguration {
 

@@ -40,7 +40,7 @@ import se.litsec.opensaml.saml2.metadata.build.UIInfoBuilder;
 /**
  * Configuration class for SP metadata.
  * 
- * @author Martin Lindström (martin@litsec.se)
+ * @author Martin Lindström (martin@idsec.se)
  */
 @Configuration
 @ConfigurationProperties(prefix = "sp.metadata")

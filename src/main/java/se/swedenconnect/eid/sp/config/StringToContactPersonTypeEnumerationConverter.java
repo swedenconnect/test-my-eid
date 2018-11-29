@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 /**
  * Converts from a String to a {@link ContactPersonTypeEnumeration}.
  * 
- * @author Martin Lindström (martin.lindstrom@litsec.se)
+ * @author Martin Lindström (martin.lindstrom@idsec.se)
  */
 @Component
 @ConfigurationPropertiesBinding

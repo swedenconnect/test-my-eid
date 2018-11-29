@@ -54,7 +54,7 @@ import se.swedenconnect.eid.sp.config.SpCredential;
 /**
  * Generator for {@code AuthnRequest} messages.
  * 
- * @author Martin Lindström (martin.lindstrom@litsec.se)
+ * @author Martin Lindström (martin.lindstrom@idsec.se)
  */
 @Slf4j
 @Service

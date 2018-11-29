@@ -29,7 +29,7 @@ import se.swedenconnect.eid.sp.config.UiLanguage;
 /**
  * Base controller.
  * 
- * @author Martin Lindström (martin.lindstrom@litsec.se)
+ * @author Martin Lindström (martin.lindstrom@idsec.se)
  */
 public class BaseController {
 

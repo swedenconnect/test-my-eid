@@ -59,7 +59,7 @@ import se.swedenconnect.eid.sp.saml.AuthnRequestGeneratorInput;
 /**
  * Controller for creating SAML {@code AuthnRequest} messages and for processing SAML responses.
  * 
- * @author Martin Lindström (martin.lindstrom@litsec.se)
+ * @author Martin Lindström (martin.lindstrom@idsec.se)
  */
 @Controller
 @RequestMapping("/saml2")

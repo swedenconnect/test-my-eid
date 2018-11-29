@@ -25,6 +25,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.mobile.device.DeviceHandlerMethodArgumentResolver;
+import org.springframework.mobile.device.DeviceResolverHandlerInterceptor;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -37,11 +40,17 @@ import se.swedenconnect.eid.sp.config.UiLanguage;
 /**
  * Application main.
  * 
- * @author Martin Lindström (martin@litsec.se)
+ * @author Martin Lindström (martin@idsec.se)
  */
 @SpringBootApplication
 public class TestMyEidApplication {
 
+  /**
+   * Program main.
+   * 
+   * @param args
+   *          program arguments
+   */
   public static void main(String[] args) {
     SpringApplication.run(TestMyEidApplication.class, args);
   }
@@ -60,28 +69,44 @@ public class TestMyEidApplication {
     resolver.setCookieMaxAge(31536000);
     return resolver;
   }
-  
+
   @Bean
   @ConfigurationProperties(prefix = "sp.ui.lang")
   public List<UiLanguage> languages() {
     return new ArrayList<>();
-  }  
-  
+  }
+
   @Configuration
   public static class WebMvcConfig implements WebMvcConfigurer {
-    
+
     @Bean
     public LocaleChangeInterceptor localeChangeInterceptor() {
       LocaleChangeInterceptor interceptor = new LocaleChangeInterceptor();
       interceptor.setParamName("lang");
       return interceptor;
-    }    
+    }
+
+    @Bean
+    public DeviceResolverHandlerInterceptor deviceResolverHandlerInterceptor() {
+      return new DeviceResolverHandlerInterceptor();
+    }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
       registry.addInterceptor(localeChangeInterceptor());
+      registry.addInterceptor(deviceResolverHandlerInterceptor());
     }
-    
+
+    @Bean
+    public DeviceHandlerMethodArgumentResolver deviceHandlerMethodArgumentResolver() {
+      return new DeviceHandlerMethodArgumentResolver();
+    }
+
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
+      argumentResolvers.add(deviceHandlerMethodArgumentResolver());
+    }
+
   }
 
 }

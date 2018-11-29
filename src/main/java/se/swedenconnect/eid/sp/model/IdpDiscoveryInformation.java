@@ -31,7 +31,7 @@ import se.swedenconnect.eid.sp.config.StaticIdpConfiguration.StaticIdpDiscoEntry
 /**
  * Model object representing info elements of an IdP for display in the UI.
  * 
- * @author Martin Lindström (martin@litsec.se)
+ * @author Martin Lindström (martin@idsec.se)
  */
 @ToString
 public class IdpDiscoveryInformation {
@@ -55,6 +55,10 @@ public class IdpDiscoveryInformation {
   @Getter
   private Integer sortOrder = Integer.MAX_VALUE;
 
+  /** Can the IdP be used from a mobile device? */
+  @Getter
+  private boolean mobileUse = true;
+
   /**
    * Constructor setting up an IdP info entry.
    * 
@@ -64,15 +68,21 @@ public class IdpDiscoveryInformation {
    *          the display names found in metadata
    * @param logotypes
    *          the logotypes found in metadata
+   * @param mobileAuth
+   *          is the {@code http://id.elegnamnden.se/sprop/1.0/mobile-auth} service property category present in IdP
+   *          metadata?
    * @param discoInfo
    *          statically configured data for the IdP
    */
   public IdpDiscoveryInformation(
-      String entityID, Collection<DisplayName> displayNames, Collection<Logo> logotypes, StaticIdpDiscoEntry discoInfo) {
+      String entityID, Collection<DisplayName> displayNames, Collection<Logo> logotypes, boolean mobileAuth,
+      StaticIdpDiscoEntry discoInfo) {
 
     this.entityID = entityID;
 
     this.sortOrder = discoInfo.getSortOrder();
+    
+    this.mobileUse = discoInfo.getMobileUse() != null ? discoInfo.getMobileUse().booleanValue() : mobileAuth;
 
     this.displayNames = new HashMap<>();
     displayNames.stream().forEach(d -> this.displayNames.put(d.getXMLLang(), d.getValue()));
@@ -166,10 +176,10 @@ public class IdpDiscoveryInformation {
   @Data
   @ToString
   public static class IdpModel {
-    
+
     /** The IdP entityID. */
     private String entityID;
-    
+
     /** The IdP display name. */
     private String displayName;
 

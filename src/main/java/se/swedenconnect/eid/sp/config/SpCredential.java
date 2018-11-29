@@ -30,7 +30,7 @@ import se.litsec.opensaml.utils.KeyStoreUtils;
 /**
  * Representation of a credential.
  * 
- * @author Martin Lindström (martin@litsec.se)
+ * @author Martin Lindström (martin@idsec.se)
  */
 @Data
 public class SpCredential {

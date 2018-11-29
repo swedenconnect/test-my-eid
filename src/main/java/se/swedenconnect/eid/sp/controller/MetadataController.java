@@ -41,7 +41,7 @@ import se.litsec.opensaml.saml2.metadata.EntityDescriptorContainer;
 /**
  * Controller for displaying SP metadata.
  * 
- * @author Martin Lindström (martin.lindstrom@litsec.se)
+ * @author Martin Lindström (martin.lindstrom@idsec.se)
  */
 @Controller
 @RequestMapping("/metadata")

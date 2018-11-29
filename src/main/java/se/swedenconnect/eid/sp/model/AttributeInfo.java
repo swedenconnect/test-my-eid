@@ -21,7 +21,7 @@ import lombok.ToString;
 /**
  * Model attribute for a SAML attribute.
  * 
- * @author Martin Lindström (martin.lindstrom@litsec.se)
+ * @author Martin Lindström (martin.lindstrom@idsec.se)
  */
 @Data
 @ToString

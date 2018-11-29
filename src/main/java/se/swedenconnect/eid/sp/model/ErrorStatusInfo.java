@@ -23,7 +23,7 @@ import lombok.ToString;
 /**
  * Model class for representing a SAML error.
  * 
- * @author Martin Lindström (martin.lindstrom@litsec.se)
+ * @author Martin Lindström (martin.lindstrom@idsec.se)
  */
 @Data
 @ToString

@@ -23,7 +23,7 @@ import se.litsec.opensaml.utils.spring.StringToLocalizedStringConverter;
 /**
  * Converts from a string to a localized string.
  * 
- * @author Martin Lindström (martin@litsec.se)
+ * @author Martin Lindström (martin@idsec.se)
  */
 @Component
 @ConfigurationPropertiesBinding

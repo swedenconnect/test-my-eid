@@ -23,7 +23,7 @@ import lombok.ToString;
 /**
  * Representation of a SAML entityID.
  * 
- * @author Martin Lindström (martin@litsec.se)
+ * @author Martin Lindström (martin@idsec.se)
  */
 @Getter
 @AllArgsConstructor

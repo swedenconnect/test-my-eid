@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Configuration of AJP for Tomcat.
  * 
- * @author Martin Lindström (martin.lindstrom@litsec.se)
+ * @author Martin Lindström (martin@idsec.se)
  */
 @Configuration
 public class TomcatWebServerCustomizer implements WebServerFactoryCustomizer<TomcatServletWebServerFactory> {

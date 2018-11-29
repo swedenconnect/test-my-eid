@@ -33,6 +33,7 @@ import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import se.litsec.opensaml.saml2.metadata.MetadataUtils;
 import se.litsec.opensaml.saml2.metadata.provider.MetadataProvider;
 import se.litsec.swedisheid.opensaml.saml2.discovery.SwedishEidDiscoveryMatchingRules;
+import se.litsec.swedisheid.opensaml.saml2.metadata.entitycategory.EntityCategoryConstants;
 import se.litsec.swedisheid.opensaml.saml2.metadata.entitycategory.EntityCategoryMetadataHelper;
 import se.swedenconnect.eid.sp.config.StaticIdpConfiguration.StaticIdpDiscoEntry;
 import se.swedenconnect.eid.sp.model.IdpDiscoveryInformation;
@@ -40,7 +41,7 @@ import se.swedenconnect.eid.sp.model.IdpDiscoveryInformation;
 /**
  * An IdP list configuration that gets its configuration from the supplied metadata provider.
  * 
- * @author Martin Lindström (martin@litsec.se)
+ * @author Martin Lindström (martin@idsec.se)
  */
 @Configuration
 @Slf4j
@@ -97,29 +98,31 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration {
     try {
       List<EntityDescriptor> idps = this.metadataProvider.getIdentityProviders();
       for (EntityDescriptor idp : idps) {
-        
+
         if (this.staticIdpConfiguration.isBlackListed(idp.getEntityID())) {
           log.debug("IdP '{}' is black-listed in configuration and will be excluded from IdP list", idp.getEntityID());
           continue;
         }
-        
+
         StaticIdpDiscoEntry discoInfo = this.staticIdpConfiguration.getIdpDiscoInformation(idp.getEntityID())
-            .orElse(this.getDefaultDiscoInformation(idp.getEntityID()));
-        
+          .orElse(this.getDefaultDiscoInformation(idp.getEntityID()));
+
         if (!discoInfo.isEnabled()) {
           log.debug("IdP '{}' is disabled in configuration and will be excluded from IdP list", idp.getEntityID());
           continue;
         }
 
         if (discoInfo.isSkipEntityCategoryMatching() || this.isValidIdP(idp)) {
-          
+
           UIInfo uiInfo = this.getUIInfo(idp);
           if (uiInfo == null) {
             log.warn("IdP '{}' does not define an UIInfo extension", idp.getEntityID());
-            idpList.add(new IdpDiscoveryInformation(idp.getEntityID(), Collections.emptyList(), Collections.emptyList(), discoInfo));
+            idpList.add(new IdpDiscoveryInformation(idp.getEntityID(), Collections.emptyList(), Collections.emptyList(), this
+              .isMobileAuthDeclared(idp), discoInfo));
           }
           else {
-            idpList.add(new IdpDiscoveryInformation(idp.getEntityID(), uiInfo.getDisplayNames(), uiInfo.getLogos(), discoInfo));
+            idpList.add(new IdpDiscoveryInformation(idp.getEntityID(), uiInfo.getDisplayNames(), uiInfo.getLogos(), this
+              .isMobileAuthDeclared(idp), discoInfo));
           }
         }
         else {
@@ -130,7 +133,7 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration {
     catch (ResolverException e) {
       log.error("Error listing metadata", e);
     }
-    
+
     // Sort the IdP list
     //
     Collections.sort(idpList, Comparator.comparing(IdpDiscoveryInformation::getSortOrder));
@@ -177,6 +180,21 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Predicate that tells if the IdP declares the mobile-auth service property in its metadata.
+   * 
+   * @param idp
+   *          the IdP metadata
+   * @return {@code true} if mobile-auth is declared, and {@code false} otherwise
+   */
+  protected boolean isMobileAuthDeclared(EntityDescriptor idp) {
+    final List<String> idpEntityCategories = EntityCategoryMetadataHelper.getEntityCategories(idp);
+    return idpEntityCategories.stream()
+      .filter(c -> EntityCategoryConstants.SERVICE_PROPERTY_CATEGORY_MOBILE_AUTH.getUri().equals(c))
+      .findFirst()
+      .isPresent();
   }
 
   /**

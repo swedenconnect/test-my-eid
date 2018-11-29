@@ -27,7 +27,7 @@ import se.litsec.opensaml.saml2.metadata.provider.MetadataProvider;
 /**
  * Health indicator for the application.
  * 
- * @author Martin Lindström (martin.lindstrom@litsec.se)
+ * @author Martin Lindström (martin@idsec.se)
  */
 @Component
 @Slf4j

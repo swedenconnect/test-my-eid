@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Application error controller.
  * 
- * @author Martin Lindström (martin.lindstrom@litsec.se)
+ * @author Martin Lindström (martin.lindstrom@idsec.se)
  */
 @Controller
 @ControllerAdvice

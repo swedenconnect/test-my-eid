@@ -22,7 +22,7 @@ import se.litsec.opensaml.saml2.common.request.AbstractRequestGeneratorInput;
 /**
  * Input for generating {@code AuthnRequest} messages.
  * 
- * @author Martin Lindström (martin.lindstrom@litsec.se)
+ * @author Martin Lindström (martin.lindstrom@idsec.se)
  */
 public class AuthnRequestGeneratorInput extends AbstractRequestGeneratorInput {
   

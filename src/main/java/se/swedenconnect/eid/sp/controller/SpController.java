@@ -23,6 +23,7 @@ import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.mobile.device.Device;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,7 +36,7 @@ import se.swedenconnect.eid.sp.config.IdpListConfiguration;
 /**
  * Main controller.
  * 
- * @author Martin Lindström (martin.lindstrom@litsec.se)
+ * @author Martin Lindström (martin.lindstrom@idsec.se)
  */
 @Controller
 @Slf4j
@@ -49,17 +50,20 @@ public class SpController extends BaseController {
   /**
    * Controller method for the home endpoint.
    * 
+   * @param device
+   *          the type of device
    * @param debug
    *          debug flag
    * 
    * @return a model and view object
    */
   @GetMapping
-  public ModelAndView home(@RequestParam(value = "debug", required = false, defaultValue = "false") Boolean debug) {
+  public ModelAndView home(Device device, @RequestParam(value = "debug", required = false, defaultValue = "false") Boolean debug) {
     ModelAndView mav = new ModelAndView("home");
     mav.addObject("debug", debug);
     mav.addObject("idpList", this.idpListConfiguration.getIdps()
       .stream()
+      .filter(idp -> device.isNormal() || idp.isMobileUse()) 
       .map(i -> i.getIdpModel(LocaleContextHolder.getLocale()))
       .collect(Collectors.toList()));
 
@@ -85,7 +89,7 @@ public class SpController extends BaseController {
     ModelAndView mav = (ModelAndView) session.getAttribute("sp-result");
     if (mav == null) {
       log.warn("No session for user, directing to start page [client-ip-address='{}']", request.getRemoteAddr());
-      return this.home(false);
+      return new ModelAndView("redirect:/");
     }
 
     return mav;

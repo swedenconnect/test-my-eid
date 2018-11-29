@@ -1,4 +1,4 @@
-FROM openjdk:8-jre
+FROM openjdk:11-jre
 
 VOLUME /etc/test-my-eid
 RUN mkdir /opt/test-my-eid
