@@ -165,10 +165,55 @@ idp.refidp.entity-id=https://qa.md.swedenconnect.se/
 idp.refidp.sort-order=2
 ```
 
-
-
 ### Management API
 
+Somewhat overkill for a test application, but **Test my eID** also has a management API.
+
+Endpoints for monitoring and administering the service can accessed via the management port (default: 8444). This port should not be publicly exposed and is for internal use only. The following endpoints are available:
+
+#### Health - /manage/health
+
+Returns a general health indication for the service. For an "UP" status, the endpoint will return a 200 HTTP status along with a JSON response that may look something like:
+
+```
+curl --insecure https://<server>:8444/testmyeid/manage/health
+
+{
+   "status" : "UP",
+   "details" : {
+      "diskSpace" : {
+         "details" : {
+            "free" : 139894284288,
+            "threshold" : 10485760,
+            "total" : 500068036608
+         },
+         "status" : "UP"
+      },
+      "testMyEid" : {
+         "status" : "UP"
+      }
+   }
+}
+```
+
+If all checks that are performed by the `health`-endpoint returns "UP", the overall status will be "UP" and a 200 HTTP status is returned.
+
+#### Info - /manage/info
+
+The `/manage/info` endpoint displays information about the service. Spring Boot supplies some information such as build info and version information.
+
+```
+curl --insecure https://<server>:8444/testmyeid/manage/info
+
+{
+   "app" : {
+      "version" : "1.0.0",
+      "name" : "test-my-eid",
+      "description" : "Application for testing my eID"
+   }
+}
+
+```
 
 
 Copyright &copy; 2016-2018, [Sweden Connect](https://swedenconnect.se). Licensed under version 2.0 of the [Apache License](http://www.apache.org/licenses/LICENSE-2.0).
