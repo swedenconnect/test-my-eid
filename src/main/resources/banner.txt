@@ -4,6 +4,6 @@
  (__) (___)(___/ (__)   (_/\/\_)(__/    (___)(__)(___/ 
  
 :: Sweden Connect - Test my eID ::
-:: Application for testing an eIDAS eID ::
+:: Application for testing my eID ::
 
 

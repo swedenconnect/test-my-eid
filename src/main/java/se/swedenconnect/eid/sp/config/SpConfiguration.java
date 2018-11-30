@@ -23,7 +23,9 @@ import java.util.List;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.NameID;
 import org.opensaml.saml.saml2.metadata.AssertionConsumerService;
+import org.opensaml.saml.saml2.metadata.EntitiesDescriptor;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
+import org.opensaml.security.credential.UsageType;
 import org.opensaml.security.httpclient.HttpClientSecurityParameters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,7 +46,8 @@ import se.litsec.opensaml.saml2.metadata.build.KeyDescriptorBuilder;
 import se.litsec.opensaml.saml2.metadata.build.SpEntityDescriptorBuilder;
 import se.litsec.opensaml.saml2.metadata.provider.HTTPMetadataProvider;
 import se.litsec.opensaml.saml2.metadata.provider.MetadataProvider;
-import se.litsec.opensaml.saml2.metadata.provider.spring.SpringResourceMetadataProvider;
+import se.litsec.opensaml.saml2.metadata.provider.StaticMetadataProvider;
+import se.litsec.opensaml.utils.ObjectUtils;
 import se.litsec.opensaml.utils.X509CertificateUtils;
 import se.litsec.opensaml.xmlsec.SAMLObjectDecrypter;
 import se.litsec.swedisheid.opensaml.saml2.validation.SwedishEidResponseProcessorImpl;
@@ -140,8 +143,14 @@ public class SpConfiguration {
   @Profile("local")
   public MetadataProvider localMetadataProvider(
       @Value("${sp.federation.metadata.url}") Resource metadataResource) throws Exception {
-
-    SpringResourceMetadataProvider provider = new SpringResourceMetadataProvider(metadataResource);
+    
+    // There is a bug in SpringResourceMetadataProvider, see https://github.com/litsec/opensaml-ext/issues/36, so
+    // we have to do a bit of a work-around.
+    //
+    // SpringResourceMetadataProvider provider = new SpringResourceMetadataProvider(metadataResource);
+    
+    EntitiesDescriptor entitiesDescriptor = ObjectUtils.unmarshall(metadataResource.getInputStream(), EntitiesDescriptor.class);
+    StaticMetadataProvider provider = new StaticMetadataProvider(entitiesDescriptor);    
     provider.setPerformSchemaValidation(false);
     provider.initialize();
     return provider;
@@ -174,10 +183,12 @@ public class SpConfiguration {
       .uiInfoExtension(this.metadataConfiguration.getUIInfoElement(baseUri, contextPath))
       .keyDescriptors(
         KeyDescriptorBuilder.builder()
+          .use(UsageType.SIGNING)
           .keyName("Signing")
           .certificate(this.signCredential().getCredential().getEntityCertificate())
           .build(),
         KeyDescriptorBuilder.builder()
+          .use(UsageType.ENCRYPTION)
           .keyName("Encryption")
           .certificate(this.encryptCredential().getCredential().getEntityCertificate())
           .build())

@@ -67,7 +67,7 @@ public class SpController extends BaseController {
       .map(i -> i.getIdpModel(LocaleContextHolder.getLocale()))
       .collect(Collectors.toList()));
 
-    log.debug("Adding IdPs {}", this.idpListConfiguration.getIdps());
+    log.trace("Adding IdPs {}", this.idpListConfiguration.getIdps());
     return mav;
   }
 
