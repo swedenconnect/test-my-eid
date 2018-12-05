@@ -29,6 +29,7 @@ import org.opensaml.saml.saml2.metadata.Organization;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.util.StringUtils;
 
 import lombok.Data;
 import se.litsec.opensaml.core.LocalizedString;
@@ -106,14 +107,18 @@ public class MetadataConfiguration {
     }
     List<ContactPerson> persons = new ArrayList<>();
     for (Map.Entry<ContactPersonTypeEnumeration, ContactPersonConfig> e : this.contactPersons.entrySet()) {
-      persons.add(ContactPersonBuilder.builder()
-        .type(e.getKey())
-        .company(e.getValue().getCompany())
-        .givenName(e.getValue().getGivenName())
-        .surname(e.getValue().getSurname())
-        .emailAddresses(e.getValue().getEmailAddress())
-        .telephoneNumbers(e.getValue().getTelephoneNumber())
-        .build());
+      ContactPersonBuilder b = ContactPersonBuilder.builder()
+          .type(e.getKey())
+          .company(e.getValue().getCompany())
+          .givenName(e.getValue().getGivenName())
+          .surname(e.getValue().getSurname());
+      if (StringUtils.hasText(e.getValue().getEmailAddress())) {
+        b.emailAddresses(e.getValue().getEmailAddress());
+      }
+      if (StringUtils.hasText(e.getValue().getTelephoneNumber())) {
+        b.telephoneNumbers(e.getValue().getTelephoneNumber());
+      }      
+      persons.add(b.build());
     }
     return persons;
   }
