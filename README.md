@@ -18,9 +18,9 @@ It is released as open source so that anyone can see how an authentication reque
 
 	* Note: Not all IdP:s in the sandbox federation is functioning correctly. The Test my eID-application is currently configured to support all IdP:s that seem to be "up". Anyone adding a new IdP to the sandbox-federation and wants that to be supported by the test application should send a mail to [info@idsec.se](mailto:info@idsec.se).
 
-* Sweden Connect QA - *To be added*
+* Sweden Connect QA - [https://qa.test.swedenconnect.se](https://qa.test.swedenconnect.se)
 
-* Sweden Connect Production - *To be added*
+* Sweden Connect Production - [https://test.swedenconnect.se](https://test.swedenconnect.se)
 
 ### Configuration settings
 
