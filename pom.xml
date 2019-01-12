@@ -119,19 +119,13 @@
     <dependency>
       <groupId>se.litsec.opensaml</groupId>
       <artifactId>opensaml3-ext</artifactId>
-      <version>1.2.3</version>
+      <version>1.2.4</version>
     </dependency>
 
     <dependency>
       <groupId>se.litsec.opensaml.sweid</groupId>
       <artifactId>swedish-eid-opensaml3</artifactId>
-      <version>1.2.2</version>
-      <exclusions>
-        <exclusion>
-          <groupId>se.litsec.opensaml</groupId>
-          <artifactId>opensaml3-ext</artifactId>
-        </exclusion>
-      </exclusions>
+      <version>1.2.3</version>
     </dependency>
 
     <dependency>
