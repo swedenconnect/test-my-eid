@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Sweden Connect
+ * Copyright 2018-2019 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.joda.time.DateTime;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.AuthnContextComparisonTypeEnumeration;
 import org.opensaml.saml.saml2.core.AuthnRequest;
+import org.opensaml.saml.saml2.core.IDPList;
 import org.opensaml.saml.saml2.core.NameID;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
@@ -33,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import lombok.extern.slf4j.Slf4j;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
@@ -43,6 +45,7 @@ import se.litsec.opensaml.saml2.common.request.RequestHttpObject;
 import se.litsec.opensaml.saml2.core.build.AuthnRequestBuilder;
 import se.litsec.opensaml.saml2.core.build.NameIDPolicyBuilder;
 import se.litsec.opensaml.saml2.core.build.RequestedAuthnContextBuilder;
+import se.litsec.opensaml.saml2.core.build.ScopingBuilder;
 import se.litsec.opensaml.saml2.metadata.MetadataUtils;
 import se.litsec.opensaml.saml2.metadata.PeerMetadataResolver;
 import se.litsec.opensaml.saml2.metadata.provider.MetadataProvider;
@@ -99,7 +102,8 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
    * @throws RequestGenerationException
    *           for generation errors
    */
-  public RequestHttpObject<AuthnRequest> generateRequest(AuthnRequestGeneratorInput input) throws RequestGenerationException {
+  public RequestHttpObject<AuthnRequest> generateRequest(AuthnRequestGeneratorInput input)
+      throws RequestGenerationException {
 
     PeerMetadataResolver pmr = new PeerMetadataResolver() {
 
@@ -174,7 +178,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
       LoaEnum e = LoaEnum.parse(u);
       return e != null ? !e.isSignatureMessageUri() : true;
     };
-    
+
     List<String> assuranceCertificationUris = MetadataUtils.getEntityAttributes(idp)
       .map(attrs -> attrs.getAttributes()
         .stream()
@@ -185,19 +189,33 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
         .filter(notSigMessageUri)
         .collect(Collectors.toList()))
       .orElse(Collections.emptyList());
-    
+
     if (!assuranceCertificationUris.isEmpty()) {
       builder.requestedAuthnContext(RequestedAuthnContextBuilder.builder()
         .comparison(AuthnContextComparisonTypeEnumeration.EXACT)
-        .authnContextClassRefs(assuranceCertificationUris).build());
+        .authnContextClassRefs(assuranceCertificationUris)
+        .build());
     }
     else {
       log.warn("IdP '{}' does not specify assurance certification URI - defaulting to {}", input.getPeerEntityID(), LoaEnum.LOA_3.getUri());
       builder.requestedAuthnContext(RequestedAuthnContextBuilder.builder()
         .comparison(AuthnContextComparisonTypeEnumeration.EXACT)
-        .authnContextClassRefs(LoaEnum.LOA_3.getUri()).build());
+        .authnContextClassRefs(LoaEnum.LOA_3.getUri())
+        .build());
     }
     
+    // If country is set, this is a request to the eIDAS connector in which we pass a requested country ...
+    //
+    if (StringUtils.hasText(input.getCountry())) {
+      String countryUri = "http://id.swedenconnect.se/eidas/1.0/proxy-service/" + input.getCountry().toLowerCase();
+      
+      IDPList idpList = ObjectUtils.createSamlObject(IDPList.class);
+      idpList.getIDPEntrys().add(ScopingBuilder.idpEntry(countryUri, null, null));
+      ScopingBuilder scopingBuilder = ScopingBuilder.builder(); 
+      scopingBuilder.object().setIDPList(idpList);
+      builder.scoping(scopingBuilder.build());
+    }
+
     // We are done ...
     //
     AuthnRequest authnRequest = builder.build();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Sweden Connect
+ * Copyright 2018-2019 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,25 +94,31 @@ public class SamlController extends BaseController {
    *          the HTTP request
    * @param response
    *          the HTTP response
+   * @param selectedIdp
+   *          the selected IdP
+   * @param country
+   *          optional parameter for direct requests to an eIDAS country
    * @param debug
    *          the debug flag
    * @return a model and view object
    * @throws ApplicationException
    *           for errors
    */
-  @PostMapping("/request")
+  @RequestMapping("/request")
   public ModelAndView sendRequest(HttpServletRequest request, HttpServletResponse response,
       @RequestParam("selectedIdp") String selectedIdp,
+      @RequestParam(value = "country", required = false) String country,
       @RequestParam(value = "debug", required = false, defaultValue = "false") Boolean debug) throws ApplicationException {
 
-    log.debug("Request for generating an AuthnRequest to '{}' [client-ip-address='{}', debug='{}']", selectedIdp, request.getRemoteAddr(),
-      debug);
+    log.debug("Request for generating an AuthnRequest to '{}' [client-ip-address='{}', debug='{}', country='{}']", selectedIdp, request.getRemoteAddr(),
+      debug, country);
 
     try {
       HttpSession session = request.getSession();
 
       AuthnRequestGeneratorInput input = new AuthnRequestGeneratorInput(selectedIdp);
       input.setDebug(debug);
+      input.setCountry(country);
 
       RequestHttpObject<AuthnRequest> authnRequest = this.authnRequestGenerator.generateRequest(input);
 
@@ -266,7 +272,7 @@ public class SamlController extends BaseController {
     else {
       log.error("Uknown LoA: {}", loa);
     }
-    
+
     final boolean isEidas = loaEnum.isEidasUri();
 
     List<Attribute> unknownAttributes = new ArrayList<>();

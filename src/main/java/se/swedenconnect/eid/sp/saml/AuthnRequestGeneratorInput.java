@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Sweden Connect
+ * Copyright 2018-2019 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,10 @@ public class AuthnRequestGeneratorInput extends AbstractRequestGeneratorInput {
   @Getter
   @Setter
   private boolean debug;
+  
+  @Getter
+  @Setter
+  private String country;
 
   /** The IdP entity ID. */
   private String idpEntityID;
