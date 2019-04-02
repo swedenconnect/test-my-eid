@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Sweden Connect
+ * Copyright 2018-2019 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,15 @@
 package se.swedenconnect.eid.sp;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import org.opensaml.core.config.ConfigurationService;
+import org.opensaml.xmlsec.EncryptionConfiguration;
+import org.opensaml.xmlsec.config.impl.DefaultSecurityConfigurationBootstrap;
+import org.opensaml.xmlsec.encryption.support.EncryptionConstants;
+import org.opensaml.xmlsec.impl.BasicEncryptionConfiguration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -58,6 +64,19 @@ public class TestMyEidApplication {
   @Bean("openSAML")
   public OpenSAMLInitializer openSAML() throws Exception {
     OpenSAMLInitializer.getInstance().initialize();
+    
+    // Make some adjustments to OpenSAML's default prefered algorithms ...
+    //
+    BasicEncryptionConfiguration encryptionConfiguration = 
+        DefaultSecurityConfigurationBootstrap.buildDefaultEncryptionConfiguration();
+    
+    encryptionConfiguration.setDataEncryptionAlgorithms(Arrays.asList(
+      EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES256,      
+      EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES192,
+      EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES128));
+    
+    ConfigurationService.register(EncryptionConfiguration.class, encryptionConfiguration); 
+    
     return OpenSAMLInitializer.getInstance();
   }
 

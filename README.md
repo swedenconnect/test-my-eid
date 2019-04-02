@@ -67,6 +67,7 @@ See the corresponding `application-<profile>.properties` files under [src/main/r
 | Property<br />Environment variable | Description | Default value |
 | :--- | :--- | :--- |
 | `sp.entity-id`<br />`SP_ENTITY_ID` | The SAML entityID for the **Test my eID** application. | `http://test.swedenconnect.se/testmyeid` |
+| `sign-sp.entity-id`<br />`SIGN_SP_ENTITY_ID` | The SAML entityID for the **Test my eID** application when it acts as a signature service. | `http://test.swedenconnect.se/testmyeid-sign` |
 | `sp.base-uri`<br />`SP_BASE_URI` | The base URI for the SP application, e.g., `https://test.swedenconnect.se`. | - |
 | `sp.federation.metadata.url`<br />`SP_FEDERATION_METADATA_URL` | The URL from which federation metadata is periodically downloaded. | For production:<br/> `https://md.swedenconnect.se/role/idp.xml`<br /> For QA:<br/> `https://qa.md.swedenconnect.se/role/idp.xml`<br />For sandbox:<br/> `https://eid.svelegtest.se/metadata/`<br/>`mdx/role/idp.xml` |
 | `sp.federation.metadata.`<br />`validation-certificate`<br />`SP_FEDERATION_METADATA_`<br />`VALIDATION_CERTIFICATE` | Path to the certificate that is to be used to verify metadata signatures. The application classpath contains valid certificates for the `sandbox`, `qa` and `prod` profiles. To override any of the default values give the full path prefixed with `file:`. | For production:<br/>`classpath:prod/sc-metadata.crt`<br/>For QA:<br />`classpath:qa/sc-qa-metadata.crt`<br />For sandbox:<br/>`classpath:sandbox/sandbox-metadata.crt` |

@@ -19,14 +19,26 @@
             <h2 th:text="#{sp.msg.heading}">Heading</h2>
           </div>
           <div class="col-sm-12">
-            <p class="info" th:text="#{sp.msg.success-intro}">Intro</p>
-            <p class="info" th:text="#{sp.msg.success-intro2}">Intro</p>
+            <p class="info" th:text="#{sp.msg.success-sign-intro}">Intro</p>
           </div>
         </div>
 
         <hr class="full-width" />
         
+        <div class="row info-intro">
+          <div class="col-sm-12">
+            <p class="info" th:text="#{sp.msg.signed-text}">You signed the following text:</p>
+            <div class="sign-message">
+              <div><span th:text="${signMessage}">Text that was signed</span></div>
+            </div>
+          </div>
+        </div>
+        
+        <hr class="full-width" />
+        
         <div class="authn-listing">
+        
+          <p th:text="#{sp.msg.success-sign-intro2}">Information received:</p>
         
           <div class="row attribute-row" th:each="info: ${authenticationInfo.attributes}">
             <div class="col-sm-4" th:text="#{${info.attributeNameCode}}">ID name</div>
@@ -81,7 +93,9 @@
                        data-content="The data content"
                        data-original-title="" />
                 </th:block>
-                <span th:text="#{${authenticationInfo.loaLevelMessageCode}}">Loa Info</span>              
+                <span th:text="#{${authenticationInfo.loaLevelMessageCode}}">Loa Info</span>
+                <br />
+                <i><span th:text="${authenticationInfo.loaUri}">Loa Info</span></i>
               </p>
               <th:block th:if="${authenticationInfo.notifiedInfoMessageCode != null}">
                 <p th:text="#{${authenticationInfo.notifiedInfoMessageCode}}">Info about notified/non-notified</p>
@@ -94,7 +108,7 @@
         <th:block th:if="${signIdp != null}">
         <hr class="full-width" />
         
-        <div class="row info-intro">
+        <div class="row sign-intro">
           <div class="col-sm-12">
             <p class="info" th:text="#{sp.msg.next-sign}">Click to sign test message</p>
           </div>

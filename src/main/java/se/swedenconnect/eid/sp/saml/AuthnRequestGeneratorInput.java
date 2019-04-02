@@ -33,6 +33,18 @@ public class AuthnRequestGeneratorInput extends AbstractRequestGeneratorInput {
   @Getter
   @Setter
   private String country;
+  
+  @Getter
+  @Setter
+  private String signMessage;
+  
+  @Getter
+  @Setter
+  private String personalIdentityNumberHint;
+  
+  @Getter
+  @Setter
+  private String requestedAuthnContextUri;
 
   /** The IdP entity ID. */
   private String idpEntityID;

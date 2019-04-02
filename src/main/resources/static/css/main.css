@@ -51,6 +51,14 @@ a {
   box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.5);
 }
 
+.info-intro {
+  padding-top: 27px;
+}
+
+.sign-provider {
+  padding-bottom: 27px;
+}
+
 .content-heading {
   padding-bottom: 27px;
 }
@@ -414,8 +422,7 @@ a {
 .sign-message {
   margin-bottom: 30px;
   background-color: #F7F7F7;
-  border-top: 1px solid #D0CACA;
-  border-bottom: 1px solid #D0CACA;
+  border: 1px solid #D0CACA;
   padding: 23px 28px;
 }
 
