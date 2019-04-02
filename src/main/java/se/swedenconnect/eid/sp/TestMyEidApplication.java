@@ -17,6 +17,7 @@ package se.swedenconnect.eid.sp;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -69,6 +70,18 @@ public class TestMyEidApplication {
     //
     BasicEncryptionConfiguration encryptionConfiguration = 
         DefaultSecurityConfigurationBootstrap.buildDefaultEncryptionConfiguration();
+    
+    // By default, RSA 1.5 is black-listed, but we allow it for a little bit longer.
+    encryptionConfiguration.setBlacklistedAlgorithms(Collections.emptyList());
+    
+    encryptionConfiguration.setKeyTransportEncryptionAlgorithms(Arrays.asList(
+      EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSAOAEP,
+      EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSA15,
+      
+      EncryptionConstants.ALGO_ID_KEYWRAP_AES256,      
+      EncryptionConstants.ALGO_ID_KEYWRAP_AES192,
+      EncryptionConstants.ALGO_ID_KEYWRAP_AES128,
+      EncryptionConstants.ALGO_ID_KEYWRAP_TRIPLEDES));
     
     encryptionConfiguration.setDataEncryptionAlgorithms(Arrays.asList(
       EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES256,      
