@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Sweden Connect
+ * Copyright 2018-2019 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,11 @@ public class AuthenticationInfo {
   /** The SAML attributes (advanced, i.e., not displayed unless asked for). */
   @Setter
   private List<AttributeInfo> advancedAttributes;
+  
+  /** The LoA URI. */
+  @Setter
+  @Getter
+  private String loaUri;
 
   /** The message code for level of assurance. */
   @Setter

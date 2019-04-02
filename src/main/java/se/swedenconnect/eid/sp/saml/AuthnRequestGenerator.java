@@ -15,25 +15,27 @@
  */
 package se.swedenconnect.eid.sp.saml;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import org.joda.time.DateTime;
+import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.AuthnContextComparisonTypeEnumeration;
 import org.opensaml.saml.saml2.core.AuthnRequest;
+import org.opensaml.saml.saml2.core.Extensions;
 import org.opensaml.saml.saml2.core.IDPList;
 import org.opensaml.saml.saml2.core.NameID;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.SingleSignOnService;
+import org.opensaml.xmlsec.encryption.support.EncryptionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.DependsOn;
-import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import lombok.extern.slf4j.Slf4j;
@@ -50,8 +52,17 @@ import se.litsec.opensaml.saml2.metadata.MetadataUtils;
 import se.litsec.opensaml.saml2.metadata.PeerMetadataResolver;
 import se.litsec.opensaml.saml2.metadata.provider.MetadataProvider;
 import se.litsec.opensaml.utils.ObjectUtils;
+import se.litsec.swedisheid.opensaml.saml2.attribute.AttributeConstants;
+import se.litsec.swedisheid.opensaml.saml2.authentication.LevelofAssuranceAuthenticationContextURI;
 import se.litsec.swedisheid.opensaml.saml2.authentication.LevelofAssuranceAuthenticationContextURI.LoaEnum;
-import se.swedenconnect.eid.sp.config.EntityID;
+import se.litsec.swedisheid.opensaml.saml2.authentication.psc.MatchValue;
+import se.litsec.swedisheid.opensaml.saml2.authentication.psc.PrincipalSelection;
+import se.litsec.swedisheid.opensaml.saml2.metadata.entitycategory.EntityCategoryConstants;
+import se.litsec.swedisheid.opensaml.saml2.metadata.entitycategory.EntityCategoryMetadataHelper;
+import se.litsec.swedisheid.opensaml.saml2.signservice.SignMessageBuilder;
+import se.litsec.swedisheid.opensaml.saml2.signservice.SignMessageEncrypter;
+import se.litsec.swedisheid.opensaml.saml2.signservice.dss.SignMessage;
+import se.litsec.swedisheid.opensaml.saml2.signservice.dss.SignMessageMimeTypeEnum;
 import se.swedenconnect.eid.sp.config.SpCredential;
 
 /**
@@ -60,7 +71,6 @@ import se.swedenconnect.eid.sp.config.SpCredential;
  * @author Martin Lindström (martin.lindstrom@idsec.se)
  */
 @Slf4j
-@Service
 @DependsOn("openSAML")
 public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRequestGeneratorInput> {
 
@@ -68,13 +78,15 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
   @Autowired
   private MetadataProvider metadataProvider;
 
-  /** The SP metadata. */
-  @Autowired
-  private EntityDescriptor spMetadata;
-
   @Autowired
   @Qualifier("signCredential")
   private SpCredential signCredential;
+
+  @Autowired
+  private SignMessageEncrypter signMessageEncrypter;
+
+  /** The SP metadata. */
+  private EntityDescriptor spMetadata;
 
   /** The assertion consumer service URL. */
   private String assertionConsumerServiceUrl;
@@ -85,11 +97,14 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
   /**
    * Contructor.
    * 
-   * @param spEntityID
+   * @param entityID
    *          the SP entityID
+   * @param metadata
+   *          the SP metadata
    */
-  public AuthnRequestGenerator(@Qualifier("spEntityID") EntityID spEntityID) {
-    super(spEntityID.getEntityID());
+  public AuthnRequestGenerator(String entityID, EntityDescriptor metadata) {
+    super(entityID);
+    this.spMetadata = metadata;
     this.setName("Sweden Connect Test SP");
   }
 
@@ -145,6 +160,9 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
       .issuer(this.getEntityID())
       .forceAuthn(true)
       .isPassive(false);
+    
+    // For extensions that we may add ...
+    Extensions extensions = null;
 
     // Assign assertion consumer URL (with support for debug).
     //
@@ -172,52 +190,79 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
         input.getPeerEntityID());
     }
 
-    // Get the assurance certification URI:s from the IdP metadata and pass all of them (except for sigmessage URI:s).
+    final boolean isSignatureService = this.isSignatureService();
+
+    // If the input contains a sign message (and we are a signature service)
+    // we assign the sign message (encrypted).
     //
-    Predicate<String> notSigMessageUri = u -> {
-      LoaEnum e = LoaEnum.parse(u);
-      return e != null ? !e.isSignatureMessageUri() : true;
-    };
+    if (input.getSignMessage() != null && isSignatureService) {
+      SignMessage signMessage = SignMessageBuilder.builder()
+        .displayEntity(input.getPeerEntityID())
+        .mimeType(SignMessageMimeTypeEnum.TEXT)
+        .mustShow(true)
+        .message(input.getSignMessage())
+        .build();
 
-    List<String> assuranceCertificationUris = MetadataUtils.getEntityAttributes(idp)
-      .map(attrs -> attrs.getAttributes()
-        .stream()
-        .filter(a -> "urn:oasis:names:tc:SAML:attribute:assurance-certification".equals(a.getName()))
-        .map(AttributeUtils::getAttributeStringValues)
-        .flatMap(List::stream)
-        .distinct()
-        .filter(notSigMessageUri)
-        .collect(Collectors.toList()))
-      .orElse(Collections.emptyList());
+      try {
+        this.signMessageEncrypter.encrypt(signMessage, input.getPeerEntityID());
+      }
+      catch (EncryptionException e) {
+        throw new RequestGenerationException("Failed to encrypt SignMessage to " + input.getPeerEntityID(), e);
+      }
+      if (extensions == null) {
+        extensions = (Extensions) XMLObjectSupport.buildXMLObject(Extensions.DEFAULT_ELEMENT_NAME);
+      }
+      extensions.getUnknownXMLObjects().add(signMessage);
+    }
 
-    if (!assuranceCertificationUris.isEmpty()) {
-      builder.requestedAuthnContext(RequestedAuthnContextBuilder.builder()
-        .comparison(AuthnContextComparisonTypeEnumeration.EXACT)
-        .authnContextClassRefs(assuranceCertificationUris)
-        .build());
+    // Get the assurance certification URI:s from the IdP metadata
+    //
+    List<String> assuranceCertificationUris;
+    if (input.getRequestedAuthnContextUri() != null) {
+      assuranceCertificationUris = Arrays.asList(input.getRequestedAuthnContextUri());
     }
     else {
-      log.warn("IdP '{}' does not specify assurance certification URI - defaulting to {}", input.getPeerEntityID(), LoaEnum.LOA_3.getUri());
-      builder.requestedAuthnContext(RequestedAuthnContextBuilder.builder()
-        .comparison(AuthnContextComparisonTypeEnumeration.EXACT)
-        .authnContextClassRefs(LoaEnum.LOA_3.getUri())
-        .build());
+      assuranceCertificationUris = this.getAssuranceCertificationUris(idp, isSignatureService && input.getSignMessage() != null);
     }
-    
+
+    builder.requestedAuthnContext(RequestedAuthnContextBuilder.builder()
+      .comparison(AuthnContextComparisonTypeEnumeration.EXACT)
+      .authnContextClassRefs(assuranceCertificationUris)
+      .build());
+
     // If country is set, this is a request to the eIDAS connector in which we pass a requested country ...
     //
     if (StringUtils.hasText(input.getCountry())) {
       String countryUri = "http://id.swedenconnect.se/eidas/1.0/proxy-service/" + input.getCountry().toLowerCase();
-      
-      IDPList idpList = ObjectUtils.createSamlObject(IDPList.class);
+
+      IDPList idpList = (IDPList) XMLObjectSupport.buildXMLObject(IDPList.DEFAULT_ELEMENT_NAME); 
       idpList.getIDPEntrys().add(ScopingBuilder.idpEntry(countryUri, null, null));
-      ScopingBuilder scopingBuilder = ScopingBuilder.builder(); 
+      ScopingBuilder scopingBuilder = ScopingBuilder.builder();
       scopingBuilder.object().setIDPList(idpList);
       builder.scoping(scopingBuilder.build());
+    }
+    
+    // If the hint for personal number is set (only if the user first authenticates, and then signs),
+    // we include the PrincipalSelection extension.
+    //
+    if (input.getPersonalIdentityNumberHint() != null) {
+      PrincipalSelection ps = (PrincipalSelection) XMLObjectSupport.buildXMLObject(PrincipalSelection.DEFAULT_ELEMENT_NAME);
+      MatchValue mv = (MatchValue) XMLObjectSupport.buildXMLObject(MatchValue.DEFAULT_ELEMENT_NAME);
+      mv.setName(AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER);
+      mv.setValue(input.getPersonalIdentityNumberHint());
+      ps.getMatchValues().add(mv);
+      
+      if (extensions == null) {
+        extensions = (Extensions) XMLObjectSupport.buildXMLObject(Extensions.DEFAULT_ELEMENT_NAME);
+      }
+      extensions.getUnknownXMLObjects().add(ps);
     }
 
     // We are done ...
     //
+    if (extensions != null && extensions.hasChildren()) {
+      builder.extensions(extensions);
+    }
     AuthnRequest authnRequest = builder.build();
 
     if (log.isTraceEnabled()) {
@@ -225,6 +270,73 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
     }
 
     return this.buildRequestHttpObject(authnRequest, input, serviceUrl.getBinding(), serviceUrl.getLocation());
+  }
+
+  /**
+   * Based on which assurance levels the IdP declares we return a list of URIs to include in our request.
+   * 
+   * @param metadata
+   *          the IdP metadata
+   * @param sigMessage
+   *          whether we should request a sigmessage URI
+   * @return a list of URIs
+   */
+  private List<String> getAssuranceCertificationUris(EntityDescriptor metadata, boolean sigMessage) {
+
+    List<String> assuranceCertificationUris = new ArrayList<>();
+
+    Predicate<String> filterPredicate;
+
+    if (!sigMessage) {
+      // For an ordinary SP, we look for all URIs except for sigmessage ones.
+      filterPredicate = u -> {
+        LoaEnum e = LoaEnum.parse(u);
+        return e != null ? !e.isSignatureMessageUri() : true;
+      };
+    }
+    else {
+      filterPredicate = u -> {
+        LoaEnum e = LoaEnum.parse(u);
+        return e != null ? e.isSignatureMessageUri() : false;
+      };
+    }
+    MetadataUtils.getEntityAttributes(metadata)
+      .ifPresent(attrs -> attrs.getAttributes()
+        .stream()
+        .filter(a -> "urn:oasis:names:tc:SAML:attribute:assurance-certification".equals(a.getName()))
+        .map(AttributeUtils::getAttributeStringValues)
+        .flatMap(List::stream)
+        .distinct()
+        .filter(filterPredicate)
+        .forEach(assuranceCertificationUris::add));
+
+    if (assuranceCertificationUris.isEmpty()) {
+      if (!sigMessage) {
+        log.warn("IdP '{}' does not specify assurance certification URI - defaulting to {}", metadata.getEntityID(), 
+          LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_LOA3);
+        assuranceCertificationUris.add(LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_LOA3);
+      }
+      else {
+        log.warn("IdP '{}' does not specify assurance certification URI - defaulting to {}", metadata.getEntityID(),
+          LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_LOA3_SIGMESSAGE);
+        assuranceCertificationUris.add(LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_LOA3_SIGMESSAGE);
+      }
+    }
+
+    return assuranceCertificationUris;
+  }
+
+  /**
+   * Predicate that tells if the entity that we are serving is a signature service SP.
+   * 
+   * @return {@code true} if this is a signature service, and {@code false} otherwise
+   */
+  private boolean isSignatureService() {
+    return EntityCategoryMetadataHelper.getEntityCategories(this.spMetadata)
+      .stream()
+      .filter(c -> c.equals(EntityCategoryConstants.SERVICE_TYPE_CATEGORY_SIGSERVICE.getUri()))
+      .findFirst()
+      .isPresent();
   }
 
   /**

@@ -32,8 +32,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.google.common.base.Objects;
+
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.eid.sp.config.IdpListConfiguration;
+import se.swedenconnect.eid.sp.model.LastAuthentication;
+import se.swedenconnect.eid.sp.model.IdpDiscoveryInformation.IdpModel;
 
 /**
  * Main controller.
@@ -128,6 +132,18 @@ public class SpController extends BaseController {
     if (mav == null) {
       log.warn("No session for user, directing to start page [client-ip-address='{}']", request.getRemoteAddr());
       return new ModelAndView("redirect:/");
+    }
+    
+    LastAuthentication lastAuthentication = (LastAuthentication) session.getAttribute("last-authentication");
+    if (lastAuthentication != null) {
+      IdpModel idpModel = this.idpListConfiguration.getIdps().stream()
+        .filter(idp -> Objects.equal(idp.getEntityID(), lastAuthentication.getIdp()))
+        .map(idp -> idp.getIdpModel(LocaleContextHolder.getLocale()))
+        .findFirst()
+        .orElse(null);
+      if (idpModel != null) {
+        mav.addObject("signIdp", idpModel);
+      }
     }
 
     return mav;

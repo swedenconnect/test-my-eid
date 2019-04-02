@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Sweden Connect
+ * Copyright 2018-2019 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.xmlsec.signature.support.SignatureException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -52,11 +53,26 @@ public class MetadataController {
   public static final String APPLICATION_SAML_METADATA = "application/samlmetadata+xml";
   
   @Autowired
+  @Qualifier("spEntityDescriptorContainer")
   private EntityDescriptorContainer metadataContainer;
+  
+  @Autowired
+  @Qualifier("signSpEntityDescriptorContainer")
+  private EntityDescriptorContainer signSpMetadataContainer;  
 
   @GetMapping
   @ResponseBody
-  public HttpEntity<byte[]> getMetadata(HttpServletRequest request, @RequestHeader(name = "Accept", required = false) String acceptHeader) {
+  public HttpEntity<byte[]> getMetadata(HttpServletRequest request, @RequestHeader(name = "Accept", required = false) String acceptHeader) {    
+    return this.getMetadata(this.metadataContainer, request, acceptHeader);
+  }
+  
+  @GetMapping("/sign")
+  @ResponseBody
+  public HttpEntity<byte[]> getSignSpMetadata(HttpServletRequest request, @RequestHeader(name = "Accept", required = false) String acceptHeader) {    
+    return this.getMetadata(this.signSpMetadataContainer, request, acceptHeader);
+  }  
+  
+  private HttpEntity<byte[]> getMetadata(EntityDescriptorContainer metadata, HttpServletRequest request, String acceptHeader) {
     
     log.debug("Request to download metadata from {}", request.getRemoteAddr());
     
@@ -64,9 +80,9 @@ public class MetadataController {
 
       // Check if the metadata is up-to-date according to how the container was configured.
       //
-      if (this.metadataContainer.updateRequired(true)) {
+      if (metadata.updateRequired(true)) {
         log.debug("Metadata needs to be updated ...");
-        this.metadataContainer.update(true);
+        metadata.update(true);
         log.debug("Metadata was updated and signed");
       }
       else {
@@ -75,7 +91,7 @@ public class MetadataController {
 
       // Get the DOM for the metadata and serialize it.
       //
-      Element dom = this.metadataContainer.marshall();
+      Element dom = metadata.marshall();
 
       ByteArrayOutputStream stream = new ByteArrayOutputStream();
       SerializeSupport.writeNode(dom, stream);
