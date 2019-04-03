@@ -55,8 +55,9 @@ import se.litsec.opensaml.utils.ObjectUtils;
 import se.litsec.swedisheid.opensaml.saml2.attribute.AttributeConstants;
 import se.litsec.swedisheid.opensaml.saml2.authentication.LevelofAssuranceAuthenticationContextURI;
 import se.litsec.swedisheid.opensaml.saml2.authentication.LevelofAssuranceAuthenticationContextURI.LoaEnum;
-import se.litsec.swedisheid.opensaml.saml2.authentication.psc.MatchValue;
 import se.litsec.swedisheid.opensaml.saml2.authentication.psc.PrincipalSelection;
+import se.litsec.swedisheid.opensaml.saml2.authentication.psc.build.MatchValueBuilder;
+import se.litsec.swedisheid.opensaml.saml2.authentication.psc.build.PrincipalSelectionBuilder;
 import se.litsec.swedisheid.opensaml.saml2.metadata.entitycategory.EntityCategoryConstants;
 import se.litsec.swedisheid.opensaml.saml2.metadata.entitycategory.EntityCategoryMetadataHelper;
 import se.litsec.swedisheid.opensaml.saml2.signservice.SignMessageBuilder;
@@ -234,7 +235,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
     //
     if (StringUtils.hasText(input.getCountry())) {
       String countryUri = "http://id.swedenconnect.se/eidas/1.0/proxy-service/" + input.getCountry().toLowerCase();
-
+      
       IDPList idpList = (IDPList) XMLObjectSupport.buildXMLObject(IDPList.DEFAULT_ELEMENT_NAME); 
       idpList.getIDPEntrys().add(ScopingBuilder.idpEntry(countryUri, null, null));
       ScopingBuilder scopingBuilder = ScopingBuilder.builder();
@@ -246,12 +247,14 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
     // we include the PrincipalSelection extension.
     //
     if (input.getPersonalIdentityNumberHint() != null) {
-      PrincipalSelection ps = (PrincipalSelection) XMLObjectSupport.buildXMLObject(PrincipalSelection.DEFAULT_ELEMENT_NAME);
-      MatchValue mv = (MatchValue) XMLObjectSupport.buildXMLObject(MatchValue.DEFAULT_ELEMENT_NAME);
-      mv.setName(AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER);
-      mv.setValue(input.getPersonalIdentityNumberHint());
-      ps.getMatchValues().add(mv);
-      
+      PrincipalSelection ps = PrincipalSelectionBuilder.builder()
+          .matchValues(
+            MatchValueBuilder.builder()
+              .name(AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER)
+              .value(input.getPersonalIdentityNumberHint())
+              .build())
+          .build();
+
       if (extensions == null) {
         extensions = (Extensions) XMLObjectSupport.buildXMLObject(Extensions.DEFAULT_ELEMENT_NAME);
       }
