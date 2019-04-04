@@ -25,9 +25,7 @@ import org.opensaml.core.config.ConfigurationService;
 import org.opensaml.xmlsec.EncryptionConfiguration;
 import org.opensaml.xmlsec.config.impl.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.encryption.support.EncryptionConstants;
-import org.opensaml.xmlsec.encryption.support.RSAOAEPParameters;
 import org.opensaml.xmlsec.impl.BasicEncryptionConfiguration;
-import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -78,7 +76,7 @@ public class TestMyEidApplication {
     
     encryptionConfiguration.setKeyTransportEncryptionAlgorithms(Arrays.asList(      
       EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSAOAEP,
-      EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSAOAEP11,
+      /**EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSAOAEP11,**/
       EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSA15,
       
       EncryptionConstants.ALGO_ID_KEYWRAP_AES256,      
@@ -86,10 +84,10 @@ public class TestMyEidApplication {
       EncryptionConstants.ALGO_ID_KEYWRAP_AES128,
       EncryptionConstants.ALGO_ID_KEYWRAP_TRIPLEDES));
     
-    encryptionConfiguration.setRSAOAEPParameters(new RSAOAEPParameters(
-      SignatureConstants.ALGO_ID_DIGEST_SHA256,
-      EncryptionConstants.ALGO_ID_MGF1_SHA1,
-      null));    
+//    encryptionConfiguration.setRSAOAEPParameters(new RSAOAEPParameters(
+//      SignatureConstants.ALGO_ID_DIGEST_SHA256,
+//      EncryptionConstants.ALGO_ID_MGF1_SHA1,
+//      null));    
     
     encryptionConfiguration.setDataEncryptionAlgorithms(Arrays.asList(
       EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES256_GCM,
