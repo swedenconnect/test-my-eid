@@ -16,16 +16,10 @@
 package se.swedenconnect.eid.sp;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-import org.opensaml.core.config.ConfigurationService;
-import org.opensaml.xmlsec.EncryptionConfiguration;
-import org.opensaml.xmlsec.config.impl.DefaultSecurityConfigurationBootstrap;
-import org.opensaml.xmlsec.encryption.support.EncryptionConstants;
-import org.opensaml.xmlsec.impl.BasicEncryptionConfiguration;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -41,8 +35,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 
-import se.litsec.opensaml.config.OpenSAMLInitializer;
+import se.swedenconnect.eid.sp.config.AlgorithmConfiguration;
 import se.swedenconnect.eid.sp.config.UiLanguage;
+import se.swedenconnect.eid.sp.saml.CustomSwedishEidSecurityConfiguration;
+import se.swedenconnect.opensaml.OpenSAMLInitializer;
+import se.swedenconnect.opensaml.OpenSAMLSecurityDefaultsConfig;
+import se.swedenconnect.opensaml.OpenSAMLSecurityExtensionConfig;
 
 /**
  * Application main.
@@ -51,6 +49,9 @@ import se.swedenconnect.eid.sp.config.UiLanguage;
  */
 @SpringBootApplication
 public class TestMyEidApplication {
+  
+  @Autowired
+  AlgorithmConfiguration algorithmConfiguration;
 
   /**
    * Program main.
@@ -64,42 +65,10 @@ public class TestMyEidApplication {
 
   @Bean("openSAML")
   public OpenSAMLInitializer openSAML() throws Exception {
-    OpenSAMLInitializer.getInstance().initialize();
-    
-    // Make some adjustments to OpenSAML's default prefered algorithms ...
-    //
-    BasicEncryptionConfiguration encryptionConfiguration = 
-        DefaultSecurityConfigurationBootstrap.buildDefaultEncryptionConfiguration();
-    
-    // By default, RSA 1.5 is black-listed, but we allow it for a little bit longer.
-    encryptionConfiguration.setBlacklistedAlgorithms(Collections.emptyList());
-    
-    encryptionConfiguration.setKeyTransportEncryptionAlgorithms(Arrays.asList(      
-      EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSAOAEP,
-      /**EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSAOAEP11,**/
-      EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSA15,
-      
-      EncryptionConstants.ALGO_ID_KEYWRAP_AES256,      
-      EncryptionConstants.ALGO_ID_KEYWRAP_AES192,
-      EncryptionConstants.ALGO_ID_KEYWRAP_AES128,
-      EncryptionConstants.ALGO_ID_KEYWRAP_TRIPLEDES));
-    
-//    encryptionConfiguration.setRSAOAEPParameters(new RSAOAEPParameters(
-//      SignatureConstants.ALGO_ID_DIGEST_SHA256,
-//      EncryptionConstants.ALGO_ID_MGF1_SHA1,
-//      null));    
-    
-    encryptionConfiguration.setDataEncryptionAlgorithms(Arrays.asList(
-      EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES256_GCM,
-      EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES192_GCM,
-      EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES128_GCM,
-      
-      EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES256,      
-      EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES192,
-      EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES128));
-    
-    ConfigurationService.register(EncryptionConfiguration.class, encryptionConfiguration); 
-    
+    OpenSAMLInitializer.getInstance()
+      .initialize(
+        new OpenSAMLSecurityDefaultsConfig(new CustomSwedishEidSecurityConfiguration(this.algorithmConfiguration)),
+        new OpenSAMLSecurityExtensionConfig());
     return OpenSAMLInitializer.getInstance();
   }
 
@@ -150,5 +119,5 @@ public class TestMyEidApplication {
     }
 
   }
-
+  
 }
