@@ -20,13 +20,24 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.NameID;
 import org.opensaml.saml.saml2.metadata.AssertionConsumerService;
-import org.opensaml.saml.saml2.metadata.EntitiesDescriptor;
+import org.opensaml.saml.saml2.metadata.EncryptionMethod;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
+import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.UsageType;
 import org.opensaml.security.httpclient.HttpClientSecurityParameters;
+import org.opensaml.xmlsec.EncryptionConfiguration;
+import org.opensaml.xmlsec.SecurityConfigurationSupport;
+import org.opensaml.xmlsec.algorithm.AlgorithmDescriptor;
+import org.opensaml.xmlsec.algorithm.AlgorithmSupport;
+import org.opensaml.xmlsec.encryption.OAEPparams;
+import org.opensaml.xmlsec.encryption.support.EncryptionConstants;
+import org.opensaml.xmlsec.encryption.support.RSAOAEPParameters;
+import org.opensaml.xmlsec.signature.DigestMethod;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,8 +59,7 @@ import se.litsec.opensaml.saml2.metadata.build.KeyDescriptorBuilder;
 import se.litsec.opensaml.saml2.metadata.build.SpEntityDescriptorBuilder;
 import se.litsec.opensaml.saml2.metadata.provider.HTTPMetadataProvider;
 import se.litsec.opensaml.saml2.metadata.provider.MetadataProvider;
-import se.litsec.opensaml.saml2.metadata.provider.StaticMetadataProvider;
-import se.litsec.opensaml.utils.ObjectUtils;
+import se.litsec.opensaml.saml2.metadata.provider.spring.SpringResourceMetadataProvider;
 import se.litsec.opensaml.utils.X509CertificateUtils;
 import se.litsec.opensaml.xmlsec.SAMLObjectDecrypter;
 import se.litsec.opensaml.xmlsec.SAMLObjectEncrypter;
@@ -65,7 +75,7 @@ import se.swedenconnect.eid.sp.saml.AuthnRequestGenerator;
  */
 @Configuration
 @DependsOn("openSAML")
-public class SpConfiguration {
+public class SpConfiguration implements InitializingBean {
 
   @Value("${sp.entity-id}")
   private String spEntityId;
@@ -81,6 +91,9 @@ public class SpConfiguration {
 
   /** Temporary directory for caches. */
   private ApplicationTemp tempDir = new ApplicationTemp();
+
+  /** Algorithm requirements for encryption. */
+  private List<EncryptionMethod> encryptionMethods;
 
   /**
    * Returns the SP entityID bean.
@@ -163,13 +176,7 @@ public class SpConfiguration {
   public MetadataProvider localMetadataProvider(
       @Value("${sp.federation.metadata.url}") Resource metadataResource) throws Exception {
 
-    // There is a bug in SpringResourceMetadataProvider, see https://github.com/litsec/opensaml-ext/issues/36, so
-    // we have to do a bit of a work-around.
-    //
-    // SpringResourceMetadataProvider provider = new SpringResourceMetadataProvider(metadataResource);
-
-    EntitiesDescriptor entitiesDescriptor = ObjectUtils.unmarshall(metadataResource.getInputStream(), EntitiesDescriptor.class);
-    StaticMetadataProvider provider = new StaticMetadataProvider(entitiesDescriptor);
+    SpringResourceMetadataProvider provider = new SpringResourceMetadataProvider(metadataResource);
     provider.setPerformSchemaValidation(false);
     provider.initialize();
     return provider;
@@ -210,6 +217,7 @@ public class SpConfiguration {
           .use(UsageType.ENCRYPTION)
           .keyName("Encryption")
           .certificate(this.encryptCredential().getCredential().getEntityCertificate())
+          .encryptionMethodsExt(this.encryptionMethods)
           .build())
       .nameIDFormats(NameID.PERSISTENT, NameID.TRANSIENT)
       .organization(this.metadataConfiguration.getOrganizationElement())
@@ -280,6 +288,7 @@ public class SpConfiguration {
           .use(UsageType.ENCRYPTION)
           .keyName("Encryption")
           .certificate(this.encryptCredential().getCredential().getEntityCertificate())
+          .encryptionMethodsExt(this.encryptionMethods)
           .build())
       .nameIDFormats(NameID.PERSISTENT, NameID.TRANSIENT)
       .organization(this.metadataConfiguration.getOrganizationElement())
@@ -344,6 +353,58 @@ public class SpConfiguration {
   @Bean
   public SignMessageEncrypter signMessageEncrypter(MetadataProvider metadataProvider) throws ComponentInitializationException {
     return new SignMessageEncrypter(new SAMLObjectEncrypter(metadataProvider));
+  }
+
+  /**
+   * Based on the configured data and key transport algorithms we set up the algorithm requirements for inclusion in SP
+   * metadata.
+   */
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    this.encryptionMethods = new ArrayList<>();
+
+    EncryptionConfiguration encryptionConfig = SecurityConfigurationSupport.getGlobalEncryptionConfiguration();
+    
+    Credential encryptCredential = this.encryptCredential().getCredential();
+    
+    final List<String> keyTransportMethods = encryptionConfig.getKeyTransportEncryptionAlgorithms();
+    for (String algo : keyTransportMethods) {
+      AlgorithmDescriptor algoDesc = AlgorithmSupport.getGlobalAlgorithmRegistry().get(algo);
+      if (algoDesc == null) {
+        continue;
+      }
+      if (AlgorithmDescriptor.AlgorithmType.KeyTransport.equals(algoDesc.getType())
+          && AlgorithmSupport.credentialSupportsAlgorithmForEncryption(encryptCredential, algoDesc)) {
+        EncryptionMethod method = (EncryptionMethod) XMLObjectSupport.buildXMLObject(EncryptionMethod.DEFAULT_ELEMENT_NAME);
+        method.setAlgorithm(algo);
+        if (AlgorithmSupport.isRSAOAEP(algo)) {
+          RSAOAEPParameters pars = encryptionConfig.getRSAOAEPParameters();
+          if (pars != null) {
+            if (pars.getDigestMethod() != null) {
+              DigestMethod dm = (DigestMethod) XMLObjectSupport.buildXMLObject(DigestMethod.DEFAULT_ELEMENT_NAME);
+              dm.setAlgorithm(pars.getDigestMethod());
+              method.getUnknownXMLObjects().add(dm);
+            }
+            if (pars.getOAEPParams() != null) {
+              OAEPparams oaepParams = (OAEPparams) XMLObjectSupport.buildXMLObject(OAEPparams.DEFAULT_ELEMENT_NAME);
+              oaepParams.setValue(pars.getOAEPParams());
+              method.setOAEPparams(oaepParams);
+            }
+          }
+        }
+        
+        this.encryptionMethods.add(method);
+      }
+    }
+    
+    for (String algo : encryptionConfig.getDataEncryptionAlgorithms()) {
+      if (algo.equals(EncryptionConstants.ALGO_ID_BLOCKCIPHER_TRIPLEDES)) {
+        continue;
+      }
+      EncryptionMethod method = (EncryptionMethod) XMLObjectSupport.buildXMLObject(EncryptionMethod.DEFAULT_ELEMENT_NAME);
+      method.setAlgorithm(algo);
+      this.encryptionMethods.add(method);
+    }
   }
 
 }

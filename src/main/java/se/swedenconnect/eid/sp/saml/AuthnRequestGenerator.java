@@ -272,7 +272,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
       log.debug("Sweden Connect SP sending AuthnRequest: {}", ObjectUtils.toStringSafe(authnRequest));
     }
 
-    return this.buildRequestHttpObject(authnRequest, input, serviceUrl.getBinding(), serviceUrl.getLocation());
+    return this.buildRequestHttpObject(authnRequest, input, serviceUrl.getBinding(), serviceUrl.getLocation(), idp);
   }
 
   /**
