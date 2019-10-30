@@ -39,6 +39,9 @@ public class AlgorithmConfiguration {
    * will used.
    */
   private Boolean useAesGcm;
+  
+  /** Should RSA 1.5 be blacklisted? If {@code null}, RSA 1.5 is allowed. */
+  private Boolean blacklistRsa15;
 
   /**
    * Predicate that tells whether any configuration has been set or not.
@@ -46,7 +49,7 @@ public class AlgorithmConfiguration {
    * @return {@code true} if no attributes have been configured
    */
   public boolean isEmpty() {
-    return !StringUtils.hasText(this.rsaOaepDigest) && useAesGcm == null;
+    return !StringUtils.hasText(this.rsaOaepDigest) && this.useAesGcm == null && this.blacklistRsa15 == null;
   }
 
 }

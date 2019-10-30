@@ -15,11 +15,18 @@
  */
 package se.swedenconnect.eid.sp.saml;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
+import org.opensaml.xmlsec.DecryptionConfiguration;
 import org.opensaml.xmlsec.EncryptionConfiguration;
+import org.opensaml.xmlsec.config.impl.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.encryption.support.EncryptionConstants;
 import org.opensaml.xmlsec.encryption.support.RSAOAEPParameters;
+import org.opensaml.xmlsec.impl.BasicDecryptionConfiguration;
 import org.opensaml.xmlsec.impl.BasicEncryptionConfiguration;
 import org.springframework.util.StringUtils;
 
@@ -99,5 +106,43 @@ public class CustomSwedishEidSecurityConfiguration extends SwedishEidSecurityCon
 
     return config;
   }
+
+  /**
+   * Adds customized algorithm settings.
+   */  
+  @Override
+  protected DecryptionConfiguration createDefaultDecryptionConfiguration() {
+    if (this.algorithmConfiguration.getBlacklistRsa15() != null) {
+      BasicDecryptionConfiguration config = (BasicDecryptionConfiguration) super.createDefaultDecryptionConfiguration();
+      if (config == null) {
+        config = DefaultSecurityConfigurationBootstrap.buildDefaultDecryptionConfiguration();
+      }
+      
+      Predicate<String> isNotRsa15 = alg -> !EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSA15.equals(alg);
+      
+      if (this.algorithmConfiguration.getBlacklistRsa15().booleanValue()) {
+        config.setWhitelistedAlgorithms(config.getWhitelistedAlgorithms().stream()
+          .filter(isNotRsa15)
+          .collect(Collectors.toList()));
+        
+        if (!config.getBlacklistedAlgorithms().contains(EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSA15)) {
+          List<String> bl = new ArrayList<>(config.getBlacklistedAlgorithms());
+          bl.add(EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSA15);
+          config.setBlacklistedAlgorithms(bl);
+        }
+      }
+      else {
+        config.setBlacklistedAlgorithms(config.getBlacklistedAlgorithms().stream()
+          .filter(isNotRsa15)
+          .collect(Collectors.toList()));          
+      }
+      return config;
+    }
+    else {
+      return super.createDefaultDecryptionConfiguration();
+    }
+  }
+  
+  
 
 }
