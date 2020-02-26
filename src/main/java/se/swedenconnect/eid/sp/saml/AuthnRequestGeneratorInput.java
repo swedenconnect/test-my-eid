@@ -44,6 +44,10 @@ public class AuthnRequestGeneratorInput extends AbstractRequestGeneratorInput {
   
   @Getter
   @Setter
+  private String pridHint;
+  
+  @Getter
+  @Setter
   private String requestedAuthnContextUri;
 
   /** The IdP entity ID. */

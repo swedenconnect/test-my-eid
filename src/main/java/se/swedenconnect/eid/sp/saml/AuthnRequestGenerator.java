@@ -55,6 +55,7 @@ import se.litsec.opensaml.utils.ObjectUtils;
 import se.litsec.swedisheid.opensaml.saml2.attribute.AttributeConstants;
 import se.litsec.swedisheid.opensaml.saml2.authentication.LevelofAssuranceAuthenticationContextURI;
 import se.litsec.swedisheid.opensaml.saml2.authentication.LevelofAssuranceAuthenticationContextURI.LoaEnum;
+import se.litsec.swedisheid.opensaml.saml2.authentication.psc.MatchValue;
 import se.litsec.swedisheid.opensaml.saml2.authentication.psc.PrincipalSelection;
 import se.litsec.swedisheid.opensaml.saml2.authentication.psc.build.MatchValueBuilder;
 import se.litsec.swedisheid.opensaml.saml2.authentication.psc.build.PrincipalSelectionBuilder;
@@ -243,16 +244,25 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
       builder.scoping(scopingBuilder.build());
     }
     
-    // If the hint for personal number is set (only if the user first authenticates, and then signs),
+    // If the hint for personal number or prid is set (only if the user first authenticates, and then signs),
     // we include the PrincipalSelection extension.
     //
-    if (input.getPersonalIdentityNumberHint() != null) {
-      PrincipalSelection ps = PrincipalSelectionBuilder.builder()
-          .matchValues(
-            MatchValueBuilder.builder()
+    if (input.getPersonalIdentityNumberHint() != null || input.getPridHint() != null) {
+      List<MatchValue> matchValues = new ArrayList<>();
+      if (input.getPersonalIdentityNumberHint() != null) {
+        matchValues.add(MatchValueBuilder.builder()
               .name(AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER)
               .value(input.getPersonalIdentityNumberHint())
-              .build())
+              .build());
+      }
+      if (input.getPridHint() != null) {
+        matchValues.add(MatchValueBuilder.builder()
+          .name(AttributeConstants.ATTRIBUTE_NAME_PRID)
+          .value(input.getPridHint())
+          .build());
+      }
+      PrincipalSelection ps = PrincipalSelectionBuilder.builder()
+          .matchValues(matchValues)
           .build();
 
       if (extensions == null) {

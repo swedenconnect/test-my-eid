@@ -189,7 +189,7 @@ public class SamlController extends BaseController {
       throw new ApplicationException("sp.msg.error.no-session");
     }
     return this.sendSignRequest(request, response, lastAuthentication.getIdp(),
-      lastAuthentication.getPersonalIdentityNumber(), lastAuthentication.getGivenName(),
+      lastAuthentication.getPersonalIdentityNumber(), lastAuthentication.getPrid(), lastAuthentication.getGivenName(),
       lastAuthentication.getSignMessageAuthnContextUri(), debug);
   }
 
@@ -218,6 +218,7 @@ public class SamlController extends BaseController {
   public ModelAndView sendSignRequest(HttpServletRequest request, HttpServletResponse response,
       @RequestParam("idp") String idp,
       @RequestParam(value = "pnr", required = false) String personalIdentityNumber,
+      @RequestParam(value = "prid", required = false) String prid,
       @RequestParam(value = "givenName", required = false) String givenName,
       @RequestParam(value = "loa", required = false) String loa,
       @RequestParam(value = "debug", required = false, defaultValue = "false") Boolean debug) throws ApplicationException {
@@ -232,6 +233,7 @@ public class SamlController extends BaseController {
       AuthnRequestGeneratorInput input = new AuthnRequestGeneratorInput(idp);
       input.setDebug(debug);
       input.setPersonalIdentityNumberHint(personalIdentityNumber);
+      input.setPridHint(prid);
       input.setRequestedAuthnContextUri(loa);
 
       // Load signature message ...
