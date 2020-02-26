@@ -379,6 +379,9 @@ public class SamlController extends BaseController {
       }
       else {
         mav.setViewName("success");
+        
+        mav.addObject("path-sign", "/saml2/request/next");
+        
         session.setAttribute("last-authentication", new LastAuthentication(result));
       }
       mav.addObject("authenticationInfo", this.createAuthenticationInfo(result));

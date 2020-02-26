@@ -56,6 +56,10 @@ public class SpController extends BaseController {
   /** The entityID for the eIDAS connector. */
   @Value("${sp.eidas-connector.entity-id}")
   private String eidasConnectorEntityId;
+  
+  /** Needed so that we can configure paths. For overloading this app. */
+  @Value("${sp.sign-path:/saml2/request/next}")
+  protected String signPath;
 
   /**
    * Controller method for the home endpoint.
@@ -145,6 +149,7 @@ public class SpController extends BaseController {
         mav.addObject("signIdp", idpModel);
       }
     }
+    mav.addObject("pathSign", this.signPath);
 
     return mav;
   }

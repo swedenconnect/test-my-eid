@@ -102,7 +102,7 @@
         <div class="providers sign-provider" id="submitDiv">
           <div class="row">
             <div class="col-12">
-              <form method="POST" action="#" th:action="@{/saml2/request/next}">
+              <form method="POST" action="#" th:action="@{${pathSign}}">
                 <input type="hidden" name="debug" th:value="${debug}" />
                 <button class="provider-button" type="submit" name="idp" th:value="${signIdp.getEntityID()}">
                   <div class="provider">                    

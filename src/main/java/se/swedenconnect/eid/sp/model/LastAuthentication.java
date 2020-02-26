@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Sweden Connect
+ * Copyright 2018-2020 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,14 @@ public class LastAuthentication {
   /** User's given name (may be null). */
   @Getter
   private String givenName;
+  
+  /** User's surname (may be null). */
+  @Getter
+  private String surName;
+  
+  /** User display name (may be null). */
+  @Getter
+  private String displayName;
 
   /** The personal identity number (may be null). */
   @Getter
@@ -49,10 +57,18 @@ public class LastAuthentication {
   /** The prid attribute (may be null). */
   @Getter
   private String prid;
+  
+  /** The country attribute (may be null). */
+  @Getter
+  private String country;
 
-  /** The AuthnContext to request. */
+  /** The AuthnContext to request. TODO: Will be removed. Not used in the new technical framework. */
   @Getter
   private String signMessageAuthnContextUri;
+  
+  /** The AuthnContext to request. */
+  @Getter
+  private String authnContextUri;
 
   /**
    * Constructor.
@@ -70,11 +86,24 @@ public class LastAuthentication {
       AttributeConstants.ATTRIBUTE_NAME_GIVEN_NAME, authnResult.getAttributes())
       .map(AttributeUtils::getAttributeStringValue)
       .orElse(null);
+    this.surName = AttributeUtils.getAttribute(
+      AttributeConstants.ATTRIBUTE_NAME_SN, authnResult.getAttributes())
+        .map(AttributeUtils::getAttributeStringValue)
+        .orElse(null);
+    this.displayName = AttributeUtils.getAttribute(
+      AttributeConstants.ATTRIBUTE_NAME_DISPLAY_NAME, authnResult.getAttributes())
+        .map(AttributeUtils::getAttributeStringValue)
+        .orElse(null);
     this.prid = AttributeUtils.getAttribute(
       AttributeConstants.ATTRIBUTE_NAME_PRID, authnResult.getAttributes())
       .map(AttributeUtils::getAttributeStringValue)
       .orElse(null);
+    this.country = AttributeUtils.getAttribute(
+      AttributeConstants.ATTRIBUTE_NAME_C, authnResult.getAttributes())
+      .map(AttributeUtils::getAttributeStringValue)
+      .orElse(null);    
     this.signMessageAuthnContextUri = toSigMessageUri(authnResult.getAuthnContextClassUri());
+    this.authnContextUri = authnResult.getAuthnContextClassUri();
   }
 
   /**
