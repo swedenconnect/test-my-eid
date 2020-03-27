@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Sweden Connect
+ * Copyright 2018-2020 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,14 +53,17 @@ public class AttributeInfoRegistry {
    *          a flag telling whether we process an eIDAS assertion
    * @return the attribute model
    */
-  public AttributeInfo resolve(Attribute attribute, boolean eidasFlag) {
-    final String name = attribute.getName();
+  public AttributeInfo resolve(final Attribute attribute, final boolean eidasFlag) {
+    return this.resolve(attribute.getName(), AttributeUtils.getAttributeStringValue(attribute), eidasFlag);
+  }
+  
+  public AttributeInfo resolve(final String attributeName, final String attributeValue, final boolean eidasFlag) {
     for (int i = 0; i < this.attributes.size(); i++) {
       final AttrInfo ai = this.attributes.get(i);
-      if (ai.getAttributeName().equals(name)) {
+      if (ai.getAttributeName().equals(attributeName)) {
         AttributeInfo attributeInfo = new AttributeInfo();
         attributeInfo.setAttributeNameCode(ai.getMessageCode(eidasFlag));
-        attributeInfo.setAttributeValue(AttributeUtils.getAttributeStringValue(attribute));
+        attributeInfo.setAttributeValue(attributeValue);
         attributeInfo.setInfoCode(ai.getDescriptionMessageCode(eidasFlag));
         attributeInfo.setAdvanced(ai.isAdvanced());
         attributeInfo.setSortOrder(i);
