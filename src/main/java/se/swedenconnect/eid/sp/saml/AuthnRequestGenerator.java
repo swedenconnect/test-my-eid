@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Sweden Connect
+ * Copyright 2018-2020 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,7 +162,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
       .issuer(this.getEntityID())
       .forceAuthn(true)
       .isPassive(false);
-    
+
     // For extensions that we may add ...
     Extensions extensions = null;
 
@@ -224,7 +224,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
       assuranceCertificationUris = Arrays.asList(input.getRequestedAuthnContextUri());
     }
     else {
-      assuranceCertificationUris = this.getAssuranceCertificationUris(idp, isSignatureService && input.getSignMessage() != null);
+      assuranceCertificationUris = this.getAssuranceCertificationUris(idp);
     }
 
     builder.requestedAuthnContext(RequestedAuthnContextBuilder.builder()
@@ -236,14 +236,14 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
     //
     if (StringUtils.hasText(input.getCountry())) {
       String countryUri = "http://id.swedenconnect.se/eidas/1.0/proxy-service/" + input.getCountry().toLowerCase();
-      
-      IDPList idpList = (IDPList) XMLObjectSupport.buildXMLObject(IDPList.DEFAULT_ELEMENT_NAME); 
+
+      IDPList idpList = (IDPList) XMLObjectSupport.buildXMLObject(IDPList.DEFAULT_ELEMENT_NAME);
       idpList.getIDPEntrys().add(ScopingBuilder.idpEntry(countryUri, null, null));
       ScopingBuilder scopingBuilder = ScopingBuilder.builder();
       scopingBuilder.object().setIDPList(idpList);
       builder.scoping(scopingBuilder.build());
     }
-    
+
     // If the hint for personal number or prid is set (only if the user first authenticates, and then signs),
     // we include the PrincipalSelection extension.
     //
@@ -251,9 +251,9 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
       List<MatchValue> matchValues = new ArrayList<>();
       if (input.getPersonalIdentityNumberHint() != null) {
         matchValues.add(MatchValueBuilder.builder()
-              .name(AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER)
-              .value(input.getPersonalIdentityNumberHint())
-              .build());
+          .name(AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER)
+          .value(input.getPersonalIdentityNumberHint())
+          .build());
       }
       if (input.getPridHint() != null) {
         matchValues.add(MatchValueBuilder.builder()
@@ -262,8 +262,8 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
           .build());
       }
       PrincipalSelection ps = PrincipalSelectionBuilder.builder()
-          .matchValues(matchValues)
-          .build();
+        .matchValues(matchValues)
+        .build();
 
       if (extensions == null) {
         extensions = (Extensions) XMLObjectSupport.buildXMLObject(Extensions.DEFAULT_ELEMENT_NAME);
@@ -290,29 +290,22 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
    * 
    * @param metadata
    *          the IdP metadata
-   * @param sigMessage
-   *          whether we should request a sigmessage URI
    * @return a list of URIs
    */
-  private List<String> getAssuranceCertificationUris(EntityDescriptor metadata, boolean sigMessage) {
+  private List<String> getAssuranceCertificationUris(EntityDescriptor metadata) {
 
     List<String> assuranceCertificationUris = new ArrayList<>();
 
     Predicate<String> filterPredicate;
 
-    if (!sigMessage) {
-      // For an ordinary SP, we look for all URIs except for sigmessage ones.
-      filterPredicate = u -> {
-        LoaEnum e = LoaEnum.parse(u);
-        return e != null ? !e.isSignatureMessageUri() : true;
-      };
-    }
-    else {
-      filterPredicate = u -> {
-        LoaEnum e = LoaEnum.parse(u);
-        return e != null ? e.isSignatureMessageUri() : false;
-      };
-    }
+    // Since we implement the latest version of the technical framework we no longer
+    // want to use the sigmessage URI:s. Even if this is a signservice ...
+    //
+    filterPredicate = u -> {
+      LoaEnum e = LoaEnum.parse(u);
+      return e != null ? !e.isSignatureMessageUri() : true;
+    };
+
     MetadataUtils.getEntityAttributes(metadata)
       .ifPresent(attrs -> attrs.getAttributes()
         .stream()
@@ -324,16 +317,9 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
         .forEach(assuranceCertificationUris::add));
 
     if (assuranceCertificationUris.isEmpty()) {
-      if (!sigMessage) {
-        log.warn("IdP '{}' does not specify assurance certification URI - defaulting to {}", metadata.getEntityID(), 
-          LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_LOA3);
-        assuranceCertificationUris.add(LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_LOA3);
-      }
-      else {
-        log.warn("IdP '{}' does not specify assurance certification URI - defaulting to {}", metadata.getEntityID(),
-          LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_LOA3_SIGMESSAGE);
-        assuranceCertificationUris.add(LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_LOA3_SIGMESSAGE);
-      }
+      log.warn("IdP '{}' does not specify assurance certification URI - defaulting to {}", metadata.getEntityID(),
+        LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_LOA3);
+      assuranceCertificationUris.add(LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_LOA3);
     }
 
     return assuranceCertificationUris;
