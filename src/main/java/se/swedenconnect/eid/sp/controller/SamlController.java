@@ -190,7 +190,7 @@ public class SamlController extends BaseController {
     }
     return this.sendSignRequest(request, response, lastAuthentication.getIdp(),
       lastAuthentication.getPersonalIdentityNumber(), lastAuthentication.getPrid(), lastAuthentication.getGivenName(),
-      lastAuthentication.getSignMessageAuthnContextUri(), debug);
+      lastAuthentication.getAuthnContextUri(), debug);
   }
 
   /**
