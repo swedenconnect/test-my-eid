@@ -36,6 +36,10 @@ public class AuthnRequestGeneratorInput extends AbstractRequestGeneratorInput {
   
   @Getter
   @Setter
+  private boolean ping;
+  
+  @Getter
+  @Setter
   private String signMessage;
   
   @Getter

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Sweden Connect
+ * Copyright 2018-2020 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,11 +126,11 @@ public class SamlController extends BaseController {
   public ModelAndView sendRequest(HttpServletRequest request, HttpServletResponse response,
       @RequestParam("selectedIdp") String selectedIdp,
       @RequestParam(value = "country", required = false) String country,
+      @RequestParam(value = "ping", required = false, defaultValue = "false") Boolean ping, 
       @RequestParam(value = "debug", required = false, defaultValue = "false") Boolean debug) throws ApplicationException {
 
-    log.debug("Request for generating an AuthnRequest to '{}' [client-ip-address='{}', debug='{}', country='{}']", selectedIdp, request
-      .getRemoteAddr(),
-      debug, country);
+    log.debug("Request for generating an AuthnRequest to '{}' [client-ip-address='{}', debug='{}', country='{}']", 
+      selectedIdp, request.getRemoteAddr(), debug, country);
 
     try {
       HttpSession session = request.getSession();
@@ -138,6 +138,7 @@ public class SamlController extends BaseController {
       AuthnRequestGeneratorInput input = new AuthnRequestGeneratorInput(selectedIdp);
       input.setDebug(debug);
       input.setCountry(country);
+      input.setPing(ping);
 
       RequestHttpObject<AuthnRequest> authnRequest = this.spAuthnRequestGenerator.generateRequest(input);
 
@@ -145,6 +146,7 @@ public class SamlController extends BaseController {
       //
       session.setAttribute("sp-request", authnRequest.getRequest());
       session.setAttribute("sp-debug", debug);
+      session.setAttribute("ping", ping);
       session.removeAttribute("sp-result");
       session.removeAttribute("last-authentication");
 
@@ -343,6 +345,13 @@ public class SamlController extends BaseController {
       log.warn("No session for user [client-ip-address='{}']", request.getRemoteAddr());
       throw new ApplicationException("sp.msg.error.no-session");
     }
+    Boolean ping = (Boolean) session.getAttribute("ping");
+    if (ping == null) {
+      ping = false;
+    }
+    else {
+      session.removeAttribute("ping");
+    }
     final LastAuthentication previousAuthentication = (LastAuthentication) session.getAttribute("last-authentication"); 
     session.removeAttribute("last-authentication");
 
@@ -382,11 +391,13 @@ public class SamlController extends BaseController {
       else {
         mav.setViewName("success");
         
-        mav.addObject("path-sign", "/saml2/request/next");
-        
-        session.setAttribute("last-authentication", new LastAuthentication(result));
+        if (!ping) {
+          mav.addObject("path-sign", "/saml2/request/next");        
+          session.setAttribute("last-authentication", new LastAuthentication(result));
+        }
       }
       mav.addObject("authenticationInfo", this.createAuthenticationInfo(result));
+      mav.addObject("ping", ping);
 
       Boolean debug = (Boolean) session.getAttribute("sp-debug");
       mav.addObject("debug", debug != null ? debug : Boolean.FALSE);
