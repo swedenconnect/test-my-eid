@@ -126,12 +126,24 @@
       <groupId>se.litsec.opensaml</groupId>
       <artifactId>opensaml3-ext</artifactId>
       <version>1.4.4</version>
+      <exclusions>
+        <exclusion>
+          <groupId>se.swedenconnect.opensaml</groupId>
+          <artifactId>opensaml-security-ext</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
       <groupId>se.litsec.opensaml.sweid</groupId>
       <artifactId>swedish-eid-opensaml3</artifactId>
       <version>1.3.2</version>
+      <exclusions>
+        <exclusion>
+          <groupId>se.swedenconnect.opensaml</groupId>
+          <artifactId>opensaml-security-ext</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
