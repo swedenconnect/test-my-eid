@@ -100,7 +100,7 @@ public class SpController extends BaseController {
   }
 
   /**
-   * Controller that by-passed the discovery page and goes directly to the eIDAS connector with a pre-selected country.
+   * Controller that by-passes the discovery page and goes directly to the eIDAS connector with a pre-selected country.
    * 
    * @param country
    *          the two-letter country code for the country to send the request from the connector to
@@ -112,11 +112,36 @@ public class SpController extends BaseController {
   public ModelAndView eidasCountry(
       @PathVariable(value = "country", required = true) String country,
       @RequestParam(value = "debug", required = false, defaultValue = "false") Boolean debug) {
-
-    return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&country=%s&debug=%s", 
+    
+    if ("ping".equalsIgnoreCase(country)) {
+      return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&ping=true&debug=%s", 
+        this.eidasConnectorEntityId, debug));
+    }
+    else {
+      return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&country=%s&debug=%s", 
+        this.eidasConnectorEntityId, country, debug));
+    }
+  }
+  
+  /**
+   * Controller that by-passes the discovery page and goes directly to the eIDAS connector with a pre-selected country
+   * and sends an authentication request for an eIDAS ping authentication request.
+   * 
+   * @param country
+   *          the two-letter country code for the country to send the request from the connector to
+   * @param debug
+   *          debug flag
+   * @return a redirect string to the SAML request endpoint
+   */
+  @GetMapping("/eidas/ping/{country}")
+  public ModelAndView eidasPingCountry(
+      @PathVariable(value = "country", required = true) String country,
+      @RequestParam(value = "debug", required = false, defaultValue = "false") Boolean debug) {
+    
+    return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&ping=true&country=%s&debug=%s", 
       this.eidasConnectorEntityId, country, debug));
   }
-
+  
   /**
    * Displays the result of an authentication.
    * 

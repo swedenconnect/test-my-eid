@@ -75,6 +75,9 @@ import se.swedenconnect.eid.sp.config.SpCredential;
 @Slf4j
 @DependsOn("openSAML")
 public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRequestGeneratorInput> {
+  
+  /** The special purpose AuthnContextClassRef URI for eIDAS test authentications. */
+  public static final String EIDAS_PING_LOA = "http://eidas.europa.eu/LoA/test";
 
   /** The federation metadata provider. */
   @Autowired
@@ -104,7 +107,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
    * @param metadata
    *          the SP metadata
    */
-  public AuthnRequestGenerator(String entityID, EntityDescriptor metadata) {
+  public AuthnRequestGenerator(final String entityID, final EntityDescriptor metadata) {
     super(entityID);
     this.spMetadata = metadata;
     this.setName("Sweden Connect Test SP");
@@ -119,7 +122,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
    * @throws RequestGenerationException
    *           for generation errors
    */
-  public RequestHttpObject<AuthnRequest> generateRequest(AuthnRequestGeneratorInput input)
+  public RequestHttpObject<AuthnRequest> generateRequest(final AuthnRequestGeneratorInput input)
       throws RequestGenerationException {
 
     PeerMetadataResolver pmr = new PeerMetadataResolver() {
@@ -141,7 +144,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
 
   /** {@inheritDoc} */
   @Override
-  public RequestHttpObject<AuthnRequest> generateRequest(AuthnRequestGeneratorInput input, PeerMetadataResolver metadataResolver)
+  public RequestHttpObject<AuthnRequest> generateRequest(final AuthnRequestGeneratorInput input, final PeerMetadataResolver metadataResolver)
       throws RequestGenerationException {
 
     log.debug("Generating AuthnRequest for IdP '{}' ...", input.getPeerEntityID());
@@ -220,7 +223,10 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
     // Get the assurance certification URI:s from the IdP metadata
     //
     List<String> assuranceCertificationUris;
-    if (input.getRequestedAuthnContextUri() != null) {
+    if (input.isPing()) {
+      assuranceCertificationUris = Arrays.asList(EIDAS_PING_LOA);
+    }
+    else if (input.getRequestedAuthnContextUri() != null) {
       assuranceCertificationUris = Arrays.asList(input.getRequestedAuthnContextUri());
     }
     else {
@@ -292,7 +298,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
    *          the IdP metadata
    * @return a list of URIs
    */
-  private List<String> getAssuranceCertificationUris(EntityDescriptor metadata) {
+  private List<String> getAssuranceCertificationUris(final EntityDescriptor metadata) {
 
     List<String> assuranceCertificationUris = new ArrayList<>();
 
