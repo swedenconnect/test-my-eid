@@ -434,6 +434,7 @@ public class SamlController extends BaseController {
     AuthenticationInfo authenticationInfo = new AuthenticationInfo();
 
     final String loa = result.getAuthnContextClassUri();
+    boolean isEidas = false;
 
     authenticationInfo.setLoaUri(loa);
     LevelofAssuranceAuthenticationContextURI.LoaEnum loaEnum = LevelofAssuranceAuthenticationContextURI.LoaEnum.parse(loa);
@@ -479,12 +480,18 @@ public class SamlController extends BaseController {
       else {
         log.error("Uknown LoA: {}", loa);
       }
+      isEidas = loaEnum.isEidasUri();
     }
     else {
-      log.error("Uknown LoA: {}", loa);
+      if (AuthnRequestGenerator.EIDAS_PING_LOA.equals(loa)) {
+        authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-eidas-test");
+        authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-eidas-test.desc");
+        isEidas = true;
+      }
+      else {
+        log.error("Uknown LoA: {}", loa);
+      }
     }
-
-    final boolean isEidas = loaEnum.isEidasUri();
 
     List<Attribute> unknownAttributes = new ArrayList<>();
 
