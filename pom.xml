@@ -171,7 +171,7 @@
     <dependency>
       <groupId>org.webjars</groupId>
       <artifactId>jquery</artifactId>
-      <version>3.3.1</version>
+      <version>3.5.0</version>
     </dependency>
 
     <dependency>
@@ -224,7 +224,7 @@
             <id>enforce</id>
             <configuration>
               <rules>
-                <dependencyConvergence />
+                <dependencyConvergence/>
               </rules>
             </configuration>
             <goals>
