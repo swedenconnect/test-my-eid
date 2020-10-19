@@ -16,6 +16,7 @@
 package se.swedenconnect.eid.sp;
 
 import org.apache.catalina.connector.Connector;
+import org.apache.coyote.ajp.AbstractAjpProtocol;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
@@ -44,6 +45,7 @@ public class TomcatWebServerCustomizer implements WebServerFactoryCustomizer<Tom
       Connector ajpConnector = new Connector("AJP/1.3");
       ajpConnector.setPort(this.ajpPort);
       ajpConnector.setSecure(false);
+      ((AbstractAjpProtocol<?>) ajpConnector.getProtocolHandler()).setSecretRequired(false);
       ajpConnector.setAllowTrace(false);
       ajpConnector.setScheme("http");
       factory.addAdditionalTomcatConnectors(ajpConnector);
