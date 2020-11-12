@@ -23,9 +23,11 @@ import java.util.stream.Collectors;
 
 import org.opensaml.saml.ext.saml2mdui.Logo;
 import org.opensaml.saml.ext.saml2mdui.UIInfo;
+import org.opensaml.saml.saml2.metadata.AttributeConsumingService;
 import org.opensaml.saml.saml2.metadata.ContactPerson;
 import org.opensaml.saml.saml2.metadata.ContactPersonTypeEnumeration;
 import org.opensaml.saml.saml2.metadata.Organization;
+import org.opensaml.saml.saml2.metadata.RequestedAttribute;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
@@ -33,9 +35,11 @@ import org.springframework.util.StringUtils;
 
 import lombok.Data;
 import se.litsec.opensaml.core.LocalizedString;
+import se.litsec.opensaml.saml2.metadata.build.AttributeConsumingServiceBuilder;
 import se.litsec.opensaml.saml2.metadata.build.ContactPersonBuilder;
 import se.litsec.opensaml.saml2.metadata.build.LogoBuilder;
 import se.litsec.opensaml.saml2.metadata.build.OrganizationBuilder;
+import se.litsec.opensaml.saml2.metadata.build.RequestedAttributeBuilder;
 import se.litsec.opensaml.saml2.metadata.build.UIInfoBuilder;
 
 /**
@@ -60,7 +64,13 @@ public class MetadataConfiguration {
 
   /** Configuration for the ContactPerson elements. */
   Map<ContactPersonTypeEnumeration, ContactPersonConfig> contactPersons;
-  
+
+  /** Requested attributes. */
+  List<RequestedAttributeConfig> requestedAttributes;
+
+  /** Service names (for AttributeConsumingServiceBuilder). */
+  List<LocalizedString> serviceNames;
+
   /**
    * Returns a list of the entity category URI:s
    * 
@@ -108,19 +118,48 @@ public class MetadataConfiguration {
     List<ContactPerson> persons = new ArrayList<>();
     for (Map.Entry<ContactPersonTypeEnumeration, ContactPersonConfig> e : this.contactPersons.entrySet()) {
       ContactPersonBuilder b = ContactPersonBuilder.builder()
-          .type(e.getKey())
-          .company(e.getValue().getCompany())
-          .givenName(e.getValue().getGivenName())
-          .surname(e.getValue().getSurname());
+        .type(e.getKey())
+        .company(e.getValue().getCompany())
+        .givenName(e.getValue().getGivenName())
+        .surname(e.getValue().getSurname());
       if (StringUtils.hasText(e.getValue().getEmailAddress())) {
         b.emailAddresses(e.getValue().getEmailAddress());
       }
       if (StringUtils.hasText(e.getValue().getTelephoneNumber())) {
         b.telephoneNumbers(e.getValue().getTelephoneNumber());
-      }      
+      }
       persons.add(b.build());
     }
     return persons;
+  }
+
+  /**
+   * Gets the {@code AttributeConsumingService} metadata element.
+   * 
+   * @return the AttributeConsumingService element
+   */
+  public AttributeConsumingService getAttributeConsumingService() {
+    if ((this.serviceNames == null || this.serviceNames.isEmpty()) && (this.requestedAttributes == null || this.requestedAttributes
+      .isEmpty())) {
+      return null;
+    }
+    AttributeConsumingServiceBuilder builder = AttributeConsumingServiceBuilder.builder();
+
+    builder.serviceNames(this.serviceNames);
+
+    if (this.requestedAttributes != null) {
+      builder.requestedAttributes(this.requestedAttributes.stream()
+        .filter(ra -> ra.getName() != null)
+        .map(ra -> RequestedAttributeBuilder.builder(ra.getName()).isRequired(ra.isRequired()).build())
+        .collect(Collectors.toList()));
+    }
+
+    return builder.build();
+  }
+
+  public List<RequestedAttribute> getRequestedAttributes() {
+    // RequestedAttributeBuilder
+    return null;
   }
 
   /**
@@ -141,7 +180,7 @@ public class MetadataConfiguration {
       if (this.logos == null) {
         return Collections.emptyList();
       }
-      final String _contextPath = "/".equals(contextPath) ? "" : contextPath;  
+      final String _contextPath = "/".equals(contextPath) ? "" : contextPath;
       return this.logos.stream()
         .map(l -> LogoBuilder.logo(String.format("%s%s%s", baseUri, _contextPath, l.getPath()), l.getHeight(), l.getWidth()))
         .collect(Collectors.toList());
@@ -152,10 +191,10 @@ public class MetadataConfiguration {
      */
     @Data
     public static class UIInfoLogo {
-      
+
       /** The logotype path (minus baseUri and context-path). */
       private String path;
-      
+
       /** The logotype height (in pixels). */
       private Integer height;
 
@@ -198,6 +237,20 @@ public class MetadataConfiguration {
 
     /** Telephone number. */
     private String telephoneNumber;
+  }
+
+  /**
+   * Configuration class for requested attributes.
+   */
+  @Data
+  public static class RequestedAttributeConfig {
+
+    /** The attribute name. */
+    private String name;
+
+    /** Required? */
+    private boolean required;
+
   }
 
 }

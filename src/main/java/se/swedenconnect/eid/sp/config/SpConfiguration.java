@@ -220,8 +220,10 @@ public class SpConfiguration implements InitializingBean {
           .encryptionMethodsExt(this.encryptionMethods)
           .build())
       .nameIDFormats(NameID.PERSISTENT, NameID.TRANSIENT)
+      .attributeConsumingServices(this.metadataConfiguration.getAttributeConsumingService())
       .organization(this.metadataConfiguration.getOrganizationElement())
-      .contactPersons(this.metadataConfiguration.getContactPersonElements());
+      .contactPersons(this.metadataConfiguration.getContactPersonElements())
+      .build();
 
     List<AssertionConsumerService> acs = new ArrayList<>();
     acs.add(AssertionConsumerServiceBuilder.builder()
@@ -291,6 +293,7 @@ public class SpConfiguration implements InitializingBean {
           .encryptionMethodsExt(this.encryptionMethods)
           .build())
       .nameIDFormats(NameID.PERSISTENT, NameID.TRANSIENT)
+      .attributeConsumingServices(this.metadataConfiguration.getAttributeConsumingService())
       .organization(this.metadataConfiguration.getOrganizationElement())
       .contactPersons(this.metadataConfiguration.getContactPersonElements());
 
