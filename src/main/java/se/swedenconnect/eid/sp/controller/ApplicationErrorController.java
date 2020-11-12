@@ -20,6 +20,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.boot.autoconfigure.web.servlet.error.AbstractErrorController;
+import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -43,7 +44,7 @@ public class ApplicationErrorController extends AbstractErrorController {
    * Constructor.
    */
   public ApplicationErrorController() {
-    super(new DefaultErrorAttributes(false));
+    super(new DefaultErrorAttributes());
   }
 
   /**
@@ -56,7 +57,7 @@ public class ApplicationErrorController extends AbstractErrorController {
   @RequestMapping("/error")
   public ModelAndView handleError(HttpServletRequest request) {
 
-    Map<String, Object> errorAttributes = this.getErrorAttributes(request, false);    
+    Map<String, Object> errorAttributes = this.getErrorAttributes(request, ErrorAttributeOptions.defaults());    
     
     if (log.isInfoEnabled()) {
       StringBuffer sb = new StringBuffer();
