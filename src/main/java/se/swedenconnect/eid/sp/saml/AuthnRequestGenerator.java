@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package se.swedenconnect.eid.sp.saml;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
-import org.joda.time.DateTime;
 import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.AuthnContextComparisonTypeEnumeration;
@@ -32,6 +32,7 @@ import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.SingleSignOnService;
+import org.opensaml.security.x509.X509Credential;
 import org.opensaml.xmlsec.encryption.support.EncryptionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -65,7 +66,6 @@ import se.litsec.swedisheid.opensaml.saml2.signservice.SignMessageBuilder;
 import se.litsec.swedisheid.opensaml.saml2.signservice.SignMessageEncrypter;
 import se.litsec.swedisheid.opensaml.saml2.signservice.dss.SignMessage;
 import se.litsec.swedisheid.opensaml.saml2.signservice.dss.SignMessageMimeTypeEnum;
-import se.swedenconnect.eid.sp.config.SpCredential;
 
 /**
  * Generator for {@code AuthnRequest} messages.
@@ -85,7 +85,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
 
   @Autowired
   @Qualifier("signCredential")
-  private SpCredential signCredential;
+  private X509Credential signCredential;
 
   @Autowired
   private SignMessageEncrypter signMessageEncrypter;
@@ -130,7 +130,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
       @Override
       public EntityDescriptor getMetadata(String entityID) {
         try {
-          return metadataProvider.getEntityDescriptor(entityID).orElse(null);
+          return metadataProvider.getEntityDescriptor(entityID);
         }
         catch (ResolverException e) {
           log.error("Failed to get metadata for IdP", e);
@@ -161,7 +161,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
     AuthnRequestBuilder builder = AuthnRequestBuilder.builder()
       .id(this.generateID())
       .destination(serviceUrl.getLocation())
-      .issueInstant(new DateTime())
+      .issueInstant(Instant.now())
       .issuer(this.getEntityID())
       .forceAuthn(true)
       .isPassive(false);
@@ -184,10 +184,10 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
     if (ssoDescriptor == null) {
       throw new RequestGenerationException("Invalid IdP metadata - Missing IDPSSODescriptor");
     }
-    if (ssoDescriptor.getNameIDFormats().stream().filter(f -> NameID.PERSISTENT.equals(f.getFormat())).findFirst().isPresent()) {
+    if (ssoDescriptor.getNameIDFormats().stream().filter(f -> NameID.PERSISTENT.equals(f.getURI())).findFirst().isPresent()) {
       builder.nameIDPolicy(NameIDPolicyBuilder.builder().format(NameID.PERSISTENT).allowCreate(true).build());
     }
-    else if (ssoDescriptor.getNameIDFormats().stream().filter(f -> NameID.TRANSIENT.equals(f.getFormat())).findFirst().isPresent()) {
+    else if (ssoDescriptor.getNameIDFormats().stream().filter(f -> NameID.TRANSIENT.equals(f.getURI())).findFirst().isPresent()) {
       builder.nameIDPolicy(NameIDPolicyBuilder.builder().format(NameID.TRANSIENT).allowCreate(true).build());
     }
     else {
@@ -355,7 +355,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
   @Override
   public void afterPropertiesSet() throws Exception {
 
-    this.setSigningCredentials(this.signCredential.getCredential());
+    this.setSigningCredentials(this.signCredential);
 
     super.afterPropertiesSet();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.web.embedded.tomcat.TomcatContextCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.mobile.device.DeviceHandlerMethodArgumentResolver;
-import org.springframework.mobile.device.DeviceResolverHandlerInterceptor;
-import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -52,7 +49,7 @@ import se.swedenconnect.opensaml.OpenSAMLSecurityExtensionConfig;
  */
 @SpringBootApplication
 public class TestMyEidApplication {
-  
+
   @Autowired
   AlgorithmConfiguration algorithmConfiguration;
 
@@ -84,6 +81,11 @@ public class TestMyEidApplication {
     return resolver;
   }
 
+  /**
+   * The supported languages.
+   * 
+   * @return a list of UI languages
+   */
   @Bean
   @ConfigurationProperties(prefix = "sp.ui.lang")
   public List<UiLanguage> languages() {
@@ -92,7 +94,7 @@ public class TestMyEidApplication {
 
   @Configuration
   public static class WebMvcConfig implements WebMvcConfigurer {
-    
+
     @Bean
     public TomcatContextCustomizer sameSiteCookiesConfig() {
       return context -> {
@@ -109,27 +111,27 @@ public class TestMyEidApplication {
       return interceptor;
     }
 
-    @Bean
-    public DeviceResolverHandlerInterceptor deviceResolverHandlerInterceptor() {
-      return new DeviceResolverHandlerInterceptor();
-    }
+//    @Bean
+//    public DeviceResolverHandlerInterceptor deviceResolverHandlerInterceptor() {
+//      return new DeviceResolverHandlerInterceptor();
+//    }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
       registry.addInterceptor(localeChangeInterceptor());
-      registry.addInterceptor(deviceResolverHandlerInterceptor());
+      //registry.addInterceptor(deviceResolverHandlerInterceptor());
     }
 
-    @Bean
-    public DeviceHandlerMethodArgumentResolver deviceHandlerMethodArgumentResolver() {
-      return new DeviceHandlerMethodArgumentResolver();
-    }
-
-    @Override
-    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
-      argumentResolvers.add(deviceHandlerMethodArgumentResolver());
-    }
+//    @Bean
+//    public DeviceHandlerMethodArgumentResolver deviceHandlerMethodArgumentResolver() {
+//      return new DeviceHandlerMethodArgumentResolver();
+//    }
+//
+//    @Override
+//    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
+//      argumentResolvers.add(deviceHandlerMethodArgumentResolver());
+//    }
 
   }
-  
+
 }

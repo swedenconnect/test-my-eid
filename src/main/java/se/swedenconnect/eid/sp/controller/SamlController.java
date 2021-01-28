@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package se.swedenconnect.eid.sp.controller;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -62,7 +63,7 @@ import se.swedenconnect.eid.sp.saml.AuthnRequestGeneratorInput;
 /**
  * Controller for creating SAML {@code AuthnRequest} messages and for processing SAML responses.
  * 
- * @author Martin Lindström (martin.lindstrom@idsec.se)
+ * @author Martin Lindström (martin@idsec.se)
  */
 @Controller
 @RequestMapping("/saml2")
@@ -361,7 +362,7 @@ public class SamlController extends BaseController {
 
     PeerMetadataResolver idpMetadataResolver = (entityID) -> {
       try {
-        return metadataProvider.getEntityDescriptor(entityID).orElse(null);
+        return metadataProvider.getEntityDescriptor(entityID);
       }
       catch (ResolverException e) {
         log.error("Error getting metadata for '{}'", entityID, e);
@@ -549,8 +550,8 @@ public class SamlController extends BaseController {
     }
 
     @Override
-    public long getReceiveInstant() {
-      return System.currentTimeMillis();
+    public Instant getReceiveInstant() {
+      return Instant.now();
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class ErrorStatusInfo {
       this.subErrorCode = status.getStatusCode().getStatusCode().getValue();
     }
     if (status.getStatusMessage() != null) {
-      this.errorMessage = status.getStatusMessage().getMessage();
+      this.errorMessage = status.getStatusMessage().getValue();
     }
   }
   

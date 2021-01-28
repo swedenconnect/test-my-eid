@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ public class IdpDiscoveryInformation {
           }
         }
       }
-      this.logotype = selected != null ? selected.getURL() : null;
+      this.logotype = selected != null ? selected.getURI() : null;
     }
   }
 

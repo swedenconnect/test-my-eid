@@ -5,8 +5,18 @@
     "description": "The base URI for the SP application"
   },
   {
+    "name": "sp.debug-base-uri",
+    "type": "java.lang.String",
+    "description": "Base URI when debugging"
+  },
+  {
     "name": "sp.entity-id",
     "type": "java.lang.String",
     "description": "The SAML entityID for the Service Provider"
+  },
+  {
+    "name": "sign-sp.entity-id",
+    "type": "java.lang.String",
+    "description": "The SAML entityID for the Service Provider when running as a Signature Service"
   }
 ]}
