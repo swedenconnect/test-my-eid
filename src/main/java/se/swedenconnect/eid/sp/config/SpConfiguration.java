@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,15 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.NameID;
 import org.opensaml.saml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml.saml2.metadata.EncryptionMethod;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
-import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.UsageType;
-import org.opensaml.security.httpclient.HttpClientSecurityParameters;
+import org.opensaml.security.x509.X509Credential;
 import org.opensaml.xmlsec.EncryptionConfiguration;
 import org.opensaml.xmlsec.SecurityConfigurationSupport;
 import org.opensaml.xmlsec.algorithm.AlgorithmDescriptor;
@@ -41,7 +41,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.system.ApplicationTemp;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -50,6 +49,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
 
+import lombok.Setter;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import se.litsec.opensaml.saml2.common.response.InMemoryReplayChecker;
 import se.litsec.opensaml.saml2.common.response.ResponseProcessor;
@@ -77,17 +77,37 @@ import se.swedenconnect.eid.sp.saml.AuthnRequestGenerator;
 @DependsOn("openSAML")
 public class SpConfiguration implements InitializingBean {
 
+  @Setter
   @Value("${sp.entity-id}")
   private String spEntityId;
 
+  @Setter
   @Value("${sign-sp.entity-id}")
   private String signSpEntityId;
 
+  /** The Base URI when debugging. */
+  @Setter
   @Value("${sp.debug-base-uri:}")
   private String debugBaseUri;
 
+  @Setter
   @Autowired
   private MetadataConfiguration metadataConfiguration;
+  
+  @Setter
+  @Autowired
+  @Qualifier("signCredential")
+  private X509Credential signCredential;
+  
+  @Setter
+  @Autowired
+  @Qualifier("encryptCredential")
+  private X509Credential encryptCredential;
+  
+  @Setter
+  @Autowired
+  @Qualifier("mdSignCredential")
+  private X509Credential mdSignCredential;    
 
   /** Temporary directory for caches. */
   private ApplicationTemp tempDir = new ApplicationTemp();
@@ -126,7 +146,7 @@ public class SpConfiguration implements InitializingBean {
   public ResponseProcessor responseProcessor() throws Exception {
 
     SwedishEidResponseProcessorImpl responseProcessor = new SwedishEidResponseProcessorImpl();
-    responseProcessor.setDecrypter(new SAMLObjectDecrypter(this.encryptCredential().getCredential()));
+    responseProcessor.setDecrypter(new SAMLObjectDecrypter(this.encryptCredential));
     responseProcessor.setMessageReplayChecker(new InMemoryReplayChecker());
     responseProcessor.initialize();
     return responseProcessor;
@@ -151,11 +171,9 @@ public class SpConfiguration implements InitializingBean {
 
     X509Certificate cert = X509CertificateUtils.decodeCertificate(validationCertificate.getInputStream());
 
-    HttpClientSecurityParameters tlsPars = new HttpClientSecurityParameters();
-    tlsPars.setTLSTrustEngine((token, trustBasisCriteria) -> true);
-
-    File backupFile = new File(this.tempDir.getDir(), "metadata-cache.xml");
-    HTTPMetadataProvider provider = new HTTPMetadataProvider(federationMetadataUrl, backupFile.getAbsolutePath(), tlsPars);
+    File backupFile = new File(this.tempDir.getDir(), "metadata-cache.xml");    
+    HTTPMetadataProvider provider = new HTTPMetadataProvider(federationMetadataUrl, backupFile.getAbsolutePath(),
+      HTTPMetadataProvider.createDefaultHttpClient(null /* trust all */, new DefaultHostnameVerifier()));
     provider.setPerformSchemaValidation(false);
     provider.setSignatureVerificationCertificate(cert);
     provider.initialize();
@@ -211,12 +229,12 @@ public class SpConfiguration implements InitializingBean {
         KeyDescriptorBuilder.builder()
           .use(UsageType.SIGNING)
           .keyName("Signing")
-          .certificate(this.signCredential().getCredential().getEntityCertificate())
+          .certificate(this.signCredential.getEntityCertificate())
           .build(),
         KeyDescriptorBuilder.builder()
           .use(UsageType.ENCRYPTION)
           .keyName("Encryption")
-          .certificate(this.encryptCredential().getCredential().getEntityCertificate())
+          .certificate(this.encryptCredential.getEntityCertificate())
           .encryptionMethodsExt(this.encryptionMethods)
           .build())
       .nameIDFormats(NameID.PERSISTENT, NameID.TRANSIENT)
@@ -248,7 +266,7 @@ public class SpConfiguration implements InitializingBean {
 
   @Bean("spEntityDescriptorContainer")
   public EntityDescriptorContainer entityDescriptorContainer(@Qualifier("spMetadata") EntityDescriptor spMetadata) {
-    return new EntityDescriptorContainer(spMetadata, this.mdSignCredential().getCredential());
+    return new EntityDescriptorContainer(spMetadata, this.mdSignCredential);
   }
 
   /**
@@ -284,12 +302,12 @@ public class SpConfiguration implements InitializingBean {
         KeyDescriptorBuilder.builder()
           .use(UsageType.SIGNING)
           .keyName("Signing")
-          .certificate(this.signCredential().getCredential().getEntityCertificate())
+          .certificate(this.signCredential.getEntityCertificate())
           .build(),
         KeyDescriptorBuilder.builder()
           .use(UsageType.ENCRYPTION)
           .keyName("Encryption")
-          .certificate(this.encryptCredential().getCredential().getEntityCertificate())
+          .certificate(this.encryptCredential.getEntityCertificate())
           .encryptionMethodsExt(this.encryptionMethods)
           .build())
       .nameIDFormats(NameID.PERSISTENT, NameID.TRANSIENT)
@@ -320,7 +338,7 @@ public class SpConfiguration implements InitializingBean {
 
   @Bean("signSpEntityDescriptorContainer")
   public EntityDescriptorContainer signSpEntityDescriptorContainer(@Qualifier("signSpMetadata") EntityDescriptor signSpMetadata) {
-    return new EntityDescriptorContainer(signSpMetadata, this.mdSignCredential().getCredential());
+    return new EntityDescriptorContainer(signSpMetadata, this.mdSignCredential);
   }
 
   @Bean("spAuthnRequestGenerator")
@@ -333,24 +351,6 @@ public class SpConfiguration implements InitializingBean {
   public AuthnRequestGenerator signSpAuthnRequestGenerator(@Qualifier("signSpEntityID") EntityID entityID,
       @Qualifier("signSpMetadata") EntityDescriptor metadata) {
     return new AuthnRequestGenerator(entityID.getEntityID(), metadata);
-  }
-
-  @Bean("signCredential")
-  @ConfigurationProperties(prefix = "sp.credential.sign")
-  public SpCredential signCredential() {
-    return new SpCredential();
-  }
-
-  @Bean("encryptCredential")
-  @ConfigurationProperties(prefix = "sp.credential.decrypt")
-  public SpCredential encryptCredential() {
-    return new SpCredential();
-  }
-
-  @Bean("mdSignCredential")
-  @ConfigurationProperties(prefix = "sp.credential.md-sign")
-  public SpCredential mdSignCredential() {
-    return new SpCredential();
   }
 
   @Bean
@@ -368,8 +368,6 @@ public class SpConfiguration implements InitializingBean {
 
     EncryptionConfiguration encryptionConfig = SecurityConfigurationSupport.getGlobalEncryptionConfiguration();
     
-    Credential encryptCredential = this.encryptCredential().getCredential();
-    
     final List<String> keyTransportMethods = encryptionConfig.getKeyTransportEncryptionAlgorithms();
     for (String algo : keyTransportMethods) {
       AlgorithmDescriptor algoDesc = AlgorithmSupport.getGlobalAlgorithmRegistry().get(algo);
@@ -377,7 +375,7 @@ public class SpConfiguration implements InitializingBean {
         continue;
       }
       if (AlgorithmDescriptor.AlgorithmType.KeyTransport.equals(algoDesc.getType())
-          && AlgorithmSupport.credentialSupportsAlgorithmForEncryption(encryptCredential, algoDesc)) {
+          && AlgorithmSupport.credentialSupportsAlgorithmForEncryption(this.encryptCredential, algoDesc)) {
         EncryptionMethod method = (EncryptionMethod) XMLObjectSupport.buildXMLObject(EncryptionMethod.DEFAULT_ELEMENT_NAME);
         method.setAlgorithm(algo);
         if (AlgorithmSupport.isRSAOAEP(algo)) {
@@ -409,5 +407,5 @@ public class SpConfiguration implements InitializingBean {
       this.encryptionMethods.add(method);
     }
   }
-
+  
 }

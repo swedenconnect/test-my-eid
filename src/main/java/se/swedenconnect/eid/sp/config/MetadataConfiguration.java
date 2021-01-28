@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.opensaml.saml.saml2.metadata.AttributeConsumingService;
 import org.opensaml.saml.saml2.metadata.ContactPerson;
 import org.opensaml.saml.saml2.metadata.ContactPersonTypeEnumeration;
 import org.opensaml.saml.saml2.metadata.Organization;
-import org.opensaml.saml.saml2.metadata.RequestedAttribute;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
@@ -70,15 +69,6 @@ public class MetadataConfiguration {
 
   /** Service names (for AttributeConsumingServiceBuilder). */
   List<LocalizedString> serviceNames;
-
-  /**
-   * Returns a list of the entity category URI:s
-   * 
-   * @return the entity categories
-   */
-  public List<String> getEntityCategories() {
-    return this.entityCategories;
-  }
 
   /**
    * Returns a {@link UIInfo} element
@@ -157,20 +147,15 @@ public class MetadataConfiguration {
     return builder.build();
   }
 
-  public List<RequestedAttribute> getRequestedAttributes() {
-    // RequestedAttributeBuilder
-    return null;
-  }
-
   /**
    * Configuration class for UIInfo.
    */
   @Data
   public static class UIInfoConfig {
-    /** The UIInfo display names. Given as <country-code>-<text>. */
+    /** The UIInfo display names. Given as country-code-text. */
     private List<LocalizedString> displayNames;
 
-    /** The UIInfo descriptions. Given as <country-code>-<text>. */
+    /** The UIInfo descriptions. Given as country-code-text. */
     private List<LocalizedString> descriptions;
 
     /** The UIInfo logotypes */
