@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import lombok.ToString;
 import se.litsec.opensaml.saml2.attribute.AttributeUtils;
 import se.litsec.opensaml.saml2.common.response.ResponseProcessingResult;
 import se.litsec.swedisheid.opensaml.saml2.attribute.AttributeConstants;
-import se.litsec.swedisheid.opensaml.saml2.authentication.LevelofAssuranceAuthenticationContextURI.LoaEnum;
 
 /**
  * Model object holding information from the last authentication operation. Used by "authentication for signature".
@@ -61,10 +60,6 @@ public class LastAuthentication {
   /** The country attribute (may be null). */
   @Getter
   private String country;
-
-  /** The AuthnContext to request. TODO: Will be removed. Not used in the new technical framework. */
-  @Getter
-  private String signMessageAuthnContextUri;
   
   /** The AuthnContext to request. */
   @Getter
@@ -76,7 +71,7 @@ public class LastAuthentication {
    * @param authnResult
    *          authentication result
    */
-  public LastAuthentication(ResponseProcessingResult authnResult) {
+  public LastAuthentication(final ResponseProcessingResult authnResult) {
     this.idp = authnResult.getIssuer();
     this.personalIdentityNumber = AttributeUtils.getAttribute(
       AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER, authnResult.getAttributes())
@@ -102,24 +97,7 @@ public class LastAuthentication {
       AttributeConstants.ATTRIBUTE_NAME_C, authnResult.getAttributes())
       .map(AttributeUtils::getAttributeStringValue)
       .orElse(null);    
-    this.signMessageAuthnContextUri = toSigMessageUri(authnResult.getAuthnContextClassUri());
     this.authnContextUri = authnResult.getAuthnContextClassUri();
-  }
-
-  /**
-   * Converts a LoA URI to its corresponding sigmessage URI.
-   * 
-   * @param loa
-   *          the LoA URI to convert
-   * @return the corresponding sigmessage URI, or {@code null} if no mapping is found
-   */
-  private static String toSigMessageUri(String loa) {
-    LoaEnum loaEnum = LoaEnum.parse(loa);
-    if (loaEnum == null) {
-      return null;
-    }
-    LoaEnum sigMsgLoa = LoaEnum.plusSigMessage(loaEnum);
-    return sigMsgLoa != null ? sigMsgLoa.getUri() : null;
   }
 
   /**
@@ -129,7 +107,7 @@ public class LastAuthentication {
    *          attributes
    * @return {@code true} if we have a match for identities, and {@code false} otherwise
    */
-  public boolean isIdentityMatch(List<Attribute> attributes) {
+  public boolean isIdentityMatch(final List<Attribute> attributes) {
     for (Attribute a : attributes) {
       if (this.personalIdentityNumber != null && AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER.equals(a.getName())) {
         return this.personalIdentityNumber.equals(AttributeUtils.getAttributeStringValue(a));

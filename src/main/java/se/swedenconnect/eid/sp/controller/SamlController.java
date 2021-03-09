@@ -127,10 +127,10 @@ public class SamlController extends BaseController {
   public ModelAndView sendRequest(HttpServletRequest request, HttpServletResponse response,
       @RequestParam("selectedIdp") String selectedIdp,
       @RequestParam(value = "country", required = false) String country,
-      @RequestParam(value = "ping", required = false, defaultValue = "false") Boolean ping, 
+      @RequestParam(value = "ping", required = false, defaultValue = "false") Boolean ping,
       @RequestParam(value = "debug", required = false, defaultValue = "false") Boolean debug) throws ApplicationException {
 
-    log.debug("Request for generating an AuthnRequest to '{}' [client-ip-address='{}', debug='{}', country='{}']", 
+    log.debug("Request for generating an AuthnRequest to '{}' [client-ip-address='{}', debug='{}', country='{}']",
       selectedIdp, request.getRemoteAddr(), debug, country);
 
     try {
@@ -353,7 +353,7 @@ public class SamlController extends BaseController {
     else {
       session.removeAttribute("ping");
     }
-    final LastAuthentication previousAuthentication = (LastAuthentication) session.getAttribute("last-authentication"); 
+    final LastAuthentication previousAuthentication = (LastAuthentication) session.getAttribute("last-authentication");
     session.removeAttribute("last-authentication");
 
     // If this was a sign request, we get the sign message for display in the viww.
@@ -376,7 +376,7 @@ public class SamlController extends BaseController {
       ResponseProcessingResult result = this.responseProcessor.processSamlResponse(
         samlResponse, relayState, new ResponseProcessingInputImpl(request, authnRequest), idpMetadataResolver, null);
       log.debug("Successfully processed SAML response");
-      
+
       if (signFlag && previousAuthentication != null) {
         // If this was an authentication for signature operation we verify that the same user
         // performed the "signature" and the one that authenticated the first time.
@@ -391,9 +391,9 @@ public class SamlController extends BaseController {
       }
       else {
         mav.setViewName("success");
-        
+
         if (!ping) {
-          mav.addObject("path-sign", "/saml2/request/next");        
+          mav.addObject("path-sign", "/saml2/request/next");
           session.setAttribute("last-authentication", new LastAuthentication(result));
         }
       }
@@ -431,7 +431,7 @@ public class SamlController extends BaseController {
    *          the result from the response processing
    * @return the model
    */
-  private AuthenticationInfo createAuthenticationInfo(ResponseProcessingResult result) {
+  private AuthenticationInfo createAuthenticationInfo(final ResponseProcessingResult result) {
     AuthenticationInfo authenticationInfo = new AuthenticationInfo();
 
     final String loa = result.getAuthnContextClassUri();
@@ -440,7 +440,7 @@ public class SamlController extends BaseController {
     authenticationInfo.setLoaUri(loa);
     LevelofAssuranceAuthenticationContextURI.LoaEnum loaEnum = LevelofAssuranceAuthenticationContextURI.LoaEnum.parse(loa);
     if (loaEnum != null) {
-      String baseUri = loaEnum.getBaseUri();      
+      String baseUri = loaEnum.getBaseUri();
       if (LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_LOA3.equals(baseUri)) {
         authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa3");
         authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
@@ -452,22 +452,37 @@ public class SamlController extends BaseController {
       else if (LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_EIDAS_LOW.equals(baseUri)) {
         authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa-low");
         authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa-eidas.desc");
-        authenticationInfo.setNotifiedInfoMessageCode(
-          loaEnum.isNotified() ? "sp.msg.authn-according-notified" : "sp.msg.authn-according-non-notified");
+        if (loaEnum.isCertified()) {
+          authenticationInfo.setNotifiedInfoMessageCode(
+            loaEnum.isNotified() ? "sp.msg.authn-according-notified" : "sp.msg.authn-according-non-notified");
+        }
+        else {
+          authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-uncertified-eidas");
+        }
         authenticationInfo.setEidasAssertion(true);
       }
       else if (LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_EIDAS_SUBSTANTIAL.equals(baseUri)) {
         authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa-substantial");
         authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa-eidas.desc");
-        authenticationInfo.setNotifiedInfoMessageCode(
-          loaEnum.isNotified() ? "sp.msg.authn-according-notified" : "sp.msg.authn-according-non-notified");
+        if (loaEnum.isCertified()) {
+          authenticationInfo.setNotifiedInfoMessageCode(
+            loaEnum.isNotified() ? "sp.msg.authn-according-notified" : "sp.msg.authn-according-non-notified");
+        }
+        else {
+          authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-uncertified-eidas");
+        }
         authenticationInfo.setEidasAssertion(true);
       }
       else if (LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_EIDAS_HIGH.equals(baseUri)) {
         authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa-high");
         authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa-eidas.desc");
-        authenticationInfo.setNotifiedInfoMessageCode(
-          loaEnum.isNotified() ? "sp.msg.authn-according-notified" : "sp.msg.authn-according-non-notified");
+        if (loaEnum.isCertified()) {
+          authenticationInfo.setNotifiedInfoMessageCode(
+            loaEnum.isNotified() ? "sp.msg.authn-according-notified" : "sp.msg.authn-according-non-notified");
+        }
+        else {
+          authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-uncertified-eidas");
+        }
         authenticationInfo.setEidasAssertion(true);
       }
       else if (LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_LOA2.equals(baseUri)) {

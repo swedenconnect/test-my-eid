@@ -55,7 +55,6 @@ import se.litsec.opensaml.saml2.metadata.provider.MetadataProvider;
 import se.litsec.opensaml.utils.ObjectUtils;
 import se.litsec.swedisheid.opensaml.saml2.attribute.AttributeConstants;
 import se.litsec.swedisheid.opensaml.saml2.authentication.LevelofAssuranceAuthenticationContextURI;
-import se.litsec.swedisheid.opensaml.saml2.authentication.LevelofAssuranceAuthenticationContextURI.LoaEnum;
 import se.litsec.swedisheid.opensaml.saml2.authentication.psc.MatchValue;
 import se.litsec.swedisheid.opensaml.saml2.authentication.psc.PrincipalSelection;
 import se.litsec.swedisheid.opensaml.saml2.authentication.psc.build.MatchValueBuilder;
@@ -302,15 +301,12 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
 
     List<String> assuranceCertificationUris = new ArrayList<>();
 
-    Predicate<String> filterPredicate;
+    
 
     // Since we implement the latest version of the technical framework we no longer
     // want to use the sigmessage URI:s. Even if this is a signservice ...
     //
-    filterPredicate = u -> {
-      LoaEnum e = LoaEnum.parse(u);
-      return e != null ? !e.isSignatureMessageUri() : true;
-    };
+    final Predicate<String> filterPredicate = u -> !u.contains("sigm");
 
     MetadataUtils.getEntityAttributes(metadata)
       .ifPresent(attrs -> attrs.getAttributes()
