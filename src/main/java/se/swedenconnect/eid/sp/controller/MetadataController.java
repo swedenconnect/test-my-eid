@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,45 +37,48 @@ import org.w3c.dom.Element;
 
 import lombok.extern.slf4j.Slf4j;
 import net.shibboleth.utilities.java.support.xml.SerializeSupport;
-import se.litsec.opensaml.saml2.metadata.EntityDescriptorContainer;
+import se.swedenconnect.opensaml.saml2.metadata.EntityDescriptorContainer;
 
 /**
  * Controller for displaying SP metadata.
- * 
- * @author Martin Lindström (martin.lindstrom@idsec.se)
+ *
+ * @author Martin Lindström (martin@idsec.se)
  */
 @Controller
 @RequestMapping("/metadata")
 @Slf4j
 public class MetadataController {
-  
+
   /** Media type for SAML metadata in XML format. */
   public static final String APPLICATION_SAML_METADATA = "application/samlmetadata+xml";
-  
+
   @Autowired
   @Qualifier("spEntityDescriptorContainer")
   private EntityDescriptorContainer metadataContainer;
-  
+
   @Autowired
   @Qualifier("signSpEntityDescriptorContainer")
-  private EntityDescriptorContainer signSpMetadataContainer;  
+  private EntityDescriptorContainer signSpMetadataContainer;
 
   @GetMapping
   @ResponseBody
-  public HttpEntity<byte[]> getMetadata(HttpServletRequest request, @RequestHeader(name = "Accept", required = false) String acceptHeader) {    
+  public HttpEntity<byte[]> getMetadata(final HttpServletRequest request,
+      @RequestHeader(name = "Accept", required = false) final String acceptHeader) {
     return this.getMetadata(this.metadataContainer, request, acceptHeader);
   }
-  
+
   @GetMapping("/sign")
   @ResponseBody
-  public HttpEntity<byte[]> getSignSpMetadata(HttpServletRequest request, @RequestHeader(name = "Accept", required = false) String acceptHeader) {    
+  public HttpEntity<byte[]> getSignSpMetadata(final HttpServletRequest request,
+      @RequestHeader(name = "Accept", required = false) final String acceptHeader) {
     return this.getMetadata(this.signSpMetadataContainer, request, acceptHeader);
-  }  
-  
-  private HttpEntity<byte[]> getMetadata(EntityDescriptorContainer metadata, HttpServletRequest request, String acceptHeader) {
-    
+  }
+
+  private HttpEntity<byte[]> getMetadata(final EntityDescriptorContainer metadata, final HttpServletRequest request,
+      final String acceptHeader) {
+
     log.debug("Request to download metadata from {}", request.getRemoteAddr());
-    
+
     try {
 
       // Check if the metadata is up-to-date according to how the container was configured.
@@ -91,14 +94,14 @@ public class MetadataController {
 
       // Get the DOM for the metadata and serialize it.
       //
-      Element dom = metadata.marshall();
+      final Element dom = metadata.marshall();
 
-      ByteArrayOutputStream stream = new ByteArrayOutputStream();
+      final ByteArrayOutputStream stream = new ByteArrayOutputStream();
       SerializeSupport.writeNode(dom, stream);
 
       // Assign the HTTP headers.
       //
-      HttpHeaders header = new HttpHeaders();
+      final HttpHeaders header = new HttpHeaders();
       if (acceptHeader != null && !acceptHeader.contains(APPLICATION_SAML_METADATA)) {
         header.setContentType(MediaType.APPLICATION_XML);
       }
@@ -106,13 +109,13 @@ public class MetadataController {
         header.setContentType(MediaType.valueOf(APPLICATION_SAML_METADATA));
       }
 
-      byte[] documentBody = stream.toByteArray();
+      final byte[] documentBody = stream.toByteArray();
       header.setContentLength(documentBody.length);
-      return new HttpEntity<byte[]>(documentBody, header);
+      return new HttpEntity<>(documentBody, header);
     }
     catch (SignatureException | MarshallingException e) {
       log.error("Failed to return valid metadata", e);
-      return new ResponseEntity<byte[]>(HttpStatus.INTERNAL_SERVER_ERROR);
+      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

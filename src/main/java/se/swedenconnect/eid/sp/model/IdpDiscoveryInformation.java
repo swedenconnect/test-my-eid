@@ -30,7 +30,7 @@ import se.swedenconnect.eid.sp.config.StaticIdpConfiguration.StaticIdpDiscoEntry
 
 /**
  * Model object representing info elements of an IdP for display in the UI.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @ToString
@@ -44,10 +44,10 @@ public class IdpDiscoveryInformation {
   private final String entityID;
 
   /** A map holding display names for different languages, where the language tag is the key. */
-  private Map<String, String> displayNames;
+  private final Map<String, String> displayNames;
 
   /** A map holding IdP description strings for different languages, where the language tag is the key. */
-  private Map<String, String> descriptions;
+  private final Map<String, String> descriptions;
 
   /** The IdP logotype. */
   private String logotype;
@@ -62,7 +62,7 @@ public class IdpDiscoveryInformation {
 
   /**
    * Constructor setting up an IdP info entry.
-   * 
+   *
    * @param entityID
    *          the IdP entityID
    * @param displayNames
@@ -76,13 +76,13 @@ public class IdpDiscoveryInformation {
    *          statically configured data for the IdP
    */
   public IdpDiscoveryInformation(
-      String entityID, Collection<DisplayName> displayNames, Collection<Logo> logotypes, boolean mobileAuth,
-      StaticIdpDiscoEntry discoInfo) {
+      final String entityID, final Collection<DisplayName> displayNames, final Collection<Logo> logotypes, final boolean mobileAuth,
+      final StaticIdpDiscoEntry discoInfo) {
 
     this.entityID = entityID;
 
     this.sortOrder = discoInfo.getSortOrder();
-    
+
     this.mobileUse = discoInfo.getMobileUse() != null ? discoInfo.getMobileUse().booleanValue() : mobileAuth;
 
     this.displayNames = new HashMap<>();
@@ -109,13 +109,13 @@ public class IdpDiscoveryInformation {
       // Prefer a square logo, and if not found, the one that is nearest a square.
       Logo selected = null;
       double widthHeightFactor = Double.MAX_VALUE;
-      for (Logo logo : logotypes) {
+      for (final Logo logo : logotypes) {
         if (selected == null) {
           selected = logo;
           widthHeightFactor = this.getWidthHeightFactor(logo);
         }
         else {
-          double factor = this.getWidthHeightFactor(logo);
+          final double factor = this.getWidthHeightFactor(logo);
           if (factor == (double) 1) {
             selected = logo;
             break;
@@ -134,13 +134,13 @@ public class IdpDiscoveryInformation {
 
   /**
    * Returns an IdP list for the given locale.
-   * 
+   *
    * @param locale
    *          the locale (language)
    * @return the IdP list
    */
-  public IdpModel getIdpModel(Locale locale) {
-    IdpModel idp = new IdpModel();
+  public IdpModel getIdpModel(final Locale locale) {
+    final IdpModel idp = new IdpModel();
     idp.setEntityID(this.entityID);
     idp.setLogotype(this.logotype);
     String dn = this.displayNames.get(locale.getLanguage());
@@ -157,16 +157,16 @@ public class IdpDiscoveryInformation {
 
   /**
    * Calculates width - height factor.
-   * 
+   *
    * @param logo
    *          the logotype
    * @return width - height factor
    */
-  private double getWidthHeightFactor(Logo logo) {
+  private double getWidthHeightFactor(final Logo logo) {
     if (logo.getWidth() == null || logo.getHeight() == null) {
       return 0;
     }
-    return (logo.getWidth() >= logo.getHeight())
+    return logo.getWidth() >= logo.getHeight()
         ? (double) logo.getWidth() / (double) logo.getHeight()
         : (double) logo.getHeight() / (double) logo.getWidth();
   }

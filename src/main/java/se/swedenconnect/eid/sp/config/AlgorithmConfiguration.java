@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class AlgorithmConfiguration {
   /**
    * Predicate that tells whether any configuration has been set or not.
    * 
-   * @return {@code true} if no attributes have been configured
+   * @return true if no attributes have been configured
    */
   public boolean isEmpty() {
     return !StringUtils.hasText(this.rsaOaepDigest) && this.useAesGcm == null && this.blacklistRsa15 == null;

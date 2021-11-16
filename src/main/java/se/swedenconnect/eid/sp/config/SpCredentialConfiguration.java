@@ -15,8 +15,6 @@
  */
 package se.swedenconnect.eid.sp.config;
 
-import java.util.Optional;
-
 import org.opensaml.security.x509.X509Credential;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +25,8 @@ import org.springframework.core.io.Resource;
 import lombok.Setter;
 import se.swedenconnect.security.credential.KeyStoreCredential;
 import se.swedenconnect.security.credential.PkiCredential;
+import se.swedenconnect.security.credential.factory.PkiCredentialConfigurationProperties;
+import se.swedenconnect.security.credential.factory.PkiCredentialFactoryBean;
 import se.swedenconnect.security.credential.opensaml.OpenSamlCredential;
 
 /**
@@ -69,39 +69,20 @@ public class SpCredentialConfiguration {
   /**
    * A wrapper to a {@link KeyStoreCredential}.
    */
-  public static class CredentialsWrapper {
+  public static class CredentialsWrapper extends PkiCredentialConfigurationProperties {
     
-    /** The resource holding the keystore file. */
-    @Setter
-    private Resource file;
-    
-    /** The type of keystore. */
-    @Setter
-    private String type;
-    
-    /** The keystore password. */
-    @Setter
-    private String password;
-    
-    /** The alias. */
-    @Setter
-    private String alias;
-    
-    /** The key password. */
-    @Setter
-    private String keyPassword;
-
-    /** The credential. */
-    private PkiCredential credential;
+    public void setFile(final Resource resource) {
+      this.setResource(resource);
+    }
+        
+    private PkiCredentialFactoryBean factory;
     
     public PkiCredential getCredential() throws Exception {
-      if (this.credential == null) {
-        this.credential = new KeyStoreCredential(this.file, this.type,
-          Optional.ofNullable(this.password).map(String::toCharArray).orElse(null), this.alias,
-          Optional.ofNullable(this.keyPassword).map(String::toCharArray).orElse(null));
-        this.credential.afterPropertiesSet();
+      if (this.factory == null) {
+        this.factory = new PkiCredentialFactoryBean(this);
+        this.factory.afterPropertiesSet();
       }
-      return this.credential;
+      return this.factory.getObject();
     }
 
   }

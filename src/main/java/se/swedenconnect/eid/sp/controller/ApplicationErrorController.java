@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Application error controller.
- * 
- * @author Martin Lindström (martin.lindstrom@idsec.se)
+ *
+ * @author Martin Lindström (martin@idsec.se)
  */
 @Controller
 @ControllerAdvice
@@ -49,19 +49,19 @@ public class ApplicationErrorController extends AbstractErrorController {
 
   /**
    * Error handler.
-   * 
+   *
    * @param request
    *          the HTTP request
    * @return a model and view object
    */
   @RequestMapping("/error")
-  public ModelAndView handleError(HttpServletRequest request) {
+  public ModelAndView handleError(final HttpServletRequest request) {
 
-    Map<String, Object> errorAttributes = this.getErrorAttributes(request, ErrorAttributeOptions.defaults());    
-    
+    final Map<String, Object> errorAttributes = this.getErrorAttributes(request, ErrorAttributeOptions.defaults());
+
     if (log.isInfoEnabled()) {
-      StringBuffer sb = new StringBuffer();
-      for (Map.Entry<String, Object> e : errorAttributes.entrySet()) {
+      final StringBuffer sb = new StringBuffer();
+      for (final Map.Entry<String, Object> e : errorAttributes.entrySet()) {
         if (sb.length() > 0) {
           sb.append(",");
         }
@@ -70,16 +70,16 @@ public class ApplicationErrorController extends AbstractErrorController {
       log.info("Error: {}", sb.toString());
     }
 
-    ModelAndView mav = new ModelAndView("error");
-    
-    ApplicationException exception = this.getException(request, ApplicationException.class);
+    final ModelAndView mav = new ModelAndView("error");
+
+    final ApplicationException exception = this.getException(request, ApplicationException.class);
     if (exception != null) {
       log.info("Reporting error: msg-code='{}',message='{}'", exception.getMessageCode(), exception.getMessage());
       mav.addObject("messageCode", exception.getMessageCode());
       mav.addObject("message", exception.getMessage());
     }
     else {
-      HttpStatus status = this.getStatus(request);
+      final HttpStatus status = this.getStatus(request);
 
       if (HttpStatus.NOT_FOUND.equals(status)) {
         mav.addObject("messageCode", "sp.msg.error.not-found");
@@ -87,22 +87,22 @@ public class ApplicationErrorController extends AbstractErrorController {
       else {
         mav.addObject("messageCode", "sp.msg.error.internal");
       }
-    }    
-    
-    request.getSession().setAttribute("sp-result", mav);    
+    }
+
+    request.getSession().setAttribute("sp-result", mav);
     return new ModelAndView("redirect:/result");
   }
 
   /**
    * Returns the exception from the error attributes.
-   * 
+   *
    * @param request
    *          the HTTP request
    * @param exceptionClass
    *          the exception class we are looking for
    * @return the exception or {@code null}
    */
-  protected <T extends Exception> T getException(HttpServletRequest request, Class<T> exceptionClass) {
+  protected <T extends Exception> T getException(final HttpServletRequest request, final Class<T> exceptionClass) {
     Exception e = (Exception) request.getAttribute("javax.servlet.error.exception");
     while (e != null) {
       if (exceptionClass.isInstance(e)) {
@@ -111,12 +111,6 @@ public class ApplicationErrorController extends AbstractErrorController {
       e = (Exception) e.getCause();
     }
     return null;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public String getErrorPath() {
-    return "/error";
   }
 
 }

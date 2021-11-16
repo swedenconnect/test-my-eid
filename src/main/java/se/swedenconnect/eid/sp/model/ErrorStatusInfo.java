@@ -22,22 +22,22 @@ import lombok.ToString;
 
 /**
  * Model class for representing a SAML error.
- * 
- * @author Martin Lindström (martin.lindstrom@idsec.se)
+ *
+ * @author Martin Lindström (martin@idsec.se)
  */
 @Data
 @ToString
 public class ErrorStatusInfo {
-  
-  public static final String CANCEL_CODE = "http://id.elegnamnden.se/status/1.0/cancel"; 
-  
+
+  public static final String CANCEL_CODE = "http://id.elegnamnden.se/status/1.0/cancel";
+
   private String mainErrorCode;
-  
+
   private String subErrorCode;
-  
+
   private String errorMessage;
 
-  public ErrorStatusInfo(Status status) {
+  public ErrorStatusInfo(final Status status) {
     this.mainErrorCode = status.getStatusCode().getValue();
     if (status.getStatusCode().getStatusCode() != null) {
       this.subErrorCode = status.getStatusCode().getStatusCode().getValue();
@@ -46,9 +46,9 @@ public class ErrorStatusInfo {
       this.errorMessage = status.getStatusMessage().getValue();
     }
   }
-  
+
   public boolean isCancel() {
-    return (this.subErrorCode != null && CANCEL_CODE.equals(this.subErrorCode));
+    return this.subErrorCode != null && CANCEL_CODE.equals(this.subErrorCode);
   }
 
 }

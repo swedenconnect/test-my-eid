@@ -33,17 +33,17 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.util.StringUtils;
 
 import lombok.Data;
-import se.litsec.opensaml.core.LocalizedString;
-import se.litsec.opensaml.saml2.metadata.build.AttributeConsumingServiceBuilder;
-import se.litsec.opensaml.saml2.metadata.build.ContactPersonBuilder;
-import se.litsec.opensaml.saml2.metadata.build.LogoBuilder;
-import se.litsec.opensaml.saml2.metadata.build.OrganizationBuilder;
-import se.litsec.opensaml.saml2.metadata.build.RequestedAttributeBuilder;
-import se.litsec.opensaml.saml2.metadata.build.UIInfoBuilder;
+import se.swedenconnect.opensaml.common.utils.LocalizedString;
+import se.swedenconnect.opensaml.saml2.metadata.build.AttributeConsumingServiceBuilder;
+import se.swedenconnect.opensaml.saml2.metadata.build.ContactPersonBuilder;
+import se.swedenconnect.opensaml.saml2.metadata.build.LogoBuilder;
+import se.swedenconnect.opensaml.saml2.metadata.build.OrganizationBuilder;
+import se.swedenconnect.opensaml.saml2.metadata.build.RequestedAttributeBuilder;
+import se.swedenconnect.opensaml.saml2.metadata.build.UIInfoBuilder;
 
 /**
  * Configuration class for SP metadata.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @Configuration
@@ -72,10 +72,10 @@ public class MetadataConfiguration {
 
   /**
    * Returns a {@link UIInfo} element
-   * 
-   * @return the {@link UIInfo}
+   *
+   * @return the UIInfo
    */
-  public UIInfo getUIInfoElement(String baseUri, String contextPath) {
+  public UIInfo getUIInfoElement(final String baseUri, final String contextPath) {
     return UIInfoBuilder.builder()
       .displayNames(this.uiinfo.getDisplayNames())
       .descriptions(this.uiinfo.getDescriptions())
@@ -85,8 +85,8 @@ public class MetadataConfiguration {
 
   /**
    * Returns the {@link Organization} element
-   * 
-   * @return the {@link Organization}
+   *
+   * @return the Organization
    */
   public Organization getOrganizationElement() {
     return OrganizationBuilder.builder()
@@ -98,16 +98,16 @@ public class MetadataConfiguration {
 
   /**
    * Returns a list of {@link ContactPerson} elements.
-   * 
-   * @return a list of {@link ContactPerson} elements
+   *
+   * @return a list of ContactPerson elements
    */
   public List<ContactPerson> getContactPersonElements() {
     if (this.contactPersons == null || this.contactPersons.isEmpty()) {
       return Collections.emptyList();
     }
-    List<ContactPerson> persons = new ArrayList<>();
-    for (Map.Entry<ContactPersonTypeEnumeration, ContactPersonConfig> e : this.contactPersons.entrySet()) {
-      ContactPersonBuilder b = ContactPersonBuilder.builder()
+    final List<ContactPerson> persons = new ArrayList<>();
+    for (final Map.Entry<ContactPersonTypeEnumeration, ContactPersonConfig> e : this.contactPersons.entrySet()) {
+      final ContactPersonBuilder b = ContactPersonBuilder.builder()
         .type(e.getKey())
         .company(e.getValue().getCompany())
         .givenName(e.getValue().getGivenName())
@@ -125,15 +125,15 @@ public class MetadataConfiguration {
 
   /**
    * Gets the {@code AttributeConsumingService} metadata element.
-   * 
+   *
    * @return the AttributeConsumingService element
    */
   public AttributeConsumingService getAttributeConsumingService() {
-    if ((this.serviceNames == null || this.serviceNames.isEmpty()) && (this.requestedAttributes == null || this.requestedAttributes
-      .isEmpty())) {
+    if ((this.serviceNames == null || this.serviceNames.isEmpty()) 
+        && (this.requestedAttributes == null || this.requestedAttributes.isEmpty())) {
       return null;
     }
-    AttributeConsumingServiceBuilder builder = AttributeConsumingServiceBuilder.builder();
+    final AttributeConsumingServiceBuilder builder = AttributeConsumingServiceBuilder.builder();
 
     builder.serviceNames(this.serviceNames);
 
@@ -161,7 +161,7 @@ public class MetadataConfiguration {
     /** The UIInfo logotypes */
     private List<UIInfoLogo> logos;
 
-    public List<Logo> getUiInfoLogos(String baseUri, String contextPath) {
+    public List<Logo> getUiInfoLogos(final String baseUri, final String contextPath) {
       if (this.logos == null) {
         return Collections.emptyList();
       }

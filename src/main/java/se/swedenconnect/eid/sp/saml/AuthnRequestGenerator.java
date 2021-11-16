@@ -34,6 +34,7 @@ import org.opensaml.saml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.x509.X509Credential;
 import org.opensaml.xmlsec.encryption.support.EncryptionException;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.DependsOn;
@@ -41,40 +42,38 @@ import org.springframework.util.StringUtils;
 
 import lombok.extern.slf4j.Slf4j;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
-import se.litsec.opensaml.saml2.attribute.AttributeUtils;
-import se.litsec.opensaml.saml2.common.request.AbstractAuthnRequestGenerator;
-import se.litsec.opensaml.saml2.common.request.RequestGenerationException;
-import se.litsec.opensaml.saml2.common.request.RequestHttpObject;
-import se.litsec.opensaml.saml2.core.build.AuthnRequestBuilder;
-import se.litsec.opensaml.saml2.core.build.NameIDPolicyBuilder;
-import se.litsec.opensaml.saml2.core.build.RequestedAuthnContextBuilder;
-import se.litsec.opensaml.saml2.core.build.ScopingBuilder;
-import se.litsec.opensaml.saml2.metadata.MetadataUtils;
-import se.litsec.opensaml.saml2.metadata.PeerMetadataResolver;
-import se.litsec.opensaml.saml2.metadata.provider.MetadataProvider;
-import se.litsec.opensaml.utils.ObjectUtils;
-import se.litsec.swedisheid.opensaml.saml2.attribute.AttributeConstants;
-import se.litsec.swedisheid.opensaml.saml2.authentication.LevelofAssuranceAuthenticationContextURI;
-import se.litsec.swedisheid.opensaml.saml2.authentication.psc.MatchValue;
-import se.litsec.swedisheid.opensaml.saml2.authentication.psc.PrincipalSelection;
-import se.litsec.swedisheid.opensaml.saml2.authentication.psc.build.MatchValueBuilder;
-import se.litsec.swedisheid.opensaml.saml2.authentication.psc.build.PrincipalSelectionBuilder;
-import se.litsec.swedisheid.opensaml.saml2.metadata.entitycategory.EntityCategoryConstants;
-import se.litsec.swedisheid.opensaml.saml2.metadata.entitycategory.EntityCategoryMetadataHelper;
-import se.litsec.swedisheid.opensaml.saml2.signservice.SignMessageBuilder;
-import se.litsec.swedisheid.opensaml.saml2.signservice.SignMessageEncrypter;
-import se.litsec.swedisheid.opensaml.saml2.signservice.dss.SignMessage;
-import se.litsec.swedisheid.opensaml.saml2.signservice.dss.SignMessageMimeTypeEnum;
+import se.swedenconnect.opensaml.common.utils.SamlLog;
+import se.swedenconnect.opensaml.saml2.core.build.AuthnRequestBuilder;
+import se.swedenconnect.opensaml.saml2.core.build.NameIDPolicyBuilder;
+import se.swedenconnect.opensaml.saml2.core.build.RequestedAuthnContextBuilder;
+import se.swedenconnect.opensaml.saml2.core.build.ScopingBuilder;
+import se.swedenconnect.opensaml.saml2.metadata.EntityDescriptorUtils;
+import se.swedenconnect.opensaml.saml2.metadata.PeerMetadataResolver;
+import se.swedenconnect.opensaml.saml2.metadata.provider.MetadataProvider;
+import se.swedenconnect.opensaml.saml2.request.AbstractAuthnRequestGenerator;
+import se.swedenconnect.opensaml.saml2.request.RequestGenerationException;
+import se.swedenconnect.opensaml.saml2.request.RequestHttpObject;
+import se.swedenconnect.opensaml.sweid.saml2.attribute.AttributeConstants;
+import se.swedenconnect.opensaml.sweid.saml2.authn.LevelOfAssuranceUris;
+import se.swedenconnect.opensaml.sweid.saml2.authn.psc.MatchValue;
+import se.swedenconnect.opensaml.sweid.saml2.authn.psc.PrincipalSelection;
+import se.swedenconnect.opensaml.sweid.saml2.authn.psc.build.MatchValueBuilder;
+import se.swedenconnect.opensaml.sweid.saml2.authn.psc.build.PrincipalSelectionBuilder;
+import se.swedenconnect.opensaml.sweid.saml2.metadata.entitycategory.EntityCategoryConstants;
+import se.swedenconnect.opensaml.sweid.saml2.signservice.SignMessageEncrypter;
+import se.swedenconnect.opensaml.sweid.saml2.signservice.build.SignMessageBuilder;
+import se.swedenconnect.opensaml.sweid.saml2.signservice.dss.SignMessage;
+import se.swedenconnect.opensaml.sweid.saml2.signservice.dss.SignMessageMimeTypeEnum;
 
 /**
  * Generator for {@code AuthnRequest} messages.
- * 
- * @author Martin Lindström (martin.lindstrom@idsec.se)
+ *
+ * @author Martin Lindström (martin@idsec.se)
  */
 @Slf4j
 @DependsOn("openSAML")
-public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRequestGeneratorInput> {
-  
+public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRequestGeneratorInput> implements InitializingBean {
+
   /** The special purpose AuthnContextClassRef URI for eIDAS test authentications. */
   public static final String EIDAS_PING_LOA = "http://eidas.europa.eu/LoA/test";
 
@@ -90,7 +89,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
   private SignMessageEncrypter signMessageEncrypter;
 
   /** The SP metadata. */
-  private EntityDescriptor spMetadata;
+  private final EntityDescriptor spMetadata;
 
   /** The assertion consumer service URL. */
   private String assertionConsumerServiceUrl;
@@ -100,7 +99,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
 
   /**
    * Contructor.
-   * 
+   *
    * @param entityID
    *          the SP entityID
    * @param metadata
@@ -114,7 +113,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
 
   /**
    * See {@link #generateRequest(AuthnRequestGeneratorInput, PeerMetadataResolver)}.
-   * 
+   *
    * @param input
    *          request input
    * @return a request object
@@ -124,17 +123,13 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
   public RequestHttpObject<AuthnRequest> generateRequest(final AuthnRequestGeneratorInput input)
       throws RequestGenerationException {
 
-    PeerMetadataResolver pmr = new PeerMetadataResolver() {
-
-      @Override
-      public EntityDescriptor getMetadata(String entityID) {
-        try {
-          return metadataProvider.getEntityDescriptor(entityID);
-        }
-        catch (ResolverException e) {
-          log.error("Failed to get metadata for IdP", e);
-          return null;
-        }
+    final PeerMetadataResolver pmr = entityID -> {
+      try {
+        return AuthnRequestGenerator.this.metadataProvider.getEntityDescriptor(entityID);
+      }
+      catch (final ResolverException e) {
+        log.error("Failed to get metadata for IdP", e);
+        return null;
       }
     };
 
@@ -143,7 +138,8 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
 
   /** {@inheritDoc} */
   @Override
-  public RequestHttpObject<AuthnRequest> generateRequest(final AuthnRequestGeneratorInput input, final PeerMetadataResolver metadataResolver)
+  public RequestHttpObject<AuthnRequest> generateRequest(final AuthnRequestGeneratorInput input,
+      final PeerMetadataResolver metadataResolver)
       throws RequestGenerationException {
 
     log.debug("Generating AuthnRequest for IdP '{}' ...", input.getPeerEntityID());
@@ -153,11 +149,11 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
 
     // Find out where to send the request (and with which binding).
     //
-    SingleSignOnService serviceUrl = this.getSingleSignOnService(idp, input);
+    final SingleSignOnService serviceUrl = this.getSingleSignOnService(idp, input);
 
     // Start building the request ...
     //
-    AuthnRequestBuilder builder = AuthnRequestBuilder.builder()
+    final AuthnRequestBuilder builder = AuthnRequestBuilder.builder()
       .id(this.generateID())
       .destination(serviceUrl.getLocation())
       .issueInstant(Instant.now())
@@ -179,7 +175,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
 
     // Use a NameID format that the IdP supports ...
     //
-    IDPSSODescriptor ssoDescriptor = idp.getIDPSSODescriptor(SAMLConstants.SAML20P_NS);
+    final IDPSSODescriptor ssoDescriptor = idp.getIDPSSODescriptor(SAMLConstants.SAML20P_NS);
     if (ssoDescriptor == null) {
       throw new RequestGenerationException("Invalid IdP metadata - Missing IDPSSODescriptor");
     }
@@ -200,7 +196,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
     // we assign the sign message (encrypted).
     //
     if (input.getSignMessage() != null && isSignatureService) {
-      SignMessage signMessage = SignMessageBuilder.builder()
+      final SignMessage signMessage = SignMessageBuilder.builder()
         .displayEntity(input.getPeerEntityID())
         .mimeType(SignMessageMimeTypeEnum.TEXT)
         .mustShow(true)
@@ -210,7 +206,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
       try {
         this.signMessageEncrypter.encrypt(signMessage, input.getPeerEntityID());
       }
-      catch (EncryptionException e) {
+      catch (final EncryptionException e) {
         throw new RequestGenerationException("Failed to encrypt SignMessage to " + input.getPeerEntityID(), e);
       }
       if (extensions == null) {
@@ -240,11 +236,11 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
     // If country is set, this is a request to the eIDAS connector in which we pass a requested country ...
     //
     if (StringUtils.hasText(input.getCountry())) {
-      String countryUri = "http://id.swedenconnect.se/eidas/1.0/proxy-service/" + input.getCountry().toLowerCase();
+      final String countryUri = "http://id.swedenconnect.se/eidas/1.0/proxy-service/" + input.getCountry().toLowerCase();
 
-      IDPList idpList = (IDPList) XMLObjectSupport.buildXMLObject(IDPList.DEFAULT_ELEMENT_NAME);
+      final IDPList idpList = (IDPList) XMLObjectSupport.buildXMLObject(IDPList.DEFAULT_ELEMENT_NAME);
       idpList.getIDPEntrys().add(ScopingBuilder.idpEntry(countryUri, null, null));
-      ScopingBuilder scopingBuilder = ScopingBuilder.builder();
+      final ScopingBuilder scopingBuilder = ScopingBuilder.builder();
       scopingBuilder.object().setIDPList(idpList);
       builder.scoping(scopingBuilder.build());
     }
@@ -253,7 +249,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
     // we include the PrincipalSelection extension.
     //
     if (input.getPersonalIdentityNumberHint() != null || input.getPridHint() != null) {
-      List<MatchValue> matchValues = new ArrayList<>();
+      final List<MatchValue> matchValues = new ArrayList<>();
       if (input.getPersonalIdentityNumberHint() != null) {
         matchValues.add(MatchValueBuilder.builder()
           .name(AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER)
@@ -266,7 +262,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
           .value(input.getPridHint())
           .build());
       }
-      PrincipalSelection ps = PrincipalSelectionBuilder.builder()
+      final PrincipalSelection ps = PrincipalSelectionBuilder.builder()
         .matchValues(matchValues)
         .build();
 
@@ -281,10 +277,10 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
     if (extensions != null && extensions.hasChildren()) {
       builder.extensions(extensions);
     }
-    AuthnRequest authnRequest = builder.build();
+    final AuthnRequest authnRequest = builder.build();
 
     if (log.isTraceEnabled()) {
-      log.debug("Sweden Connect SP sending AuthnRequest: {}", ObjectUtils.toStringSafe(authnRequest));
+      log.debug("Sweden Connect SP sending AuthnRequest: {}", SamlLog.toStringSafe(authnRequest));
     }
 
     return this.buildRequestHttpObject(authnRequest, input, serviceUrl.getBinding(), serviceUrl.getLocation(), idp);
@@ -292,36 +288,29 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
 
   /**
    * Based on which assurance levels the IdP declares we return a list of URIs to include in our request.
-   * 
+   *
    * @param metadata
    *          the IdP metadata
    * @return a list of URIs
    */
   private List<String> getAssuranceCertificationUris(final EntityDescriptor metadata) {
 
-    List<String> assuranceCertificationUris = new ArrayList<>();
-
-    
+    final List<String> assuranceCertificationUris = new ArrayList<>();
 
     // Since we implement the latest version of the technical framework we no longer
     // want to use the sigmessage URI:s. Even if this is a signservice ...
     //
     final Predicate<String> filterPredicate = u -> !u.contains("sigm");
 
-    MetadataUtils.getEntityAttributes(metadata)
-      .ifPresent(attrs -> attrs.getAttributes()
-        .stream()
-        .filter(a -> "urn:oasis:names:tc:SAML:attribute:assurance-certification".equals(a.getName()))
-        .map(AttributeUtils::getAttributeStringValues)
-        .flatMap(List::stream)
-        .distinct()
-        .filter(filterPredicate)
-        .forEach(assuranceCertificationUris::add));
+    EntityDescriptorUtils.getAssuranceCertificationUris(metadata).stream()
+      .distinct()
+      .filter(filterPredicate)
+      .forEach(assuranceCertificationUris::add);
 
     if (assuranceCertificationUris.isEmpty()) {
-      log.warn("IdP '{}' does not specify assurance certification URI - defaulting to {}", metadata.getEntityID(),
-        LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_LOA3);
-      assuranceCertificationUris.add(LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_LOA3);
+      log.warn("IdP '{}' does not specify assurance certification URI - defaulting to {}",
+        metadata.getEntityID(), LevelOfAssuranceUris.AUTHN_CONTEXT_URI_LOA3);
+      assuranceCertificationUris.add(LevelOfAssuranceUris.AUTHN_CONTEXT_URI_LOA3);
     }
 
     return assuranceCertificationUris;
@@ -329,11 +318,11 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
 
   /**
    * Predicate that tells if the entity that we are serving is a signature service SP.
-   * 
-   * @return {@code true} if this is a signature service, and {@code false} otherwise
+   *
+   * @return true if this is a signature service, and false otherwise
    */
   private boolean isSignatureService() {
-    return EntityCategoryMetadataHelper.getEntityCategories(this.spMetadata)
+    return EntityDescriptorUtils.getEntityCategories(this.spMetadata)
       .stream()
       .filter(c -> c.equals(EntityCategoryConstants.SERVICE_TYPE_CATEGORY_SIGSERVICE.getUri()))
       .findFirst()
@@ -353,9 +342,7 @@ public class AuthnRequestGenerator extends AbstractAuthnRequestGenerator<AuthnRe
 
     this.setSigningCredentials(this.signCredential);
 
-    super.afterPropertiesSet();
-
-    SPSSODescriptor descriptor = this.spMetadata.getSPSSODescriptor(SAMLConstants.SAML20P_NS);
+    final SPSSODescriptor descriptor = this.spMetadata.getSPSSODescriptor(SAMLConstants.SAML20P_NS);
     this.assertionConsumerServiceUrl = descriptor.getAssertionConsumerServices().get(0).getLocation();
     if (descriptor.getAssertionConsumerServices().size() > 1) {
       this.debugAssertionConsumerServiceUrl = descriptor.getAssertionConsumerServices().get(1).getLocation();

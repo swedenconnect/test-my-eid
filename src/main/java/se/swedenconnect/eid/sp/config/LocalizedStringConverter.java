@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 package se.swedenconnect.eid.sp.config;
 
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
-import se.litsec.opensaml.utils.spring.StringToLocalizedStringConverter;
+import se.swedenconnect.opensaml.common.utils.LocalizedString;
 
 /**
  * Converts from a string to a localized string.
@@ -27,5 +28,21 @@ import se.litsec.opensaml.utils.spring.StringToLocalizedStringConverter;
  */
 @Component
 @ConfigurationPropertiesBinding
-public class LocalizedStringConverter extends StringToLocalizedStringConverter {
+public class LocalizedStringConverter implements Converter<String, LocalizedString> {
+
+  /**
+   * Converts strings on the format {@code <lang-tag>-<string according to language>}. The string "en-Hello" will give a
+   * LocalizedString where:
+   * 
+   * <pre>{@code
+   * ls.getLanguage() => "en"
+   * ls.getLocalString() => "Hello"}
+   * </pre>
+   */
+  @Override
+  public LocalizedString convert(String source) {    
+    return new LocalizedString(source);
+  }
+
 }
+

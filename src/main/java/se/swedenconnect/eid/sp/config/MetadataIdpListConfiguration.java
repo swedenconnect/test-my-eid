@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,17 +30,16 @@ import org.springframework.context.annotation.Configuration;
 
 import lombok.extern.slf4j.Slf4j;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
-import se.litsec.opensaml.saml2.metadata.MetadataUtils;
-import se.litsec.opensaml.saml2.metadata.provider.MetadataProvider;
-import se.litsec.swedisheid.opensaml.saml2.discovery.SwedishEidDiscoveryMatchingRules;
-import se.litsec.swedisheid.opensaml.saml2.metadata.entitycategory.EntityCategoryConstants;
-import se.litsec.swedisheid.opensaml.saml2.metadata.entitycategory.EntityCategoryMetadataHelper;
 import se.swedenconnect.eid.sp.config.StaticIdpConfiguration.StaticIdpDiscoEntry;
 import se.swedenconnect.eid.sp.model.IdpDiscoveryInformation;
+import se.swedenconnect.opensaml.saml2.metadata.EntityDescriptorUtils;
+import se.swedenconnect.opensaml.saml2.metadata.provider.MetadataProvider;
+import se.swedenconnect.opensaml.sweid.saml2.discovery.SwedishEidDiscoveryMatchingRules;
+import se.swedenconnect.opensaml.sweid.saml2.metadata.entitycategory.EntityCategoryConstants;
 
 /**
  * An IdP list configuration that gets its configuration from the supplied metadata provider.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @Configuration
@@ -55,15 +54,15 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration {
   private MetadataProvider metadataProvider;
 
   /** The SP entity categories. */
-  private List<String> spEntityCategories;
+  private final List<String> spEntityCategories;
 
   /** The time we should keep an IdP list in the cache (in seconds). */
   @Value("${sp.discovery.cache-time:600}")
-  private int cacheTime = DEFAULT_CACHE_TIME;
+  private final int cacheTime = DEFAULT_CACHE_TIME;
 
   /** Setting that tells whether we should ignore contract entity categories when matching. */
   @Value("${sp.discovery.ignore-contracts:true}")
-  private boolean ignoreContracts = true;
+  private final boolean ignoreContracts = true;
 
   /** Configuration for static conf of IdPs. */
   @Autowired
@@ -77,12 +76,12 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration {
 
   /**
    * Constructor.
-   * 
+   *
    * @param spMetadata
    *          the metadata for our SP
    */
-  public MetadataIdpListConfiguration(@Autowired EntityDescriptor spMetadata) {
-    this.spEntityCategories = EntityCategoryMetadataHelper.getEntityCategories(spMetadata);
+  public MetadataIdpListConfiguration(@Autowired final EntityDescriptor spMetadata) {
+    this.spEntityCategories = EntityDescriptorUtils.getEntityCategories(spMetadata);
   }
 
   /** {@inheritDoc} */
@@ -93,18 +92,18 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration {
     }
     log.debug("Compiling IdP list from metadata {}", this.metadataProvider.getID());
 
-    List<IdpDiscoveryInformation> idpList = new ArrayList<>();
+    final List<IdpDiscoveryInformation> idpList = new ArrayList<>();
 
     try {
-      List<EntityDescriptor> idps = this.metadataProvider.getIdentityProviders();
-      for (EntityDescriptor idp : idps) {
+      final List<EntityDescriptor> idps = this.metadataProvider.getIdentityProviders();
+      for (final EntityDescriptor idp : idps) {
 
         if (this.staticIdpConfiguration.isBlackListed(idp.getEntityID())) {
           log.debug("IdP '{}' is black-listed in configuration and will be excluded from IdP list", idp.getEntityID());
           continue;
         }
 
-        StaticIdpDiscoEntry discoInfo = this.staticIdpConfiguration.getIdpDiscoInformation(idp.getEntityID())
+        final StaticIdpDiscoEntry discoInfo = this.staticIdpConfiguration.getIdpDiscoInformation(idp.getEntityID())
           .orElse(this.getDefaultDiscoInformation(idp.getEntityID()));
 
         if (!discoInfo.isEnabled()) {
@@ -114,7 +113,7 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration {
 
         if (discoInfo.isSkipEntityCategoryMatching() || this.isValidIdP(idp)) {
 
-          UIInfo uiInfo = this.getUIInfo(idp);
+          final UIInfo uiInfo = this.getUIInfo(idp);
           if (uiInfo == null) {
             log.warn("IdP '{}' does not define an UIInfo extension", idp.getEntityID());
             idpList.add(new IdpDiscoveryInformation(idp.getEntityID(), Collections.emptyList(), Collections.emptyList(), this
@@ -130,7 +129,7 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration {
         }
       }
     }
-    catch (ResolverException e) {
+    catch (final ResolverException e) {
       log.error("Error listing metadata", e);
     }
 
@@ -147,13 +146,13 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration {
 
   /**
    * Returns a {@code IdpDiscoInformation} object to be used when the IdP is not explicitly configured.
-   * 
+   *
    * @param entityId
    *          the IdP entity
-   * @return a default {@code IdpDiscoInformation}
+   * @return a default IdpDiscoInformation
    */
-  private StaticIdpDiscoEntry getDefaultDiscoInformation(String entityId) {
-    StaticIdpDiscoEntry discoInfo = new StaticIdpDiscoEntry();
+  private StaticIdpDiscoEntry getDefaultDiscoInformation(final String entityId) {
+    final StaticIdpDiscoEntry discoInfo = new StaticIdpDiscoEntry();
     discoInfo.setEntityId(entityId);
     discoInfo.setEnabled(this.staticIdpConfiguration.getIncludeUnlisted());
     return discoInfo;
@@ -161,13 +160,13 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration {
 
   /**
    * Matches the SP entity categories against the IdP to check if the IdP can be used by the SP.
-   * 
+   *
    * @param idp
    *          the IdP metadata
-   * @return {@code true} if the IdP can be used, and {@code false} otherwise
+   * @return true if the IdP can be used, and false otherwise
    */
-  protected boolean isValidIdP(EntityDescriptor idp) {
-    final List<String> idpEntityCategories = EntityCategoryMetadataHelper.getEntityCategories(idp);
+  protected boolean isValidIdP(final EntityDescriptor idp) {
+    final List<String> idpEntityCategories = EntityDescriptorUtils.getEntityCategories(idp);
     if (!SwedishEidDiscoveryMatchingRules.isServiceEntityMatch(this.spEntityCategories, idpEntityCategories)) {
       return false;
     }
@@ -184,13 +183,13 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration {
 
   /**
    * Predicate that tells if the IdP declares the mobile-auth service property in its metadata.
-   * 
+   *
    * @param idp
    *          the IdP metadata
-   * @return {@code true} if mobile-auth is declared, and {@code false} otherwise
+   * @return true if mobile-auth is declared, and false otherwise
    */
-  protected boolean isMobileAuthDeclared(EntityDescriptor idp) {
-    final List<String> idpEntityCategories = EntityCategoryMetadataHelper.getEntityCategories(idp);
+  protected boolean isMobileAuthDeclared(final EntityDescriptor idp) {
+    final List<String> idpEntityCategories = EntityDescriptorUtils.getEntityCategories(idp);
     return idpEntityCategories.stream()
       .filter(c -> EntityCategoryConstants.SERVICE_PROPERTY_CATEGORY_MOBILE_AUTH.getUri().equals(c))
       .findFirst()
@@ -199,26 +198,26 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration {
 
   /**
    * Returns the UIInfo extension from the IdP metadata.
-   * 
+   *
    * @param idp
    *          the IdP metadata
    * @return the UIInfo extension
    */
-  private UIInfo getUIInfo(EntityDescriptor idp) {
-    SSODescriptor ssoDescriptor = idp.getIDPSSODescriptor(SAMLConstants.SAML20P_NS);
+  private UIInfo getUIInfo(final EntityDescriptor idp) {
+    final SSODescriptor ssoDescriptor = idp.getIDPSSODescriptor(SAMLConstants.SAML20P_NS);
     if (ssoDescriptor == null) {
       return null;
     }
-    return MetadataUtils.getMetadataExtension(ssoDescriptor.getExtensions(), UIInfo.class).orElse(null);
+    return EntityDescriptorUtils.getMetadataExtension(ssoDescriptor.getExtensions(), UIInfo.class);
   }
 
   /**
    * Predicate that checks if the cache is still valid.
-   * 
+   *
    * @return {@code true} if the cache is still valid and {@code false} otherwise
    */
   private boolean validCache() {
-    return (System.currentTimeMillis() - this.lastUpdate > (this.cacheTime * 1000L)) && this.cache != null;
+    return System.currentTimeMillis() - this.lastUpdate > this.cacheTime * 1000L && this.cache != null;
   }
 
 }

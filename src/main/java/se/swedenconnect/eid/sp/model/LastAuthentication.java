@@ -16,18 +16,19 @@
 package se.swedenconnect.eid.sp.model;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.opensaml.saml.saml2.core.Attribute;
 
 import lombok.Getter;
 import lombok.ToString;
-import se.litsec.opensaml.saml2.attribute.AttributeUtils;
-import se.litsec.opensaml.saml2.common.response.ResponseProcessingResult;
-import se.litsec.swedisheid.opensaml.saml2.attribute.AttributeConstants;
+import se.swedenconnect.opensaml.saml2.attribute.AttributeUtils;
+import se.swedenconnect.opensaml.saml2.response.ResponseProcessingResult;
+import se.swedenconnect.opensaml.sweid.saml2.attribute.AttributeConstants;
 
 /**
  * Model object holding information from the last authentication operation. Used by "authentication for signature".
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @ToString
@@ -35,80 +36,81 @@ public class LastAuthentication {
 
   /** The IdP that authenticated the user. */
   @Getter
-  private String idp;
+  private final String idp;
 
   /** User's given name (may be null). */
   @Getter
-  private String givenName;
-  
+  private final String givenName;
+
   /** User's surname (may be null). */
   @Getter
-  private String surName;
-  
+  private final String surName;
+
   /** User display name (may be null). */
   @Getter
-  private String displayName;
+  private final String displayName;
 
   /** The personal identity number (may be null). */
   @Getter
-  private String personalIdentityNumber;
+  private final String personalIdentityNumber;
 
   /** The prid attribute (may be null). */
   @Getter
-  private String prid;
-  
+  private final String prid;
+
   /** The country attribute (may be null). */
   @Getter
-  private String country;
-  
+  private final String country;
+
   /** The AuthnContext to request. */
   @Getter
-  private String authnContextUri;
+  private final String authnContextUri;
 
   /**
    * Constructor.
-   * 
+   *
    * @param authnResult
    *          authentication result
    */
   public LastAuthentication(final ResponseProcessingResult authnResult) {
     this.idp = authnResult.getIssuer();
-    this.personalIdentityNumber = AttributeUtils.getAttribute(
-      AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER, authnResult.getAttributes())
+    this.personalIdentityNumber = Optional.ofNullable(
+      AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER, authnResult.getAttributes()))
       .map(AttributeUtils::getAttributeStringValue)
       .orElse(null);
-    this.givenName = AttributeUtils.getAttribute(
-      AttributeConstants.ATTRIBUTE_NAME_GIVEN_NAME, authnResult.getAttributes())
+    this.givenName = Optional.ofNullable(
+      AttributeUtils.getAttribute(
+        AttributeConstants.ATTRIBUTE_NAME_GIVEN_NAME, authnResult.getAttributes()))
       .map(AttributeUtils::getAttributeStringValue)
       .orElse(null);
-    this.surName = AttributeUtils.getAttribute(
-      AttributeConstants.ATTRIBUTE_NAME_SN, authnResult.getAttributes())
-        .map(AttributeUtils::getAttributeStringValue)
-        .orElse(null);
-    this.displayName = AttributeUtils.getAttribute(
-      AttributeConstants.ATTRIBUTE_NAME_DISPLAY_NAME, authnResult.getAttributes())
-        .map(AttributeUtils::getAttributeStringValue)
-        .orElse(null);
-    this.prid = AttributeUtils.getAttribute(
-      AttributeConstants.ATTRIBUTE_NAME_PRID, authnResult.getAttributes())
+    this.surName = Optional.ofNullable(
+      AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_SN, authnResult.getAttributes()))
       .map(AttributeUtils::getAttributeStringValue)
       .orElse(null);
-    this.country = AttributeUtils.getAttribute(
-      AttributeConstants.ATTRIBUTE_NAME_C, authnResult.getAttributes())
+    this.displayName = Optional.ofNullable(
+      AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_DISPLAY_NAME, authnResult.getAttributes()))
       .map(AttributeUtils::getAttributeStringValue)
-      .orElse(null);    
+      .orElse(null);
+    this.prid = Optional.ofNullable(
+      AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_PRID, authnResult.getAttributes()))
+      .map(AttributeUtils::getAttributeStringValue)
+      .orElse(null);
+    this.country = Optional.ofNullable(
+      AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_C, authnResult.getAttributes()))
+      .map(AttributeUtils::getAttributeStringValue)
+      .orElse(null);
     this.authnContextUri = authnResult.getAuthnContextClassUri();
   }
 
   /**
    * Given the list of attributes, this method checks if they match this object.
-   * 
+   *
    * @param attributes
    *          attributes
    * @return {@code true} if we have a match for identities, and {@code false} otherwise
    */
   public boolean isIdentityMatch(final List<Attribute> attributes) {
-    for (Attribute a : attributes) {
+    for (final Attribute a : attributes) {
       if (this.personalIdentityNumber != null && AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER.equals(a.getName())) {
         return this.personalIdentityNumber.equals(AttributeUtils.getAttributeStringValue(a));
       }

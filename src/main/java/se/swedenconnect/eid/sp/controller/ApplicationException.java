@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import org.springframework.util.Assert;
 
 /**
  * Exception class for errors during processing. Holds a message code for the error UI.
- * 
- * @author Martin Lindström (martin.lindstrom@idsec.se)
+ *
+ * @author Martin Lindström (martin@idsec.se)
  */
 public class ApplicationException extends Exception {
 
@@ -28,48 +28,48 @@ public class ApplicationException extends Exception {
   private static final long serialVersionUID = 5950708628760407672L;
 
   /** The message code. */
-  private String messageCode;
+  private final String messageCode;
 
   /**
    * Constructor assigning the message code for the error.
-   * 
+   *
    * @param messageCode
    *          the message code
    */
-  public ApplicationException(String messageCode) {
+  public ApplicationException(final String messageCode) {
     Assert.hasText(messageCode, "messageCode must not be null or empty");
     this.messageCode = messageCode;
   }
 
   /**
    * Constructor assigning the message code and the message text for the error.
-   * 
+   *
    * @param messageCode
    *          the message code
    * @param message
    *          the error message
    */
-  public ApplicationException(String messageCode, String message) {
+  public ApplicationException(final String messageCode, final String message) {
     super(message);
     this.messageCode = messageCode;
   }
 
   /**
    * Constructor assigning the message code and the cause of the error.
-   * 
+   *
    * @param messageCode
    *          the message code
    * @param cause
    *          the cause of the error
    */
-  public ApplicationException(String messageCode, Throwable cause) {
+  public ApplicationException(final String messageCode, final Throwable cause) {
     super(cause.getMessage(), cause);
     this.messageCode = messageCode;
   }
 
   /**
    * Constructor assigning the message code, the message text and the cause of the error.
-   * 
+   *
    * @param messageCode
    *          the message code
    * @param message
@@ -77,14 +77,14 @@ public class ApplicationException extends Exception {
    * @param cause
    *          the cause of the error
    */
-  public ApplicationException(String messageCode, String message, Throwable cause) {
+  public ApplicationException(final String messageCode, final String message, final Throwable cause) {
     super(message, cause);
     this.messageCode = messageCode;
   }
 
   /**
    * Returns the message code.
-   * 
+   *
    * @return the message code
    */
   public String getMessageCode() {

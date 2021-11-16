@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,28 +28,28 @@ import se.swedenconnect.eid.sp.config.UiLanguage;
 
 /**
  * Base controller.
- * 
- * @author Martin Lindström (martin.lindstrom@idsec.se)
+ *
+ * @author Martin Lindström (martin@idsec.se)
  */
 public class BaseController {
 
   /** Possible languages for the UI. */
   @Autowired
   protected List<UiLanguage> languages;
-    
+
   /**
    * Updates the MVC model with common attributes such as possible languages.
-   * 
+   *
    * @param model
    *          the model
    */
   @ModelAttribute
-  public void updateModel(Model model) {
-    Locale locale = LocaleContextHolder.getLocale();
+  public void updateModel(final Model model) {
+    final Locale locale = LocaleContextHolder.getLocale();
 
     model.addAttribute("languages", this.languages.stream()
       .filter(lang -> !lang.getLanguageTag().equals(locale.getLanguage()))
       .collect(Collectors.toList()));
   }
-    
+
 }
