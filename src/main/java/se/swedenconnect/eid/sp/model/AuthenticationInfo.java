@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import lombok.ToString;
 /**
  * Model class for the information to display about an authentication.
  * 
- * @author Martin Lindström (martin.lindstrom@idsec.se)
+ * @author Martin Lindström (martin@idsec.se)
  */
 @ToString
 public class AuthenticationInfo {

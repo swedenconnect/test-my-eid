@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ import org.opensaml.xmlsec.impl.BasicEncryptionConfiguration;
 import org.springframework.util.StringUtils;
 
 import lombok.extern.slf4j.Slf4j;
-import se.litsec.swedisheid.opensaml.xmlsec.config.SwedishEidSecurityConfiguration;
 import se.swedenconnect.eid.sp.config.AlgorithmConfiguration;
+import se.swedenconnect.opensaml.sweid.xmlsec.config.SwedishEidSecurityConfiguration;
 
 /**
  * Security configuration class for initialization of algorithm support.
@@ -51,7 +51,7 @@ public class CustomSwedishEidSecurityConfiguration extends SwedishEidSecurityCon
    * @param algorithmConfiguration
    *          customized algorithm configuration
    */
-  public CustomSwedishEidSecurityConfiguration(AlgorithmConfiguration algorithmConfiguration) {
+  public CustomSwedishEidSecurityConfiguration(final AlgorithmConfiguration algorithmConfiguration) {
     this.algorithmConfiguration = algorithmConfiguration;
   }
   
@@ -121,18 +121,18 @@ public class CustomSwedishEidSecurityConfiguration extends SwedishEidSecurityCon
       Predicate<String> isNotRsa15 = alg -> !EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSA15.equals(alg);
       
       if (this.algorithmConfiguration.getBlacklistRsa15().booleanValue()) {
-        config.setWhitelistedAlgorithms(config.getWhitelistedAlgorithms().stream()
+        config.setIncludedAlgorithms(config.getIncludedAlgorithms().stream()
           .filter(isNotRsa15)
           .collect(Collectors.toList()));
         
-        if (!config.getBlacklistedAlgorithms().contains(EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSA15)) {
-          List<String> bl = new ArrayList<>(config.getBlacklistedAlgorithms());
+        if (!config.getExcludedAlgorithms().contains(EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSA15)) {
+          List<String> bl = new ArrayList<>(config.getExcludedAlgorithms());
           bl.add(EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSA15);
-          config.setBlacklistedAlgorithms(bl);
+          config.setExcludedAlgorithms(bl);
         }
       }
       else {
-        config.setBlacklistedAlgorithms(config.getBlacklistedAlgorithms().stream()
+        config.setExcludedAlgorithms(config.getExcludedAlgorithms().stream()
           .filter(isNotRsa15)
           .collect(Collectors.toList()));          
       }

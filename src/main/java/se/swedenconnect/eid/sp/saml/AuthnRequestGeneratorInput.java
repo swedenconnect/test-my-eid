@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,14 @@ package se.swedenconnect.eid.sp.saml;
 
 import lombok.Getter;
 import lombok.Setter;
-import se.litsec.opensaml.saml2.common.request.AbstractRequestGeneratorInput;
+import se.swedenconnect.opensaml.saml2.request.AbstractAuthnRequestGeneratorInput;
 
 /**
  * Input for generating {@code AuthnRequest} messages.
  * 
- * @author Martin Lindström (martin.lindstrom@idsec.se)
+ * @author Martin Lindström (martin@idsec.se)
  */
-public class AuthnRequestGeneratorInput extends AbstractRequestGeneratorInput {
+public class AuthnRequestGeneratorInput extends AbstractAuthnRequestGeneratorInput {
   
   @Getter
   @Setter
@@ -53,18 +53,9 @@ public class AuthnRequestGeneratorInput extends AbstractRequestGeneratorInput {
   @Getter
   @Setter
   private String requestedAuthnContextUri;
-
-  /** The IdP entity ID. */
-  private String idpEntityID;
   
-  public AuthnRequestGeneratorInput(String idpEntityID) {
-    this.idpEntityID = idpEntityID;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public String getPeerEntityID() {
-    return this.idpEntityID;
+  public AuthnRequestGeneratorInput(final String idpEntityID) {
+    this.setPeerEntityID(idpEntityID);
   }
 
 }

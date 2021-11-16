@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Configuration class for statically configured IdPs.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @Component
@@ -57,7 +57,7 @@ public class StaticIdpConfiguration {
 
   /**
    * Returns a list of IdP discovery info objects based on their sortOrder property.
-   * 
+   *
    * @return a (possibly empty) list of discovery objects
    */
   public List<StaticIdpDiscoEntry> getIdps() {
@@ -68,25 +68,25 @@ public class StaticIdpConfiguration {
 
   /**
    * Predicate that tells if the given IdP is black-listed and should not be included.
-   * 
+   *
    * @param entityID
    *          the IdP entityID
-   * @return {@code true} if the IdP is black-listed, and {@code false} otherwise
+   * @return true if the IdP is black-listed, and false otherwise
    */
-  public boolean isBlackListed(String entityID) {
+  public boolean isBlackListed(final String entityID) {
     return this.blackList != null ? this.blackList.contains(entityID) : false;
   }
 
   /**
    * Returns the IdP discovery information for the given entityID.
-   * 
+   *
    * @param entityID
    *          the IdP entityID
-   * @return an optional to a {@code StaticIdpDiscoEntry} object
+   * @return an optional to a StaticIdpDiscoEntry object
    */
-  public Optional<StaticIdpDiscoEntry> getIdpDiscoInformation(String entityID) {
+  public Optional<StaticIdpDiscoEntry> getIdpDiscoInformation(final String entityID) {
     Assert.notNull(entityID, "entityID must not be null");
-    return this.idp != null 
+    return this.idp != null
         ? this.idp.values().stream().filter(i -> entityID.equals(i.getEntityId())).findFirst()
         : Optional.empty();
   }
@@ -120,8 +120,8 @@ public class StaticIdpConfiguration {
 
     /**
      * Predicate that tells if the IdP is enabled.
-     * 
-     * @return {@code true} if the IdP is enabled, and {@code false} otherwise
+     *
+     * @return true if the IdP is enabled, and false otherwise
      */
     public boolean isEnabled() {
       return this.enabled != null ? this.enabled.booleanValue() : true;
@@ -129,8 +129,8 @@ public class StaticIdpConfiguration {
 
     /**
      * Predicate that tells whether we should skip discovery entity category matching for the entry.
-     * 
-     * @return {@code true} if matching should be skipped, and {@code false} otherwise
+     *
+     * @return true if matching should be skipped, and false otherwise
      */
     public boolean isSkipEntityCategoryMatching() {
       return this.skipEntityCategoryMatching != null ? this.skipEntityCategoryMatching.booleanValue() : false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,13 +36,13 @@ import com.google.common.base.Objects;
 
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.eid.sp.config.IdpListConfiguration;
-import se.swedenconnect.eid.sp.model.LastAuthentication;
 import se.swedenconnect.eid.sp.model.IdpDiscoveryInformation.IdpModel;
+import se.swedenconnect.eid.sp.model.LastAuthentication;
 
 /**
  * Main controller.
- * 
- * @author Martin Lindström (martin.lindstrom@idsec.se)
+ *
+ * @author Martin Lindström (martin@idsec.se)
  */
 @Controller
 @Slf4j
@@ -56,24 +56,25 @@ public class SpController extends BaseController {
   /** The entityID for the eIDAS connector. */
   @Value("${sp.eidas-connector.entity-id}")
   private String eidasConnectorEntityId;
-  
+
   /** Needed so that we can configure paths. For overloading this app. */
   @Value("${sp.sign-path:/saml2/request/next}")
   protected String signPath;
 
   /**
    * Controller method for the home endpoint.
-   * 
+   *
    * @param device
    *          the type of device
    * @param debug
    *          debug flag
-   * 
+   *
    * @return a model and view object
    */
   @GetMapping
-  public ModelAndView home(Device device, @RequestParam(value = "debug", required = false, defaultValue = "false") Boolean debug) {
-    ModelAndView mav = new ModelAndView("home");
+  public ModelAndView home(final Device device,
+      @RequestParam(value = "debug", required = false, defaultValue = "false") final Boolean debug) {
+    final ModelAndView mav = new ModelAndView("home");
     mav.addObject("debug", debug);
     mav.addObject("idpList", this.idpListConfiguration.getIdps()
       .stream()
@@ -87,21 +88,21 @@ public class SpController extends BaseController {
 
   /**
    * Controller that by-passes the discovery page and goes directly to the eIDAS connector.
-   * 
+   *
    * @param debug
    *          debug flag
    * @return a redirect string to the SAML request endpoint
    */
   @GetMapping("/eidas")
   public ModelAndView eidas(
-      @RequestParam(value = "debug", required = false, defaultValue = "false") Boolean debug) {
+      @RequestParam(value = "debug", required = false, defaultValue = "false") final Boolean debug) {
 
     return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&debug=%s", this.eidasConnectorEntityId, debug));
   }
 
   /**
    * Controller that by-passes the discovery page and goes directly to the eIDAS connector with a pre-selected country.
-   * 
+   *
    * @param country
    *          the two-letter country code for the country to send the request from the connector to
    * @param debug
@@ -110,23 +111,23 @@ public class SpController extends BaseController {
    */
   @GetMapping("/eidas/{country}")
   public ModelAndView eidasCountry(
-      @PathVariable(value = "country", required = true) String country,
-      @RequestParam(value = "debug", required = false, defaultValue = "false") Boolean debug) {
-    
+      @PathVariable(value = "country", required = true) final String country,
+      @RequestParam(value = "debug", required = false, defaultValue = "false") final Boolean debug) {
+
     if ("ping".equalsIgnoreCase(country)) {
-      return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&ping=true&debug=%s", 
+      return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&ping=true&debug=%s",
         this.eidasConnectorEntityId, debug));
     }
     else {
-      return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&country=%s&debug=%s", 
+      return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&country=%s&debug=%s",
         this.eidasConnectorEntityId, country, debug));
     }
   }
-  
+
   /**
    * Controller that by-passes the discovery page and goes directly to the eIDAS connector with a pre-selected country
    * and sends an authentication request for an eIDAS ping authentication request.
-   * 
+   *
    * @param country
    *          the two-letter country code for the country to send the request from the connector to
    * @param debug
@@ -135,16 +136,16 @@ public class SpController extends BaseController {
    */
   @GetMapping("/eidas/ping/{country}")
   public ModelAndView eidasPingCountry(
-      @PathVariable(value = "country", required = true) String country,
-      @RequestParam(value = "debug", required = false, defaultValue = "false") Boolean debug) {
-    
-    return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&ping=true&country=%s&debug=%s", 
+      @PathVariable(value = "country", required = true) final String country,
+      @RequestParam(value = "debug", required = false, defaultValue = "false") final Boolean debug) {
+
+    return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&ping=true&country=%s&debug=%s",
       this.eidasConnectorEntityId, country, debug));
   }
-  
+
   /**
    * Displays the result of an authentication.
-   * 
+   *
    * @param request
    *          the HTTP request
    * @param response
@@ -154,18 +155,18 @@ public class SpController extends BaseController {
    *           for
    */
   @GetMapping("/result")
-  public ModelAndView displayResult(HttpServletRequest request, HttpServletResponse response) {
+  public ModelAndView displayResult(final HttpServletRequest request, final HttpServletResponse response) {
 
-    HttpSession session = request.getSession();
-    ModelAndView mav = (ModelAndView) session.getAttribute("sp-result");
+    final HttpSession session = request.getSession();
+    final ModelAndView mav = (ModelAndView) session.getAttribute("sp-result");
     if (mav == null) {
       log.warn("No session for user, directing to start page [client-ip-address='{}']", request.getRemoteAddr());
       return new ModelAndView("redirect:/");
     }
-    
-    LastAuthentication lastAuthentication = (LastAuthentication) session.getAttribute("last-authentication");
+
+    final LastAuthentication lastAuthentication = (LastAuthentication) session.getAttribute("last-authentication");
     if (lastAuthentication != null) {
-      IdpModel idpModel = this.idpListConfiguration.getIdps().stream()
+      final IdpModel idpModel = this.idpListConfiguration.getIdps().stream()
         .filter(idp -> Objects.equal(idp.getEntityID(), lastAuthentication.getIdp()))
         .map(idp -> idp.getIdpModel(LocaleContextHolder.getLocale()))
         .findFirst()

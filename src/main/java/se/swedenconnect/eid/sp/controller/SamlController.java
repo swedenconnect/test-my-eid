@@ -41,16 +41,6 @@ import org.springframework.web.servlet.ModelAndView;
 
 import lombok.extern.slf4j.Slf4j;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
-import se.litsec.opensaml.saml2.common.request.RequestGenerationException;
-import se.litsec.opensaml.saml2.common.request.RequestHttpObject;
-import se.litsec.opensaml.saml2.common.response.ResponseProcessingException;
-import se.litsec.opensaml.saml2.common.response.ResponseProcessingInput;
-import se.litsec.opensaml.saml2.common.response.ResponseProcessingResult;
-import se.litsec.opensaml.saml2.common.response.ResponseProcessor;
-import se.litsec.opensaml.saml2.common.response.ResponseStatusErrorException;
-import se.litsec.opensaml.saml2.metadata.PeerMetadataResolver;
-import se.litsec.opensaml.saml2.metadata.provider.MetadataProvider;
-import se.litsec.swedisheid.opensaml.saml2.authentication.LevelofAssuranceAuthenticationContextURI;
 import se.swedenconnect.eid.sp.config.EntityID;
 import se.swedenconnect.eid.sp.model.AttributeInfo;
 import se.swedenconnect.eid.sp.model.AttributeInfoRegistry;
@@ -59,10 +49,20 @@ import se.swedenconnect.eid.sp.model.ErrorStatusInfo;
 import se.swedenconnect.eid.sp.model.LastAuthentication;
 import se.swedenconnect.eid.sp.saml.AuthnRequestGenerator;
 import se.swedenconnect.eid.sp.saml.AuthnRequestGeneratorInput;
+import se.swedenconnect.opensaml.saml2.metadata.PeerMetadataResolver;
+import se.swedenconnect.opensaml.saml2.metadata.provider.MetadataProvider;
+import se.swedenconnect.opensaml.saml2.request.RequestGenerationException;
+import se.swedenconnect.opensaml.saml2.request.RequestHttpObject;
+import se.swedenconnect.opensaml.saml2.response.ResponseProcessingException;
+import se.swedenconnect.opensaml.saml2.response.ResponseProcessingInput;
+import se.swedenconnect.opensaml.saml2.response.ResponseProcessingResult;
+import se.swedenconnect.opensaml.saml2.response.ResponseProcessor;
+import se.swedenconnect.opensaml.saml2.response.ResponseStatusErrorException;
+import se.swedenconnect.opensaml.sweid.saml2.authn.LevelOfAssuranceUris;
 
 /**
  * Controller for creating SAML {@code AuthnRequest} messages and for processing SAML responses.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @Controller
@@ -108,7 +108,7 @@ public class SamlController extends BaseController {
 
   /**
    * Builds an {@code AuthnRequest}.
-   * 
+   *
    * @param request
    *          the HTTP request
    * @param response
@@ -124,24 +124,24 @@ public class SamlController extends BaseController {
    *           for errors
    */
   @RequestMapping("/request")
-  public ModelAndView sendRequest(HttpServletRequest request, HttpServletResponse response,
-      @RequestParam("selectedIdp") String selectedIdp,
-      @RequestParam(value = "country", required = false) String country,
-      @RequestParam(value = "ping", required = false, defaultValue = "false") Boolean ping,
-      @RequestParam(value = "debug", required = false, defaultValue = "false") Boolean debug) throws ApplicationException {
+  public ModelAndView sendRequest(final HttpServletRequest request, final HttpServletResponse response,
+      @RequestParam("selectedIdp") final String selectedIdp,
+      @RequestParam(value = "country", required = false) final String country,
+      @RequestParam(value = "ping", required = false, defaultValue = "false") final Boolean ping,
+      @RequestParam(value = "debug", required = false, defaultValue = "false") final Boolean debug) throws ApplicationException {
 
     log.debug("Request for generating an AuthnRequest to '{}' [client-ip-address='{}', debug='{}', country='{}']",
       selectedIdp, request.getRemoteAddr(), debug, country);
 
     try {
-      HttpSession session = request.getSession();
+      final HttpSession session = request.getSession();
 
-      AuthnRequestGeneratorInput input = new AuthnRequestGeneratorInput(selectedIdp);
+      final AuthnRequestGeneratorInput input = new AuthnRequestGeneratorInput(selectedIdp);
       input.setDebug(debug);
       input.setCountry(country);
       input.setPing(ping);
 
-      RequestHttpObject<AuthnRequest> authnRequest = this.spAuthnRequestGenerator.generateRequest(input);
+      final RequestHttpObject<AuthnRequest> authnRequest = this.spAuthnRequestGenerator.generateRequest(input);
 
       // Save the request in the session so that we can use it when verifying the response.
       //
@@ -152,7 +152,7 @@ public class SamlController extends BaseController {
       session.removeAttribute("last-authentication");
 
       if (SAMLConstants.POST_METHOD.equals(authnRequest.getMethod())) {
-        ModelAndView mav = new ModelAndView("post-request");
+        final ModelAndView mav = new ModelAndView("post-request");
         mav.addObject("action", authnRequest.getSendUrl());
         mav.addAllObjects(authnRequest.getRequestParameters());
         return mav;
@@ -161,7 +161,7 @@ public class SamlController extends BaseController {
         return new ModelAndView("redirect:" + authnRequest.getSendUrl());
       }
     }
-    catch (RequestGenerationException e) {
+    catch (final RequestGenerationException e) {
       log.error("Failed to generate AuthnRequest - {}", e.getMessage(), e);
       throw new ApplicationException("sp.msg.error.failed-request", e);
     }
@@ -170,7 +170,7 @@ public class SamlController extends BaseController {
   /**
    * Controller method that is invoked when the user wants to use his or hers eID to "sign", i.e., to send an
    * {@code AuthnRequest} from the Test my eID signature service SP.
-   * 
+   *
    * @param request
    *          the HTTP request
    * @param response
@@ -182,11 +182,11 @@ public class SamlController extends BaseController {
    *           for errors (session errors)
    */
   @RequestMapping("/request/next")
-  public ModelAndView sendNextRequest(HttpServletRequest request, HttpServletResponse response,
-      @RequestParam(value = "debug", required = false, defaultValue = "false") Boolean debug) throws ApplicationException {
+  public ModelAndView sendNextRequest(final HttpServletRequest request, final HttpServletResponse response,
+      @RequestParam(value = "debug", required = false, defaultValue = "false") final Boolean debug) throws ApplicationException {
 
-    HttpSession session = request.getSession();
-    LastAuthentication lastAuthentication = (LastAuthentication) session.getAttribute("last-authentication");
+    final HttpSession session = request.getSession();
+    final LastAuthentication lastAuthentication = (LastAuthentication) session.getAttribute("last-authentication");
     if (lastAuthentication == null) {
       log.error("There is no session information available about the last authentication - cannot sign");
       throw new ApplicationException("sp.msg.error.no-session");
@@ -198,7 +198,7 @@ public class SamlController extends BaseController {
 
   /**
    * Controller method for sending a request to force signature behaviour at the IdP.
-   * 
+   *
    * @param request
    *          the HTTP request
    * @param response
@@ -218,22 +218,22 @@ public class SamlController extends BaseController {
    *           for errors
    */
   @RequestMapping("/request/sign")
-  public ModelAndView sendSignRequest(HttpServletRequest request, HttpServletResponse response,
-      @RequestParam("idp") String idp,
-      @RequestParam(value = "pnr", required = false) String personalIdentityNumber,
-      @RequestParam(value = "prid", required = false) String prid,
-      @RequestParam(value = "givenName", required = false) String givenName,
-      @RequestParam(value = "loa", required = false) String loa,
-      @RequestParam(value = "debug", required = false, defaultValue = "false") Boolean debug) throws ApplicationException {
+  public ModelAndView sendSignRequest(final HttpServletRequest request, final HttpServletResponse response,
+      @RequestParam("idp") final String idp,
+      @RequestParam(value = "pnr", required = false) final String personalIdentityNumber,
+      @RequestParam(value = "prid", required = false) final String prid,
+      @RequestParam(value = "givenName", required = false) final String givenName,
+      @RequestParam(value = "loa", required = false) final String loa,
+      @RequestParam(value = "debug", required = false, defaultValue = "false") final Boolean debug) throws ApplicationException {
 
     log.debug(
       "Request for generating an AuthnRequest for a signature authentication to '{}' [client-ip-address='{}', personal-number='{}', debug='{}']",
       idp, request.getRemoteAddr(), personalIdentityNumber, debug);
 
     try {
-      HttpSession session = request.getSession();
+      final HttpSession session = request.getSession();
 
-      AuthnRequestGeneratorInput input = new AuthnRequestGeneratorInput(idp);
+      final AuthnRequestGeneratorInput input = new AuthnRequestGeneratorInput(idp);
       input.setDebug(debug);
       input.setPersonalIdentityNumberHint(personalIdentityNumber);
       input.setPridHint(prid);
@@ -241,14 +241,14 @@ public class SamlController extends BaseController {
 
       // Load signature message ...
       //
-      String signMessage = givenName != null
+      final String signMessage = givenName != null
           ? this.messageSource.getMessage("sp.msg.sign-message", new Object[] { givenName }, LocaleContextHolder.getLocale())
           : this.messageSource.getMessage("sp.msg.sigm-message-noname", null, LocaleContextHolder.getLocale());
 
       input.setSignMessage(signMessage);
       session.setAttribute("sign-message", signMessage);
 
-      RequestHttpObject<AuthnRequest> authnRequest = this.signSpAuthnRequestGenerator.generateRequest(input);
+      final RequestHttpObject<AuthnRequest> authnRequest = this.signSpAuthnRequestGenerator.generateRequest(input);
 
       // Save the request in the session so that we can use it when verifying the response.
       //
@@ -257,7 +257,7 @@ public class SamlController extends BaseController {
       session.setAttribute("sp-debug", debug);
 
       if (SAMLConstants.POST_METHOD.equals(authnRequest.getMethod())) {
-        ModelAndView mav = new ModelAndView("post-request");
+        final ModelAndView mav = new ModelAndView("post-request");
         mav.addObject("action", authnRequest.getSendUrl());
         mav.addAllObjects(authnRequest.getRequestParameters());
         return mav;
@@ -266,7 +266,7 @@ public class SamlController extends BaseController {
         return new ModelAndView("redirect:" + authnRequest.getSendUrl());
       }
     }
-    catch (RequestGenerationException e) {
+    catch (final RequestGenerationException e) {
       log.error("Failed to generate AuthnRequest for signature - {}", e.getMessage(), e);
       throw new ApplicationException("sp.msg.error.failed-request", e);
     }
@@ -274,7 +274,7 @@ public class SamlController extends BaseController {
 
   /**
    * Endpoint for receiving and processing SAML responses.
-   * 
+   *
    * @param request
    *          the HTTP request
    * @param response
@@ -288,16 +288,16 @@ public class SamlController extends BaseController {
    *           for application errors
    */
   @PostMapping("/post")
-  public ModelAndView processResponse(HttpServletRequest request, HttpServletResponse response,
-      @RequestParam("SAMLResponse") String samlResponse,
-      @RequestParam(value = "RelayState", required = false) String relayState) throws ApplicationException {
+  public ModelAndView processResponse(final HttpServletRequest request, final HttpServletResponse response,
+      @RequestParam("SAMLResponse") final String samlResponse,
+      @RequestParam(value = "RelayState", required = false) final String relayState) throws ApplicationException {
 
     return this.processResponse(request, response, false, samlResponse, relayState);
   }
 
   /**
    * Endpoint for receiving and processing SAML responses for "sign requests".
-   * 
+   *
    * @param request
    *          the HTTP request
    * @param response
@@ -311,16 +311,16 @@ public class SamlController extends BaseController {
    *           for application errors
    */
   @PostMapping("/sign")
-  public ModelAndView processSignResponse(HttpServletRequest request, HttpServletResponse response,
-      @RequestParam("SAMLResponse") String samlResponse,
-      @RequestParam(value = "RelayState", required = false) String relayState) throws ApplicationException {
+  public ModelAndView processSignResponse(final HttpServletRequest request, final HttpServletResponse response,
+      @RequestParam("SAMLResponse") final String samlResponse,
+      @RequestParam(value = "RelayState", required = false) final String relayState) throws ApplicationException {
 
     return this.processResponse(request, response, true, samlResponse, relayState);
   }
 
   /**
    * Support method for processing responses.
-   * 
+   *
    * @param request
    *          the HTTP request
    * @param response
@@ -335,13 +335,13 @@ public class SamlController extends BaseController {
    * @throws ApplicationException
    *           for application errors
    */
-  private ModelAndView processResponse(HttpServletRequest request, HttpServletResponse response, boolean signFlag,
-      String samlResponse, String relayState) throws ApplicationException {
+  private ModelAndView processResponse(final HttpServletRequest request, final HttpServletResponse response, final boolean signFlag,
+      final String samlResponse, final String relayState) throws ApplicationException {
 
     log.debug("Received SAML response [client-ip-address='{}']", request.getRemoteAddr());
 
-    HttpSession session = request.getSession();
-    AuthnRequest authnRequest = (AuthnRequest) session.getAttribute("sp-request");
+    final HttpSession session = request.getSession();
+    final AuthnRequest authnRequest = (AuthnRequest) session.getAttribute("sp-request");
     if (authnRequest == null) {
       log.warn("No session for user [client-ip-address='{}']", request.getRemoteAddr());
       throw new ApplicationException("sp.msg.error.no-session");
@@ -357,23 +357,23 @@ public class SamlController extends BaseController {
     session.removeAttribute("last-authentication");
 
     // If this was a sign request, we get the sign message for display in the viww.
-    String signMessage = signFlag ? (String) session.getAttribute("sign-message") : null;
+    final String signMessage = signFlag ? (String) session.getAttribute("sign-message") : null;
     session.removeAttribute("sign-message");
 
-    PeerMetadataResolver idpMetadataResolver = (entityID) -> {
+    final PeerMetadataResolver idpMetadataResolver = (entityID) -> {
       try {
-        return metadataProvider.getEntityDescriptor(entityID);
+        return this.metadataProvider.getEntityDescriptor(entityID);
       }
-      catch (ResolverException e) {
+      catch (final ResolverException e) {
         log.error("Error getting metadata for '{}'", entityID, e);
         return null;
       }
     };
 
-    ModelAndView mav = new ModelAndView();
+    final ModelAndView mav = new ModelAndView();
 
     try {
-      ResponseProcessingResult result = this.responseProcessor.processSamlResponse(
+      final ResponseProcessingResult result = this.responseProcessor.processSamlResponse(
         samlResponse, relayState, new ResponseProcessingInputImpl(request, authnRequest), idpMetadataResolver, null);
       log.debug("Successfully processed SAML response");
 
@@ -400,13 +400,13 @@ public class SamlController extends BaseController {
       mav.addObject("authenticationInfo", this.createAuthenticationInfo(result));
       mav.addObject("ping", ping);
 
-      Boolean debug = (Boolean) session.getAttribute("sp-debug");
+      final Boolean debug = (Boolean) session.getAttribute("sp-debug");
       mav.addObject("debug", debug != null ? debug : Boolean.FALSE);
     }
-    catch (ResponseStatusErrorException e) {
+    catch (final ResponseStatusErrorException e) {
       log.info("Received non successful status: {}", e.getMessage());
       final Status status = e.getStatus();
-      ErrorStatusInfo errorInfo = new ErrorStatusInfo(status);
+      final ErrorStatusInfo errorInfo = new ErrorStatusInfo(status);
       if (errorInfo.isCancel()) {
         return new ModelAndView("redirect:../");
       }
@@ -415,7 +415,7 @@ public class SamlController extends BaseController {
         mav.addObject("status", errorInfo);
       }
     }
-    catch (ResponseProcessingException e) {
+    catch (final ResponseProcessingException e) {
       log.warn("Error while processing SAML response - {}", e.getMessage(), e);
       throw new ApplicationException("sp.msg.error.response-processing", e);
     }
@@ -426,93 +426,133 @@ public class SamlController extends BaseController {
 
   /**
    * Creates an authentication info model object based on the response result.
-   * 
+   *
    * @param result
    *          the result from the response processing
    * @return the model
    */
   private AuthenticationInfo createAuthenticationInfo(final ResponseProcessingResult result) {
-    AuthenticationInfo authenticationInfo = new AuthenticationInfo();
+    final AuthenticationInfo authenticationInfo = new AuthenticationInfo();
 
     final String loa = result.getAuthnContextClassUri();
     boolean isEidas = false;
 
     authenticationInfo.setLoaUri(loa);
-    LevelofAssuranceAuthenticationContextURI.LoaEnum loaEnum = LevelofAssuranceAuthenticationContextURI.LoaEnum.parse(loa);
-    if (loaEnum != null) {
-      String baseUri = loaEnum.getBaseUri();
-      if (LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_LOA3.equals(baseUri)) {
-        authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa3");
-        authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
+
+    if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_LOA3.equals(loa) ||
+        "http://id.elegnamnden.se/loa/1.0/loa3-sigmessage".equals(loa)) {
+      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa3");
+      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
+    }
+    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_UNCERTIFIED_LOA3.equals(loa) ||
+        "http://id.swedenconnect.se/loa/1.0/uncertified-loa3-sigmessage".equals(loa)) {
+      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa3-uncertified");
+      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
+    }
+    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_LOA3_NONRESIDENT.equals(loa)) {
+      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa3-nonresident");
+      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
+    }
+    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_LOA2.equals(loa) ||
+        "http://id.elegnamnden.se/loa/1.0/loa2-sigmessage".equals(loa)) {
+      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa2");
+      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
+    }
+    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_UNCERTIFIED_LOA2.equals(loa)) {
+      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa2-uncertified");
+      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
+    }
+    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_LOA2_NONRESIDENT.equals(loa)) {
+      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa2-nonresident");
+      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
+    }
+    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_LOA4.equals(loa) ||
+        "http://id.elegnamnden.se/loa/1.0/loa4-sigmessage".equals(loa)) {
+      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa4");
+      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
+    }
+    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_LOA4_NONRESIDENT.equals(loa)) {
+      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa4-nonresident");
+      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
+    }
+    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_LOW.equals(loa)
+        || LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_LOW_NF.equals(loa)
+        || "http://id.elegnamnden.se/loa/1.0/eidas-low-sigm".equals(loa)
+        || "http://id.elegnamnden.se/loa/1.0/eidas-nf-low-sigm".equals(loa)
+        || LevelOfAssuranceUris.AUTHN_CONTEXT_URI_UNCERTIFIED_EIDAS_LOW.equals(loa)) {
+      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa-low");
+      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa-eidas.desc");
+      authenticationInfo.setEidasAssertion(true);
+      isEidas = true;
+
+      if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_LOW_NF.equals(loa)
+          || "http://id.elegnamnden.se/loa/1.0/eidas-nf-low-sigm".equals(loa)) {
+        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-notified");
       }
-      else if (LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_UNCERTIFIED_LOA3.equals(baseUri)) {
-        authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa3-uncertified");
-        authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
-      }
-      else if (LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_EIDAS_LOW.equals(baseUri)) {
-        authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa-low");
-        authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa-eidas.desc");
-        if (loaEnum.isCertified()) {
-          authenticationInfo.setNotifiedInfoMessageCode(
-            loaEnum.isNotified() ? "sp.msg.authn-according-notified" : "sp.msg.authn-according-non-notified");
-        }
-        else {
-          authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-uncertified-eidas");
-        }
-        authenticationInfo.setEidasAssertion(true);
-      }
-      else if (LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_EIDAS_SUBSTANTIAL.equals(baseUri)) {
-        authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa-substantial");
-        authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa-eidas.desc");
-        if (loaEnum.isCertified()) {
-          authenticationInfo.setNotifiedInfoMessageCode(
-            loaEnum.isNotified() ? "sp.msg.authn-according-notified" : "sp.msg.authn-according-non-notified");
-        }
-        else {
-          authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-uncertified-eidas");
-        }
-        authenticationInfo.setEidasAssertion(true);
-      }
-      else if (LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_EIDAS_HIGH.equals(baseUri)) {
-        authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa-high");
-        authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa-eidas.desc");
-        if (loaEnum.isCertified()) {
-          authenticationInfo.setNotifiedInfoMessageCode(
-            loaEnum.isNotified() ? "sp.msg.authn-according-notified" : "sp.msg.authn-according-non-notified");
-        }
-        else {
-          authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-uncertified-eidas");
-        }
-        authenticationInfo.setEidasAssertion(true);
-      }
-      else if (LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_LOA2.equals(baseUri)) {
-        authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa2");
-        authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
-      }
-      else if (LevelofAssuranceAuthenticationContextURI.AUTH_CONTEXT_URI_LOA4.equals(baseUri)) {
-        authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa4");
-        authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
+      else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_LOW.equals(loa)
+          || "http://id.elegnamnden.se/loa/1.0/eidas-nf-low-sigm".equals(loa)) {
+        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-non-notified");
       }
       else {
-        log.error("Uknown LoA: {}", loa);
+        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-uncertified-eidas");
       }
-      isEidas = loaEnum.isEidasUri();
+    }
+    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_SUBSTANTIAL.equals(loa)
+        || LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_SUBSTANTIAL_NF.equals(loa)
+        || "http://id.elegnamnden.se/loa/1.0/eidas-sub-sigm".equals(loa)
+        || "http://id.elegnamnden.se/loa/1.0/eidas-nf-sub-sigm".equals(loa)
+        || LevelOfAssuranceUris.AUTHN_CONTEXT_URI_UNCERTIFIED_EIDAS_SUBSTANTIAL.equals(loa)) {
+      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa-substantial");
+      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa-eidas.desc");
+      authenticationInfo.setEidasAssertion(true);
+      isEidas = true;
+
+      if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_SUBSTANTIAL_NF.equals(loa)
+          || "http://id.elegnamnden.se/loa/1.0/eidas-nf-sub-sigm".equals(loa)) {
+        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-notified");
+      }
+      else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_SUBSTANTIAL.equals(loa)
+          || "http://id.elegnamnden.se/loa/1.0/eidas-nf-sub-sigm".equals(loa)) {
+        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-non-notified");
+      }
+      else {
+        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-uncertified-eidas");
+      }
+    }
+    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_HIGH.equals(loa)
+        || LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_HIGH_NF.equals(loa)
+        || "http://id.elegnamnden.se/loa/1.0/eidas-high-sigm".equals(loa)
+        || "http://id.elegnamnden.se/loa/1.0/eidas-nf-high-sigm".equals(loa)
+        || LevelOfAssuranceUris.AUTHN_CONTEXT_URI_UNCERTIFIED_EIDAS_HIGH.equals(loa)) {
+      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa-high");
+      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa-eidas.desc");
+      authenticationInfo.setEidasAssertion(true);
+      isEidas = true;
+
+      if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_HIGH_NF.equals(loa)
+          || "http://id.elegnamnden.se/loa/1.0/eidas-nf-high-sigm".equals(loa)) {
+        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-notified");
+      }
+      else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_HIGH.equals(loa)
+          || "http://id.elegnamnden.se/loa/1.0/eidas-nf-high-sigm".equals(loa)) {
+        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-non-notified");
+      }
+      else {
+        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-uncertified-eidas");
+      }
+    }
+    else if (AuthnRequestGenerator.EIDAS_PING_LOA.equals(loa)) {
+      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-eidas-test");
+      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-eidas-test.desc");
+      isEidas = true;
     }
     else {
-      if (AuthnRequestGenerator.EIDAS_PING_LOA.equals(loa)) {
-        authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-eidas-test");
-        authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-eidas-test.desc");
-        isEidas = true;
-      }
-      else {
-        log.error("Uknown LoA: {}", loa);
-      }
+      log.error("Uknown LoA: {}", loa);
     }
 
-    List<Attribute> unknownAttributes = new ArrayList<>();
-
-    for (Attribute a : result.getAttributes()) {
-      AttributeInfo ai = this.attributeInfoRegistry.resolve(a, isEidas);
+    final List<Attribute> unknownAttributes = new ArrayList<>();
+    for (final Attribute a : result.getAttributes()) {
+      final AttributeInfo ai = this.attributeInfoRegistry.resolve(a, isEidas);
       if (ai != null) {
         if (!ai.isAdvanced()) {
           authenticationInfo.getAttributes().add(ai);
@@ -541,10 +581,10 @@ public class SamlController extends BaseController {
 
   private static class ResponseProcessingInputImpl implements ResponseProcessingInput {
 
-    private HttpServletRequest httpRequest;
-    private AuthnRequest authnRequest;
+    private final HttpServletRequest httpRequest;
+    private final AuthnRequest authnRequest;
 
-    public ResponseProcessingInputImpl(HttpServletRequest httpRequest, AuthnRequest authnRequest) {
+    public ResponseProcessingInputImpl(final HttpServletRequest httpRequest, final AuthnRequest authnRequest) {
       this.httpRequest = httpRequest;
       this.authnRequest = authnRequest;
     }
@@ -561,7 +601,7 @@ public class SamlController extends BaseController {
 
     @Override
     public String getReceiveURL() {
-      return httpRequest.getRequestURL().toString();
+      return this.httpRequest.getRequestURL().toString();
     }
 
     @Override
@@ -571,7 +611,7 @@ public class SamlController extends BaseController {
 
     @Override
     public String getClientIpAddress() {
-      return httpRequest.getRemoteAddr();
+      return this.httpRequest.getRemoteAddr();
     }
 
   }

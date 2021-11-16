@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
-import se.litsec.opensaml.saml2.metadata.provider.MetadataProvider;
+import se.swedenconnect.opensaml.saml2.metadata.provider.MetadataProvider;
 
 /**
  * Health indicator for the application.

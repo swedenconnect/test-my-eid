@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Sweden Connect
+ * Copyright 2018-2021 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ import org.springframework.util.StringUtils;
 import lombok.Data;
 import lombok.Setter;
 import lombok.ToString;
-import se.litsec.opensaml.saml2.attribute.AttributeUtils;
+import se.swedenconnect.opensaml.saml2.attribute.AttributeUtils;
 
 /**
  * Registry holding information about attributes. This information is used when a listing of received attributes are
  * displayed.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @Component
@@ -46,7 +46,7 @@ public class AttributeInfoRegistry {
 
   /**
    * Resolves the supplied SAML attribute into an attribute info model object.
-   * 
+   *
    * @param attribute
    *          the SAML attribute to resolve
    * @param eidasFlag
@@ -56,18 +56,18 @@ public class AttributeInfoRegistry {
   public AttributeInfo resolve(final Attribute attribute, final boolean eidasFlag) {
     return this.resolve(attribute.getName(), AttributeUtils.getAttributeStringValue(attribute), eidasFlag);
   }
-  
+
   public AttributeInfo resolve(final String attributeName, final String attributeValue, final boolean eidasFlag) {
     for (int i = 0; i < this.attributes.size(); i++) {
       final AttrInfo ai = this.attributes.get(i);
       if (ai.getAttributeName().equals(attributeName)) {
-        AttributeInfo attributeInfo = new AttributeInfo();
+        final AttributeInfo attributeInfo = new AttributeInfo();
         attributeInfo.setAttributeNameCode(ai.getMessageCode(eidasFlag));
         attributeInfo.setAttributeValue(attributeValue);
         attributeInfo.setInfoCode(ai.getDescriptionMessageCode(eidasFlag));
         attributeInfo.setAdvanced(ai.isAdvanced());
         attributeInfo.setSortOrder(i);
-        
+
         return attributeInfo;
       }
     }
@@ -101,24 +101,24 @@ public class AttributeInfoRegistry {
 
     /**
      * Returns the message code for the attribute.
-     * 
+     *
      * @param eidasFlag
      *          is eIDAS used?
      * @return the message code to use for the attribute
      */
-    public String getMessageCode(boolean eidasFlag) {
+    public String getMessageCode(final boolean eidasFlag) {
       return eidasFlag && StringUtils.hasText(this.messageCodeEidas) ? this.messageCodeEidas : this.messageCode;
     }
 
     /**
      * Returns the message code for the description field.
-     * 
+     *
      * @param eidasFlag
      *          is eIDAS used?
      * @return the message code for the description field
      */
-    public String getDescriptionMessageCode(boolean eidasFlag) {
-      return eidasFlag ? this.descriptionMessageCodeEidas : descriptionMessageCode;
+    public String getDescriptionMessageCode(final boolean eidasFlag) {
+      return eidasFlag ? this.descriptionMessageCodeEidas : this.descriptionMessageCode;
     }
   }
 
