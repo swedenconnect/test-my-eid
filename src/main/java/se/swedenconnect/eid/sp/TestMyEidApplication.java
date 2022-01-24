@@ -80,7 +80,7 @@ public class TestMyEidApplication {
     resolver.setCookieMaxAge(31536000);
     return resolver;
   }
-
+  
   /**
    * The supported languages.
    * 

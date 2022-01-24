@@ -19,12 +19,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.ext.saml2mdui.UIInfo;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml.saml2.metadata.SSODescriptor;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
@@ -44,7 +47,7 @@ import se.swedenconnect.opensaml.sweid.saml2.metadata.entitycategory.EntityCateg
  */
 @Configuration
 @Slf4j
-public class MetadataIdpListConfiguration implements IdpListConfiguration {
+public class MetadataIdpListConfiguration implements IdpListConfiguration, InitializingBean {
 
   /** The default time to keep an IdP list in the cache (10 minutes). */
   public static int DEFAULT_CACHE_TIME = 600;
@@ -52,9 +55,14 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration {
   /** The metadata provider from where we get the IdP:s. */
   @Autowired
   private MetadataProvider metadataProvider;
+  
+  /** The SP metadata. */
+  @Autowired 
+  @Qualifier("spMetadata")
+  private EntityDescriptor spMetadata;
 
   /** The SP entity categories. */
-  private final List<String> spEntityCategories;
+  private List<String> spEntityCategories;
 
   /** The time we should keep an IdP list in the cache (in seconds). */
   @Value("${sp.discovery.cache-time:600}")
@@ -68,20 +76,24 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration {
   @Autowired
   private StaticIdpConfiguration staticIdpConfiguration;
 
+  /** Is Holder-of-key active? */
+  @Autowired
+  @Qualifier("hokActive")
+  private Boolean hokActive;
+
   /** The IdP list cache. */
   private List<IdpDiscoveryInformation> cache;
 
   /** The last time the cache was updated. */
   private long lastUpdate = 0;
-
-  /**
-   * Constructor.
-   *
-   * @param spMetadata
-   *          the metadata for our SP
-   */
-  public MetadataIdpListConfiguration(@Autowired final EntityDescriptor spMetadata) {
-    this.spEntityCategories = EntityDescriptorUtils.getEntityCategories(spMetadata);
+  
+  /** {@inheritDoc} */
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    this.spEntityCategories = EntityDescriptorUtils.getEntityCategories(this.spMetadata).stream()
+        // Remove all loa4 entity categories if we don't support HoK
+        .filter(c -> this.hokActive || (!this.hokActive && !c.contains("loa4")))
+        .collect(Collectors.toList());    
   }
 
   /** {@inheritDoc} */
@@ -97,7 +109,7 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration {
     try {
       final List<EntityDescriptor> idps = this.metadataProvider.getIdentityProviders();
       for (final EntityDescriptor idp : idps) {
-
+        
         if (this.staticIdpConfiguration.isBlackListed(idp.getEntityID())) {
           log.debug("IdP '{}' is black-listed in configuration and will be excluded from IdP list", idp.getEntityID());
           continue;

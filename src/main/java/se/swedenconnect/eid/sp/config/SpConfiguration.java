@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2022 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.system.ApplicationTemp;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -54,7 +55,10 @@ import org.w3c.dom.Element;
 
 import lombok.Setter;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
-import se.swedenconnect.eid.sp.saml.AuthnRequestGenerator;
+import se.swedenconnect.eid.sp.saml.TestMyEidAuthnRequestGenerator;
+import se.swedenconnect.eid.sp.utils.ClientCertificateGetter;
+import se.swedenconnect.eid.sp.utils.FromHeaderClientCertificateGetter;
+import se.swedenconnect.eid.sp.utils.FromRequestAttributeClientCertificateGetter;
 import se.swedenconnect.opensaml.saml2.metadata.EntityDescriptorContainer;
 import se.swedenconnect.opensaml.saml2.metadata.build.AssertionConsumerServiceBuilder;
 import se.swedenconnect.opensaml.saml2.metadata.build.EntityAttributesBuilder;
@@ -94,6 +98,26 @@ public class SpConfiguration implements InitializingBean {
   @Setter
   @Value("${sp.debug-base-uri:}")
   private String debugBaseUri;
+
+  /** Base URI for holder of key profile. */
+  @Setter
+  @Value("${sp.hok-base-uri:}")
+  private String hokBaseUri;
+
+  /** Base URI for holder of key profile in debug. */
+  @Setter
+  @Value("${sp.debug-hok-base-uri:}")
+  private String debugHokBaseUri;
+  
+  /** Header name from which we can read the mTls client certificate. */
+  @Setter
+  @Value("${sp.mtls.header-name:SSL_CLIENT_CERT}")
+  private String mtlsHeaderName;
+  
+  /** Attribute name from which we can read the mTls client certificate. */
+  @Setter
+  @Value("${sp.mtls.attribute-name:SSL_CLIENT_CERT}")
+  private String mtlsAttributeName;
 
   @Setter
   @Autowired
@@ -139,21 +163,35 @@ public class SpConfiguration implements InitializingBean {
   public EntityID signSpEntityID() {
     return new EntityID(this.signSpEntityId);
   }
+  
+  @Bean
+  @ConditionalOnProperty(name = "tomcat.ajp.enabled", havingValue = "true")
+  public ClientCertificateGetter attributeBasedClientCertificateGetter() {
+    return new FromRequestAttributeClientCertificateGetter(this.mtlsAttributeName);
+  }
+    
+  @Bean
+  @ConditionalOnProperty(name = "tomcat.ajp.enabled", matchIfMissing = true, havingValue = "false") 
+  public ClientCertificateGetter headerBasedClientCertificateGetter() {
+    return new FromHeaderClientCertificateGetter(this.mtlsHeaderName);
+  }
 
   /**
    * The response processor.
    *
+   * @param metadataProvider
+   *          the metadata provider
    * @return the response processor
    * @throws Exception
    *           for errors
    */
-  @Bean
-  public ResponseProcessor responseProcessor() throws Exception {
+  @Bean(initMethod = "initialize")
+  public ResponseProcessor responseProcessor(final MetadataProvider metadataProvider) throws Exception {
 
     final SwedishEidResponseProcessorImpl responseProcessor = new SwedishEidResponseProcessorImpl();
+    responseProcessor.setMetadataResolver(metadataProvider.getMetadataResolver());
     responseProcessor.setDecrypter(new SAMLObjectDecrypter(this.encryptCredential));
     responseProcessor.setMessageReplayChecker(new InMemoryReplayChecker());
-    responseProcessor.initialize();
     return responseProcessor;
   }
 
@@ -208,6 +246,11 @@ public class SpConfiguration implements InitializingBean {
     return provider;
   }
 
+  @Bean("hokActive")
+  public Boolean hokActive() {
+    return StringUtils.hasText(this.hokBaseUri) || StringUtils.hasText(this.debugHokBaseUri);
+  }
+
   /**
    * Returns the SP metadata.
    *
@@ -226,10 +269,11 @@ public class SpConfiguration implements InitializingBean {
       @Value("${server.port}") final int serverPort) {
 
     final List<AssertionConsumerService> acs = new ArrayList<>();
+    int index = 0;
     acs.add(AssertionConsumerServiceBuilder.builder()
       .binding(SAMLConstants.SAML2_POST_BINDING_URI)
       .location(String.format("%s%s/saml2/post", baseUri, contextPath.equals("/") ? "" : contextPath))
-      .index(0)
+      .index(index++)
       .isDefault(true)
       .build());
 
@@ -237,7 +281,23 @@ public class SpConfiguration implements InitializingBean {
       acs.add(AssertionConsumerServiceBuilder.builder()
         .binding(SAMLConstants.SAML2_POST_BINDING_URI)
         .location(String.format("%s%s/saml2/post", this.debugBaseUri.trim(), contextPath.equals("/") ? "" : contextPath))
-        .index(1)
+        .index(index++)
+        .isDefault(false)
+        .build());
+    }
+    if (StringUtils.hasText(this.hokBaseUri)) {
+      acs.add(AssertionConsumerServiceBuilder.builder()
+        .hokPostBinding()
+        .location(String.format("%s%s/saml2/hok", this.hokBaseUri.trim(), contextPath.equals("/") ? "" : contextPath))
+        .index(index++)
+        .isDefault(false)
+        .build());
+    }
+    if (StringUtils.hasText(this.debugHokBaseUri)) {
+      acs.add(AssertionConsumerServiceBuilder.builder()
+        .hokPostBinding()
+        .location(String.format("%s%s/saml2/hok", this.debugHokBaseUri.trim(), contextPath.equals("/") ? "" : contextPath))
+        .index(index++)
         .isDefault(false)
         .build());
     }
@@ -299,10 +359,11 @@ public class SpConfiguration implements InitializingBean {
       @Value("${server.port}") final int serverPort) {
 
     final List<AssertionConsumerService> acs = new ArrayList<>();
+    int index = 0;
     acs.add(AssertionConsumerServiceBuilder.builder()
       .binding(SAMLConstants.SAML2_POST_BINDING_URI)
       .location(String.format("%s%s/saml2/sign", baseUri, contextPath.equals("/") ? "" : contextPath))
-      .index(0)
+      .index(index++)
       .isDefault(true)
       .build());
 
@@ -310,7 +371,23 @@ public class SpConfiguration implements InitializingBean {
       acs.add(AssertionConsumerServiceBuilder.builder()
         .binding(SAMLConstants.SAML2_POST_BINDING_URI)
         .location(String.format("%s%s/saml2/sign", this.debugBaseUri.trim(), contextPath.equals("/") ? "" : contextPath))
-        .index(1)
+        .index(index++)
+        .isDefault(false)
+        .build());
+    }
+    if (StringUtils.hasText(this.hokBaseUri)) {
+      acs.add(AssertionConsumerServiceBuilder.builder()
+        .hokPostBinding()
+        .location(String.format("%s%s/saml2/signhok", this.hokBaseUri.trim(), contextPath.equals("/") ? "" : contextPath))
+        .index(index++)
+        .isDefault(false)
+        .build());
+    }
+    if (StringUtils.hasText(this.debugHokBaseUri)) {
+      acs.add(AssertionConsumerServiceBuilder.builder()
+        .hokPostBinding()
+        .location(String.format("%s%s/saml2/signhok", this.debugHokBaseUri.trim(), contextPath.equals("/") ? "" : contextPath))
+        .index(index++)
         .isDefault(false)
         .build());
     }
@@ -358,16 +435,26 @@ public class SpConfiguration implements InitializingBean {
     return new EntityDescriptorContainer(signSpMetadata, this.mdSignCredential);
   }
 
-  @Bean("spAuthnRequestGenerator")
-  public AuthnRequestGenerator spAuthnRequestGenerator(@Qualifier("spEntityID") final EntityID entityID,
-      @Qualifier("spMetadata") final EntityDescriptor metadata) {
-    return new AuthnRequestGenerator(entityID.getEntityID(), metadata);
+  @Bean(name = "spAuthnRequestGenerator", initMethod = "initialize")
+  public TestMyEidAuthnRequestGenerator spAuthnRequestGenerator(
+      @Qualifier("spMetadata") final EntityDescriptor metadata, 
+      @Qualifier("signCredential") final X509Credential signCredential,
+      final MetadataProvider metadataProvider) {
+
+    return new TestMyEidAuthnRequestGenerator(metadata, signCredential, metadataProvider.getMetadataResolver());
   }
 
-  @Bean("signSpAuthnRequestGenerator")
-  public AuthnRequestGenerator signSpAuthnRequestGenerator(@Qualifier("signSpEntityID") final EntityID entityID,
-      @Qualifier("signSpMetadata") final EntityDescriptor metadata) {
-    return new AuthnRequestGenerator(entityID.getEntityID(), metadata);
+  @Bean(name = "signSpAuthnRequestGenerator", initMethod = "initialize")
+  public TestMyEidAuthnRequestGenerator signSpAuthnRequestGenerator(
+      @Qualifier("signSpMetadata") final EntityDescriptor metadata,
+      @Qualifier("signCredential") final X509Credential signCredential,
+      final MetadataProvider metadataProvider,
+      final SignMessageEncrypter signMessageEncrypter) {
+    
+    final TestMyEidAuthnRequestGenerator generator = 
+        new TestMyEidAuthnRequestGenerator(metadata, signCredential, metadataProvider.getMetadataResolver());
+    generator.setSignMessageEncrypter(signMessageEncrypter);    
+    return generator;
   }
 
   @Bean

@@ -21,6 +21,7 @@ import java.util.Optional;
 import org.opensaml.saml.saml2.core.Attribute;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import se.swedenconnect.opensaml.saml2.attribute.AttributeUtils;
 import se.swedenconnect.opensaml.saml2.response.ResponseProcessingResult;
@@ -65,6 +66,10 @@ public class LastAuthentication {
   /** The AuthnContext to request. */
   @Getter
   private final String authnContextUri;
+  
+  @Getter
+  @Setter
+  private boolean hokUsed = false;
 
   /**
    * Constructor.
