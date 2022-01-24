@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2022 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package se.swedenconnect.eid.sp.controller;
 
+import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,17 +42,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import lombok.extern.slf4j.Slf4j;
-import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import se.swedenconnect.eid.sp.config.EntityID;
 import se.swedenconnect.eid.sp.model.AttributeInfo;
 import se.swedenconnect.eid.sp.model.AttributeInfoRegistry;
 import se.swedenconnect.eid.sp.model.AuthenticationInfo;
 import se.swedenconnect.eid.sp.model.ErrorStatusInfo;
 import se.swedenconnect.eid.sp.model.LastAuthentication;
-import se.swedenconnect.eid.sp.saml.AuthnRequestGenerator;
-import se.swedenconnect.eid.sp.saml.AuthnRequestGeneratorInput;
-import se.swedenconnect.opensaml.saml2.metadata.PeerMetadataResolver;
-import se.swedenconnect.opensaml.saml2.metadata.provider.MetadataProvider;
+import se.swedenconnect.eid.sp.saml.HokSupport;
+import se.swedenconnect.eid.sp.saml.TestMyEidAuthnRequestGenerator;
+import se.swedenconnect.eid.sp.saml.TestMyEidAuthnRequestGeneratorContext;
+import se.swedenconnect.eid.sp.utils.ClientCertificateGetter;
+import se.swedenconnect.opensaml.saml2.request.AuthnRequestGeneratorContext.HokRequirement;
 import se.swedenconnect.opensaml.saml2.request.RequestGenerationException;
 import se.swedenconnect.opensaml.saml2.request.RequestHttpObject;
 import se.swedenconnect.opensaml.saml2.response.ResponseProcessingException;
@@ -73,16 +75,21 @@ public class SamlController extends BaseController {
   /** For generating a SAML AuthnRequest message. */
   @Autowired
   @Qualifier("spAuthnRequestGenerator")
-  private AuthnRequestGenerator spAuthnRequestGenerator;
+  private TestMyEidAuthnRequestGenerator spAuthnRequestGenerator;
 
   /** For generating a SAML AuthnRequest message for the signature service. */
   @Autowired
   @Qualifier("signSpAuthnRequestGenerator")
-  private AuthnRequestGenerator signSpAuthnRequestGenerator;
+  private TestMyEidAuthnRequestGenerator signSpAuthnRequestGenerator;
 
   /** For processing SAML responses. */
   @Autowired
   private ResponseProcessor responseProcessor;
+
+  /** Is Holder-of-key active? */
+  @Autowired
+  @Qualifier("hokActive")
+  private Boolean hokActive;
 
   /** The SP entity ID. */
   @Autowired
@@ -94,10 +101,6 @@ public class SamlController extends BaseController {
   @Qualifier("signSpEntityID")
   private EntityID signSpEntityID;
 
-  /** The federation metadata provider. */
-  @Autowired
-  private MetadataProvider metadataProvider;
-
   /** For displaying of SAML attributes. */
   @Autowired
   private AttributeInfoRegistry attributeInfoRegistry;
@@ -105,6 +108,10 @@ public class SamlController extends BaseController {
   /** Holds localized messages. */
   @Autowired
   private MessageSource messageSource;
+
+  /** Gets the client TLS certificate (if available). */
+  @Autowired
+  private ClientCertificateGetter clientCertificateGetter;
 
   /**
    * Builds an {@code AuthnRequest}.
@@ -128,20 +135,42 @@ public class SamlController extends BaseController {
       @RequestParam("selectedIdp") final String selectedIdp,
       @RequestParam(value = "country", required = false) final String country,
       @RequestParam(value = "ping", required = false, defaultValue = "false") final Boolean ping,
-      @RequestParam(value = "debug", required = false, defaultValue = "false") final Boolean debug) throws ApplicationException {
+      @RequestParam(value = "debug", required = false, defaultValue = "false") final Boolean debug,
+      @RequestParam(value = "useHok", required = false) final Boolean useHok) throws ApplicationException {
 
     log.debug("Request for generating an AuthnRequest to '{}' [client-ip-address='{}', debug='{}', country='{}']",
       selectedIdp, request.getRemoteAddr(), debug, country);
+    
+    // Special handling for LoA 4 and Holder-of-key
+    //
+    HokRequirement hokRequirement = HokRequirement.DONT_USE;
+    if (useHok == null && this.hokActive && (country == null || ping)) {
+      final HokSupport hokSupport = this.spAuthnRequestGenerator.getIdpHokSupport(selectedIdp);
+      if (HokSupport.BOTH.equals(hokSupport)) {
+        // Ask whether to use HoK or not ...
+        final ModelAndView mav = new ModelAndView("ask-hok");
+        mav.addObject("selectedIdp", selectedIdp);
+        mav.addObject("debug", debug);
+        return mav;
+      }
+      else if (HokSupport.ONLY_HOK.equals(hokSupport)) {
+        hokRequirement = HokRequirement.REQUIRED;
+      }
+    }
+    else if (useHok != null) {
+      hokRequirement = useHok ? HokRequirement.REQUIRED : HokRequirement.DONT_USE;
+    }
 
     try {
       final HttpSession session = request.getSession();
 
-      final AuthnRequestGeneratorInput input = new AuthnRequestGeneratorInput(selectedIdp);
+      final TestMyEidAuthnRequestGeneratorContext input = new TestMyEidAuthnRequestGeneratorContext(hokRequirement);       
       input.setDebug(debug);
       input.setCountry(country);
       input.setPing(ping);
 
-      final RequestHttpObject<AuthnRequest> authnRequest = this.spAuthnRequestGenerator.generateRequest(input);
+      final RequestHttpObject<AuthnRequest> authnRequest = 
+          this.spAuthnRequestGenerator.generateAuthnRequest(selectedIdp, null, input);
 
       // Save the request in the session so that we can use it when verifying the response.
       //
@@ -193,7 +222,7 @@ public class SamlController extends BaseController {
     }
     return this.sendSignRequest(request, response, lastAuthentication.getIdp(),
       lastAuthentication.getPersonalIdentityNumber(), lastAuthentication.getPrid(), lastAuthentication.getGivenName(),
-      lastAuthentication.getAuthnContextUri(), debug);
+      lastAuthentication.getAuthnContextUri(), debug, lastAuthentication.isHokUsed());
   }
 
   /**
@@ -224,7 +253,8 @@ public class SamlController extends BaseController {
       @RequestParam(value = "prid", required = false) final String prid,
       @RequestParam(value = "givenName", required = false) final String givenName,
       @RequestParam(value = "loa", required = false) final String loa,
-      @RequestParam(value = "debug", required = false, defaultValue = "false") final Boolean debug) throws ApplicationException {
+      @RequestParam(value = "debug", required = false, defaultValue = "false") final Boolean debug,
+      @RequestParam(value = "hok", required = false, defaultValue = "false") final Boolean hokUsed) throws ApplicationException {
 
     log.debug(
       "Request for generating an AuthnRequest for a signature authentication to '{}' [client-ip-address='{}', personal-number='{}', debug='{}']",
@@ -233,11 +263,12 @@ public class SamlController extends BaseController {
     try {
       final HttpSession session = request.getSession();
 
-      final AuthnRequestGeneratorInput input = new AuthnRequestGeneratorInput(idp);
+      final TestMyEidAuthnRequestGeneratorContext input = new TestMyEidAuthnRequestGeneratorContext(
+        hokUsed ? HokRequirement.REQUIRED : HokRequirement.DONT_USE);
       input.setDebug(debug);
       input.setPersonalIdentityNumberHint(personalIdentityNumber);
       input.setPridHint(prid);
-      input.setRequestedAuthnContextUri(loa);
+      input.setRequestedAuthnContextUris(Arrays.asList(loa));
 
       // Load signature message ...
       //
@@ -248,7 +279,8 @@ public class SamlController extends BaseController {
       input.setSignMessage(signMessage);
       session.setAttribute("sign-message", signMessage);
 
-      final RequestHttpObject<AuthnRequest> authnRequest = this.signSpAuthnRequestGenerator.generateRequest(input);
+      final RequestHttpObject<AuthnRequest> authnRequest = 
+          this.signSpAuthnRequestGenerator.generateAuthnRequest(idp, null, input);
 
       // Save the request in the session so that we can use it when verifying the response.
       //
@@ -292,7 +324,18 @@ public class SamlController extends BaseController {
       @RequestParam("SAMLResponse") final String samlResponse,
       @RequestParam(value = "RelayState", required = false) final String relayState) throws ApplicationException {
 
-    return this.processResponse(request, response, false, samlResponse, relayState);
+    return this.processResponse(request, response, false, false, samlResponse, relayState);
+  }
+
+  @PostMapping("/hok")
+  public ModelAndView processHokResponse(final HttpServletRequest request, final HttpServletResponse response,
+      @RequestParam("SAMLResponse") final String samlResponse,
+      @RequestParam(value = "RelayState", required = false) final String relayState) throws ApplicationException {
+
+    if (!hokActive) {
+      throw new ApplicationException("sp.msg.error.no-hok");
+    }
+    return this.processResponse(request, response, false, true, samlResponse, relayState);
   }
 
   /**
@@ -315,7 +358,19 @@ public class SamlController extends BaseController {
       @RequestParam("SAMLResponse") final String samlResponse,
       @RequestParam(value = "RelayState", required = false) final String relayState) throws ApplicationException {
 
-    return this.processResponse(request, response, true, samlResponse, relayState);
+    return this.processResponse(request, response, true, false, samlResponse, relayState);
+  }
+
+  @PostMapping("/signhok")
+  public ModelAndView processHokSignResponse(final HttpServletRequest request, final HttpServletResponse response,
+      @RequestParam("SAMLResponse") final String samlResponse,
+      @RequestParam(value = "RelayState", required = false) final String relayState) throws ApplicationException {
+
+    if (!hokActive) {
+      throw new ApplicationException("sp.msg.error.no-hok");
+    }
+
+    return this.processResponse(request, response, true, true, samlResponse, relayState);
   }
 
   /**
@@ -327,6 +382,8 @@ public class SamlController extends BaseController {
    *          the HTTP response
    * @param signFlag
    *          indicates whether this is a response for a "sign" AuthnRequest or a plain one
+   * @param hokFlag
+   *          indicates whether the response was received on a holder-of-key endpoint
    * @param samlResponse
    *          the base64-encoded SAML response
    * @param relayState
@@ -335,7 +392,8 @@ public class SamlController extends BaseController {
    * @throws ApplicationException
    *           for application errors
    */
-  private ModelAndView processResponse(final HttpServletRequest request, final HttpServletResponse response, final boolean signFlag,
+  private ModelAndView processResponse(final HttpServletRequest request, final HttpServletResponse response, 
+      final boolean signFlag, final boolean hokFlag,
       final String samlResponse, final String relayState) throws ApplicationException {
 
     log.debug("Received SAML response [client-ip-address='{}']", request.getRemoteAddr());
@@ -360,21 +418,13 @@ public class SamlController extends BaseController {
     final String signMessage = signFlag ? (String) session.getAttribute("sign-message") : null;
     session.removeAttribute("sign-message");
 
-    final PeerMetadataResolver idpMetadataResolver = (entityID) -> {
-      try {
-        return this.metadataProvider.getEntityDescriptor(entityID);
-      }
-      catch (final ResolverException e) {
-        log.error("Error getting metadata for '{}'", entityID, e);
-        return null;
-      }
-    };
-
     final ModelAndView mav = new ModelAndView();
+    
+    final X509Certificate clientCertificate = hokFlag ? this.clientCertificateGetter.getClientCertificate(request) : null; 
 
     try {
       final ResponseProcessingResult result = this.responseProcessor.processSamlResponse(
-        samlResponse, relayState, new ResponseProcessingInputImpl(request, authnRequest), idpMetadataResolver, null);
+        samlResponse, relayState, new ResponseProcessingInputImpl(request, authnRequest, clientCertificate), null);
       log.debug("Successfully processed SAML response");
 
       if (signFlag && previousAuthentication != null) {
@@ -394,7 +444,9 @@ public class SamlController extends BaseController {
 
         if (!ping) {
           mav.addObject("path-sign", "/saml2/request/next");
-          session.setAttribute("last-authentication", new LastAuthentication(result));
+          final LastAuthentication lastAuthn = new LastAuthentication(result);
+          lastAuthn.setHokUsed(hokFlag);
+          session.setAttribute("last-authentication", lastAuthn);
         }
       }
       mav.addObject("authenticationInfo", this.createAuthenticationInfo(result));
@@ -541,7 +593,7 @@ public class SamlController extends BaseController {
         authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-uncertified-eidas");
       }
     }
-    else if (AuthnRequestGenerator.EIDAS_PING_LOA.equals(loa)) {
+    else if (TestMyEidAuthnRequestGeneratorContext.EIDAS_PING_LOA.equals(loa)) {
       authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-eidas-test");
       authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-eidas-test.desc");
       isEidas = true;
@@ -583,19 +635,22 @@ public class SamlController extends BaseController {
 
     private final HttpServletRequest httpRequest;
     private final AuthnRequest authnRequest;
+    private final X509Certificate clientCertificate;
 
-    public ResponseProcessingInputImpl(final HttpServletRequest httpRequest, final AuthnRequest authnRequest) {
+    public ResponseProcessingInputImpl(final HttpServletRequest httpRequest, 
+        final AuthnRequest authnRequest, final X509Certificate clientCertificate) {
       this.httpRequest = httpRequest;
       this.authnRequest = authnRequest;
+      this.clientCertificate = clientCertificate;
     }
 
     @Override
-    public AuthnRequest getAuthnRequest() {
+    public AuthnRequest getAuthnRequest(final String id) {
       return this.authnRequest;
     }
 
     @Override
-    public String getRelayState() {
+    public String getRequestRelayState(final String id) {
       return null;
     }
 
@@ -612,6 +667,11 @@ public class SamlController extends BaseController {
     @Override
     public String getClientIpAddress() {
       return this.httpRequest.getRemoteAddr();
+    }
+
+    @Override
+    public X509Certificate getClientCertificate() {
+      return this.clientCertificate;
     }
 
   }
