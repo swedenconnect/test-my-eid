@@ -19,6 +19,7 @@ import java.io.File;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.http.conn.ssl.DefaultHostnameVerifier;
@@ -66,6 +67,7 @@ import se.swedenconnect.opensaml.saml2.metadata.build.EntityDescriptorBuilder;
 import se.swedenconnect.opensaml.saml2.metadata.build.ExtensionsBuilder;
 import se.swedenconnect.opensaml.saml2.metadata.build.KeyDescriptorBuilder;
 import se.swedenconnect.opensaml.saml2.metadata.build.SPSSODescriptorBuilder;
+import se.swedenconnect.opensaml.saml2.metadata.provider.CompositeMetadataProvider;
 import se.swedenconnect.opensaml.saml2.metadata.provider.HTTPMetadataProvider;
 import se.swedenconnect.opensaml.saml2.metadata.provider.MetadataProvider;
 import se.swedenconnect.opensaml.saml2.metadata.provider.StaticMetadataProvider;
@@ -116,7 +118,7 @@ public class SpConfiguration implements InitializingBean {
   
   /** Attribute name from which we can read the mTls client certificate. */
   @Setter
-  @Value("${sp.mtls.attribute-name:SSL_CLIENT_CERT}")
+  @Value("${sp.mtls.attribute-name:javax.servlet.request.X509Certificate}")
   private String mtlsAttributeName;
 
   @Setter
@@ -164,16 +166,23 @@ public class SpConfiguration implements InitializingBean {
     return new EntityID(this.signSpEntityId);
   }
   
-  @Bean
+  @Bean  
   @ConditionalOnProperty(name = "tomcat.ajp.enabled", havingValue = "true")
   public ClientCertificateGetter attributeBasedClientCertificateGetter() {
     return new FromRequestAttributeClientCertificateGetter(this.mtlsAttributeName);
   }
     
   @Bean
+  @Profile("!local")
   @ConditionalOnProperty(name = "tomcat.ajp.enabled", matchIfMissing = true, havingValue = "false") 
   public ClientCertificateGetter headerBasedClientCertificateGetter() {
     return new FromHeaderClientCertificateGetter(this.mtlsHeaderName);
+  }
+  
+  @Bean  
+  @Profile("local")
+  public ClientCertificateGetter attributeBasedClientCertificateGetter2() {
+    return new FromRequestAttributeClientCertificateGetter(this.mtlsAttributeName);
   }
 
   /**
@@ -206,7 +215,7 @@ public class SpConfiguration implements InitializingBean {
    * @throws Exception
    *           for init errors
    */
-  @Bean
+  @Bean(initMethod = "initialize")
   @Profile("!local")
   public MetadataProvider metadataProvider(
       @Value("${sp.federation.metadata.url}") final String federationMetadataUrl,
@@ -220,7 +229,6 @@ public class SpConfiguration implements InitializingBean {
       HTTPMetadataProvider.createDefaultHttpClient(null /* trust all */, new DefaultHostnameVerifier()));
     provider.setPerformSchemaValidation(false);
     provider.setSignatureVerificationCertificate(cert);
-    provider.initialize();
     return provider;
   }
 
@@ -233,17 +241,26 @@ public class SpConfiguration implements InitializingBean {
    * @throws Exception
    *           for init errors
    */
-  @Bean
+  @Bean(initMethod = "initialize")
   @Profile("local")
   public MetadataProvider localMetadataProvider(
-      @Value("${sp.federation.metadata.url}") final Resource metadataResource) throws Exception {
+      @Value("${sp.federation.metadata.url}") final Resource metadataResource,
+      @Qualifier("spMetadata") final EntityDescriptor spMetadata,
+      @Qualifier("signSpMetadata") final EntityDescriptor signSpMetadata) throws Exception {
 
     final Element element = XMLObjectProviderRegistrySupport.getParserPool()
       .parse(metadataResource.getInputStream()).getDocumentElement();
     final StaticMetadataProvider provider = new StaticMetadataProvider(element);
-    provider.setPerformSchemaValidation(false);
-    provider.initialize();
-    return provider;
+    
+    final StaticMetadataProvider provider2 = new StaticMetadataProvider(spMetadata);
+    provider2.setID("spMetadata");
+    
+    final StaticMetadataProvider provider3 = new StaticMetadataProvider(signSpMetadata);
+    provider3.setID("signSpMetadata");
+    
+    final CompositeMetadataProvider cp = new CompositeMetadataProvider("localMetadata", Arrays.asList(
+      provider, provider2, provider3));
+    return cp;
   }
 
   @Bean("hokActive")

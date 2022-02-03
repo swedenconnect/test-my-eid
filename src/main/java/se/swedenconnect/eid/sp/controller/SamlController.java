@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -33,6 +34,7 @@ import org.opensaml.saml.saml2.core.AuthnRequest;
 import org.opensaml.saml.saml2.core.Status;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Controller;
@@ -41,6 +43,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.eid.sp.config.EntityID;
 import se.swedenconnect.eid.sp.model.AttributeInfo;
@@ -112,6 +115,18 @@ public class SamlController extends BaseController {
   /** Gets the client TLS certificate (if available). */
   @Autowired
   private ClientCertificateGetter clientCertificateGetter;
+  
+  @Setter
+  @Value("${server.servlet.context-path}") 
+  private String contextPath;
+  
+  @Setter
+  @Value("${sp.base-uri}")
+  private String baseUri;
+  
+  @Setter
+  @Value("${sp.debug-base-uri:}")
+  private String debugBaseUri;
 
   /**
    * Builds an {@code AuthnRequest}.
@@ -399,6 +414,11 @@ public class SamlController extends BaseController {
     log.debug("Received SAML response [client-ip-address='{}']", request.getRemoteAddr());
 
     final HttpSession session = request.getSession();
+    
+    final boolean debug = Optional.ofNullable(session.getAttribute("sp-debug"))
+        .map(Boolean.class::cast)
+        .orElse(false);        
+    
     final AuthnRequest authnRequest = (AuthnRequest) session.getAttribute("sp-request");
     if (authnRequest == null) {
       log.warn("No session for user [client-ip-address='{}']", request.getRemoteAddr());
@@ -451,16 +471,15 @@ public class SamlController extends BaseController {
       }
       mav.addObject("authenticationInfo", this.createAuthenticationInfo(result));
       mav.addObject("ping", ping);
-
-      final Boolean debug = (Boolean) session.getAttribute("sp-debug");
-      mav.addObject("debug", debug != null ? debug : Boolean.FALSE);
+      mav.addObject("debug", debug);
     }
     catch (final ResponseStatusErrorException e) {
       log.info("Received non successful status: {}", e.getMessage());
       final Status status = e.getStatus();
       final ErrorStatusInfo errorInfo = new ErrorStatusInfo(status);
       if (errorInfo.isCancel()) {
-        return new ModelAndView("redirect:../");
+        //return new ModelAndView("redirect:../");
+        return new ModelAndView("redirect:" + this.buildRedirectUrl("/", debug));
       }
       else {
         mav.setViewName("saml-error");
@@ -473,7 +492,13 @@ public class SamlController extends BaseController {
     }
 
     session.setAttribute("sp-result", mav);
-    return new ModelAndView("redirect:../result");
+    //return new ModelAndView("redirect:../result");
+    return new ModelAndView("redirect:" + this.buildRedirectUrl("/result", debug));
+  }
+  
+  private String buildRedirectUrl(final String path, final boolean debug) {
+      return String.format("%s%s%s", 
+        (debug ? this.debugBaseUri : this.baseUri), contextPath.equals("/") ? "" : this.contextPath, path);
   }
 
   /**

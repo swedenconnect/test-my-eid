@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2022 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package se.swedenconnect.eid.sp.controller;
 
 import java.util.Map;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.web.servlet.error.AbstractErrorController;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -39,6 +42,18 @@ import lombok.extern.slf4j.Slf4j;
 @ControllerAdvice
 @Slf4j
 public class ApplicationErrorController extends AbstractErrorController {
+  
+  @Setter
+  @Value("${server.servlet.context-path}") 
+  private String contextPath;
+  
+  @Setter
+  @Value("${sp.base-uri}")
+  private String baseUri;
+  
+  @Setter
+  @Value("${sp.debug-base-uri:}")
+  private String debugBaseUri;  
 
   /**
    * Constructor.
@@ -90,9 +105,18 @@ public class ApplicationErrorController extends AbstractErrorController {
     }
 
     request.getSession().setAttribute("sp-result", mav);
-    return new ModelAndView("redirect:/result");
+    
+    final boolean debug = Optional.ofNullable(request.getSession().getAttribute("sp-debug"))
+        .map(Boolean.class::cast)
+        .orElse(false);
+    
+    final String url = String.format("%s%s/result",
+      (debug ? this.debugBaseUri : this.baseUri), contextPath.equals("/") ? "" : this.contextPath);
+    
+    //return new ModelAndView("redirect:/result");
+    return new ModelAndView("redirect:" + url);
   }
-
+  
   /**
    * Returns the exception from the error attributes.
    *

@@ -51,7 +51,7 @@ public class TomcatWebServerConfiguration implements WebServerFactoryCustomizer<
   /** {@inheritDoc} */
   @Override
   public void customize(final TomcatServletWebServerFactory factory) {
-    
+        
     if (this.tomcatAjpEnabled) {
       Connector ajpConnector = new Connector("AJP/1.3");
       ajpConnector.setPort(this.ajpPort);
@@ -73,6 +73,7 @@ public class TomcatWebServerConfiguration implements WebServerFactoryCustomizer<
 
       factory.addAdditionalTomcatConnectors(ajpConnector);
     }
+        
   }
 
 }

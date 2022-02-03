@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2022 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class SpController extends BaseController {
    * @return a model and view object
    */
   @GetMapping
-  public ModelAndView home(final Device device,
+  public ModelAndView home(final HttpServletRequest request, final Device device,
       @RequestParam(value = "debug", required = false, defaultValue = "false") final Boolean debug) {
     final ModelAndView mav = new ModelAndView("home");
     mav.addObject("debug", debug);
@@ -81,7 +81,7 @@ public class SpController extends BaseController {
       .filter(idp -> device.isNormal() || idp.isMobileUse())
       .map(i -> i.getIdpModel(LocaleContextHolder.getLocale()))
       .collect(Collectors.toList()));
-
+    
     log.trace("Adding IdPs {}", this.idpListConfiguration.getIdps());
     return mav;
   }

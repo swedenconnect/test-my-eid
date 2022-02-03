@@ -147,13 +147,15 @@
     <dependency>
       <groupId>se.swedenconnect.opensaml</groupId>
       <artifactId>opensaml-addons</artifactId>
-      <version>[1.2.2,)</version>
+      <!-- <version>[1.2.2,)</version>--> 
+      <version>1.2.3-SNAPSHOT</version>
     </dependency>
 
     <dependency>
       <groupId>se.swedenconnect.opensaml</groupId>
       <artifactId>opensaml-swedish-eid</artifactId>
-      <version>[1.2.1,)</version>
+      <!-- <version>[1.2.1,)</version> -->
+      <version>1.2.2-SNAPSHOT</version>
     </dependency>
 
     <dependency>
