@@ -19,7 +19,6 @@ import java.io.File;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.http.conn.ssl.DefaultHostnameVerifier;
@@ -67,7 +66,6 @@ import se.swedenconnect.opensaml.saml2.metadata.build.EntityDescriptorBuilder;
 import se.swedenconnect.opensaml.saml2.metadata.build.ExtensionsBuilder;
 import se.swedenconnect.opensaml.saml2.metadata.build.KeyDescriptorBuilder;
 import se.swedenconnect.opensaml.saml2.metadata.build.SPSSODescriptorBuilder;
-import se.swedenconnect.opensaml.saml2.metadata.provider.CompositeMetadataProvider;
 import se.swedenconnect.opensaml.saml2.metadata.provider.HTTPMetadataProvider;
 import se.swedenconnect.opensaml.saml2.metadata.provider.MetadataProvider;
 import se.swedenconnect.opensaml.saml2.metadata.provider.StaticMetadataProvider;
@@ -244,23 +242,11 @@ public class SpConfiguration implements InitializingBean {
   @Bean(initMethod = "initialize")
   @Profile("local")
   public MetadataProvider localMetadataProvider(
-      @Value("${sp.federation.metadata.url}") final Resource metadataResource,
-      @Qualifier("spMetadata") final EntityDescriptor spMetadata,
-      @Qualifier("signSpMetadata") final EntityDescriptor signSpMetadata) throws Exception {
+      @Value("${sp.federation.metadata.url}") final Resource metadataResource) throws Exception {
 
     final Element element = XMLObjectProviderRegistrySupport.getParserPool()
       .parse(metadataResource.getInputStream()).getDocumentElement();
-    final StaticMetadataProvider provider = new StaticMetadataProvider(element);
-    
-    final StaticMetadataProvider provider2 = new StaticMetadataProvider(spMetadata);
-    provider2.setID("spMetadata");
-    
-    final StaticMetadataProvider provider3 = new StaticMetadataProvider(signSpMetadata);
-    provider3.setID("signSpMetadata");
-    
-    final CompositeMetadataProvider cp = new CompositeMetadataProvider("localMetadata", Arrays.asList(
-      provider, provider2, provider3));
-    return cp;
+    return new StaticMetadataProvider(element);
   }
 
   @Bean("hokActive")

@@ -360,4 +360,97 @@
   </Organization>
 </EntityDescriptor>
 
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://integration.phenixid.se/saml/idp/diggconform">
+<md:Extensions>
+<mdattr:EntityAttributes xmlns:mdattr="urn:oasis:names:tc:SAML:metadata:attribute">
+<saml:Attribute xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" Name="urn:oasis:names:tc:SAML:attribute:assurance-certification" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+<saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">http://id.elegnamnden.se/loa/1.0/loa4</saml:AttributeValue>
+<saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">http://id.elegnamnden.se/loa/1.0/loa3</saml:AttributeValue>
+</saml:Attribute>
+<saml:Attribute xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" Name="http://macedir.org/entity-category" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+<saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">http://id.elegnamnden.se/ec/1.0/loa4-pnr</saml:AttributeValue>
+<saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">http://id.elegnamnden.se/ec/1.0/loa4-name</saml:AttributeValue>
+<saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">http://id.elegnamnden.se/ec/1.0/loa4-orgid</saml:AttributeValue>
+<saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">http://id.elegnamnden.se/ec/1.0/loa3-pnr</saml:AttributeValue>
+<saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">http://id.elegnamnden.se/ec/1.0/loa3-name</saml:AttributeValue>
+<saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">http://id.elegnamnden.se/ec/1.0/loa3-orgid</saml:AttributeValue>
+</saml:Attribute>
+</mdattr:EntityAttributes>
+</md:Extensions>
+<md:IDPSSODescriptor WantAuthnRequestsSigned="true" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+<md:Extensions>
+<mdui:UIInfo xmlns:mdui="urn:oasis:names:tc:SAML:metadata:ui">
+<mdui:DisplayName xml:lang="en">PhenixID Labs IdP</mdui:DisplayName>
+<mdui:DisplayName xml:lang="sv">PhenixID Labs IdP</mdui:DisplayName>
+<mdui:Logo height="66" width="76">
+https://www.phenixid.se/wordpress/uploads/2019/11/full_logo-blue.png
+</mdui:Logo>
+<mdui:Description xml:lang="sv">PhenixID Labs IdP</mdui:Description>
+<mdui:Description xml:lang="en">PhenixID Labs IdP</mdui:Description>
+</mdui:UIInfo>
+</md:Extensions>
+<md:KeyDescriptor use="signing">
+<ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+<ds:X509Data>
+<ds:X509Certificate>
+MIIE8DCCAtigAwIBAgIEYcGFPjANBgkqhkiG9w0BAQsFADAWMRQwEgYDVQQDDAtTQU1MIFNJR05F UjAgFw0yMTEyMjEwNzQxNTBaGA8yMDk2MTIyMTA3NDE1MFowFjEUMBIGA1UEAwwLU0FNTCBTSUdO RVIwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQDJFrbZYFg3ymfOGICT6gFbt0sbYKc3 GBy+oWOmkzwYzutPGWNoY7HCIOtLtlutQUz6C0PO4uM5Sbi+u5OdF/f8Xbuo/gYAtGaOpHAyBe1+ VZZRIRnSqowulcSfKrqDC3+jTDF2d7gzt8T30reCgVoe9WmMOt9hUmwfe/uToZ5gB4yW6nlPfRJK heNK3HiL0qVvl2mrQ5aW6dSFIqM+uCLXrX+EbYvAj1qAKgBH3eB9eOyaAjijRqrM6rSk9SVRYL2B 4NbiADJ+FrmQi2XOrvq1Cg5jRBaMmJy3ZXVRiTvsX3+Ej3acYIelekgSSjB/c/bN5pI/TFt8EG7m NR6gNZxF9DkEAESD1yUCFv02rSYeDplsQ/VwdRSdQrr9+7+xMonapRaj735mLTEVD7dqNjDR4RjO aZOGgl2EQ0s4J/SND17HVQV5SzslX63HAFgf/3HSGSBFyh/rGiqB6iijffLIbeBzKuEyKSRvh0zJ OmP+NzXanTvmH7TeWeojJQQEPBCdnu00LX+PsaBHYE3JMP/gdhbdzP9Uy0AJUNO9fxAFQCbxOXy0 lZ014FzdMzal1JzoZEmaXuM8KqYWvSykV7C/naws+tlT2yFM5H+4tFtXZLPzqOO+eiWCPzS+pH/J WwP8S6m+oe8yQORPfwOShYA67j10MByyC7WJTRkKP/mDBQIDAQABo0QwQjALBgNVHQ8EBAMCBPAw MwYDVR0lBCwwKgYIKwYBBQUHAwEGCCsGAQUFBwMCBggrBgEFBQcDAwYKKwYBBAGCNwoDBDANBgkq hkiG9w0BAQsFAAOCAgEASzBTJ8xhEn2bOPQfBrKcDWEjxwguM4CSNfYEFcnOI30EHLkpljfCjk1X Q3UTGgnqwDxH3hvvGzGA7teqiTpMHvO9LpWaPFZXKNKfh/7/TzfxWZdgVJzNN8WnkJ094d0V45XX 9rWwzkyf35+tQXb9tlPsjKDTggKH+KieLoFTSFYvQMyEXizpXV0sZPrEN+TCYwGeXFovscHM2pPK vF5RoZ45alpPY/gSRtWq+l6KP35BkIfeynGU9inCIQqS9y5RUrA39jsrdYLwhkCCkLQeUDYx2av5 zKsm9NR4IWFnOJ+3h5YN51uS23jz8NOKrUjb+e5bzWRXMia5fAKhT80Fghpdv3mXiSC9Ual++B74 GR3GlYFYTTi+rRrxMbdb0SHbiQlcEBX/SMUNGlkkWnuUJwwCJpewD+TqSRayrfKORktyHvI5BEG3 fwfM9D0LkNbsOgZ/xvakSXDlfMT6JFDWqdUmlSLWc79JzKTwslajuga0FI77R+PXqu+zIY+42ulb NmUUwRhcLycg0kLiPrHMwHe7nXPY+OSi4RktZBy7ree82r/NNaxiUle17q4VznmrGNOIKU1I8y6S 5c1yIdlQwHyZaKJru3krq1HHApT+50B32Xbc7YAJ7KoUpoViCdYsY7f8YX3c45JhMCcWuP/OD0N+ GZOgRNDjaIx5JU5z2lU=
+</ds:X509Certificate>
+</ds:X509Data>
+</ds:KeyInfo>
+</md:KeyDescriptor>
+<md:KeyDescriptor use="encryption">
+<ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+<ds:X509Data>
+<ds:X509Certificate>
+MIIE8DCCAtigAwIBAgIEYcGFPjANBgkqhkiG9w0BAQsFADAWMRQwEgYDVQQDDAtTQU1MIFNJR05F UjAgFw0yMTEyMjEwNzQxNTBaGA8yMDk2MTIyMTA3NDE1MFowFjEUMBIGA1UEAwwLU0FNTCBTSUdO RVIwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQDJFrbZYFg3ymfOGICT6gFbt0sbYKc3 GBy+oWOmkzwYzutPGWNoY7HCIOtLtlutQUz6C0PO4uM5Sbi+u5OdF/f8Xbuo/gYAtGaOpHAyBe1+ VZZRIRnSqowulcSfKrqDC3+jTDF2d7gzt8T30reCgVoe9WmMOt9hUmwfe/uToZ5gB4yW6nlPfRJK heNK3HiL0qVvl2mrQ5aW6dSFIqM+uCLXrX+EbYvAj1qAKgBH3eB9eOyaAjijRqrM6rSk9SVRYL2B 4NbiADJ+FrmQi2XOrvq1Cg5jRBaMmJy3ZXVRiTvsX3+Ej3acYIelekgSSjB/c/bN5pI/TFt8EG7m NR6gNZxF9DkEAESD1yUCFv02rSYeDplsQ/VwdRSdQrr9+7+xMonapRaj735mLTEVD7dqNjDR4RjO aZOGgl2EQ0s4J/SND17HVQV5SzslX63HAFgf/3HSGSBFyh/rGiqB6iijffLIbeBzKuEyKSRvh0zJ OmP+NzXanTvmH7TeWeojJQQEPBCdnu00LX+PsaBHYE3JMP/gdhbdzP9Uy0AJUNO9fxAFQCbxOXy0 lZ014FzdMzal1JzoZEmaXuM8KqYWvSykV7C/naws+tlT2yFM5H+4tFtXZLPzqOO+eiWCPzS+pH/J WwP8S6m+oe8yQORPfwOShYA67j10MByyC7WJTRkKP/mDBQIDAQABo0QwQjALBgNVHQ8EBAMCBPAw MwYDVR0lBCwwKgYIKwYBBQUHAwEGCCsGAQUFBwMCBggrBgEFBQcDAwYKKwYBBAGCNwoDBDANBgkq hkiG9w0BAQsFAAOCAgEASzBTJ8xhEn2bOPQfBrKcDWEjxwguM4CSNfYEFcnOI30EHLkpljfCjk1X Q3UTGgnqwDxH3hvvGzGA7teqiTpMHvO9LpWaPFZXKNKfh/7/TzfxWZdgVJzNN8WnkJ094d0V45XX 9rWwzkyf35+tQXb9tlPsjKDTggKH+KieLoFTSFYvQMyEXizpXV0sZPrEN+TCYwGeXFovscHM2pPK vF5RoZ45alpPY/gSRtWq+l6KP35BkIfeynGU9inCIQqS9y5RUrA39jsrdYLwhkCCkLQeUDYx2av5 zKsm9NR4IWFnOJ+3h5YN51uS23jz8NOKrUjb+e5bzWRXMia5fAKhT80Fghpdv3mXiSC9Ual++B74 GR3GlYFYTTi+rRrxMbdb0SHbiQlcEBX/SMUNGlkkWnuUJwwCJpewD+TqSRayrfKORktyHvI5BEG3 fwfM9D0LkNbsOgZ/xvakSXDlfMT6JFDWqdUmlSLWc79JzKTwslajuga0FI77R+PXqu+zIY+42ulb NmUUwRhcLycg0kLiPrHMwHe7nXPY+OSi4RktZBy7ree82r/NNaxiUle17q4VznmrGNOIKU1I8y6S 5c1yIdlQwHyZaKJru3krq1HHApT+50B32Xbc7YAJ7KoUpoViCdYsY7f8YX3c45JhMCcWuP/OD0N+ GZOgRNDjaIx5JU5z2lU=
+</ds:X509Certificate>
+</ds:X509Data>
+</ds:KeyInfo>
+</md:KeyDescriptor>
+<md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://integration.phenixid.se/saml/authenticate/slo"/>
+<md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://integration.phenixid.se/saml/authenticate/slo"/>
+<md:NameIDFormat>
+urn:oasis:names:tc:SAML:2.0:nameid-format:persistent
+</md:NameIDFormat>
+<md:NameIDFormat>
+urn:oasis:names:tc:SAML:2.0:nameid-format:transient
+</md:NameIDFormat>
+<md:SingleSignOnService xmlns:hoksso="urn:oasis:names:tc:SAML:2.0:profiles:holder-of-key:SSO:browser" Binding="urn:oasis:names:tc:SAML:2.0:profiles:holder-of-key:SSO:browser" Location="https://integration.phenixid.se/saml/authenticate/diggconform_loa4" hoksso:ProtocolBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"/>
+<md:SingleSignOnService xmlns:hoksso="urn:oasis:names:tc:SAML:2.0:profiles:holder-of-key:SSO:browser" Binding="urn:oasis:names:tc:SAML:2.0:profiles:holder-of-key:SSO:browser" Location="https://integration.phenixid.se/saml/authenticate/diggconform_loa4" hoksso:ProtocolBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"/>
+<md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://integration.phenixid.se/saml/authenticate/diggconform"/>
+<md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://integration.phenixid.se/saml/authenticate/diggconform"/>
+</md:IDPSSODescriptor>
+<md:Organization>
+<md:OrganizationName xml:lang="en">PhenixID Labs</md:OrganizationName>
+<md:OrganizationName xml:lang="sv">PhenixID Labs</md:OrganizationName>
+<md:OrganizationDisplayName xml:lang="en">PhenixID Labs</md:OrganizationDisplayName>
+<md:OrganizationURL xml:lang="en">https://www.phenixid.se</md:OrganizationURL>
+</md:Organization>
+<md:ContactPerson contactType="administrative">
+<md:GivenName>Anders</md:GivenName>
+<md:SurName>Björk</md:SurName>
+<md:EmailAddress>cust_success@phenixid.se</md:EmailAddress>
+</md:ContactPerson>
+<md:ContactPerson contactType="support">
+<md:GivenName>Anders</md:GivenName>
+<md:SurName>Björk</md:SurName>
+<md:EmailAddress>cust_success@phenixid.se</md:EmailAddress>
+</md:ContactPerson>
+<md:ContactPerson contactType="other">
+<md:GivenName>Anders</md:GivenName>
+<md:SurName>Björk</md:SurName>
+<md:EmailAddress>cust_success@phenixid.se</md:EmailAddress>
+</md:ContactPerson>
+<md:ContactPerson contactType="support">
+<md:GivenName>Anders</md:GivenName>
+<md:SurName>Björk</md:SurName>
+<md:EmailAddress>cust_success@phenixid.se</md:EmailAddress>
+</md:ContactPerson>
+<md:ContactPerson contactType="technical">
+<md:GivenName>Anders</md:GivenName>
+<md:SurName>Björk</md:SurName>
+<md:EmailAddress>cust_success@phenixid.se</md:EmailAddress>
+</md:ContactPerson>
+</md:EntityDescriptor>
+
 </EntitiesDescriptor>

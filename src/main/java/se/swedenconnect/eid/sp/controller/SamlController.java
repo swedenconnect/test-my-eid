@@ -20,7 +20,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -28,10 +30,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.opensaml.saml.common.assertion.ValidationContext;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.Attribute;
 import org.opensaml.saml.saml2.core.AuthnRequest;
 import org.opensaml.saml.saml2.core.Status;
+import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,6 +59,7 @@ import se.swedenconnect.eid.sp.saml.HokSupport;
 import se.swedenconnect.eid.sp.saml.TestMyEidAuthnRequestGenerator;
 import se.swedenconnect.eid.sp.saml.TestMyEidAuthnRequestGeneratorContext;
 import se.swedenconnect.eid.sp.utils.ClientCertificateGetter;
+import se.swedenconnect.opensaml.common.validation.CoreValidatorParameters;
 import se.swedenconnect.opensaml.saml2.request.AuthnRequestGeneratorContext.HokRequirement;
 import se.swedenconnect.opensaml.saml2.request.RequestGenerationException;
 import se.swedenconnect.opensaml.saml2.request.RequestHttpObject;
@@ -103,6 +108,14 @@ public class SamlController extends BaseController {
   @Autowired
   @Qualifier("signSpEntityID")
   private EntityID signSpEntityID;
+  
+  @Autowired
+  @Qualifier("spMetadata") 
+  private EntityDescriptor spMetadata;
+  
+  @Autowired
+  @Qualifier("signSpMetadata") 
+  private EntityDescriptor signSpMetadata;
 
   /** For displaying of SAML attributes. */
   @Autowired
@@ -422,7 +435,7 @@ public class SamlController extends BaseController {
     final AuthnRequest authnRequest = (AuthnRequest) session.getAttribute("sp-request");
     if (authnRequest == null) {
       log.warn("No session for user [client-ip-address='{}']", request.getRemoteAddr());
-      throw new ApplicationException("sp.msg.error.no-session");
+      throw new ApplicationException("sp.msg.error.no-session", "AuthnRequest not found in session");
     }
     Boolean ping = (Boolean) session.getAttribute("ping");
     if (ping == null) {
@@ -440,11 +453,20 @@ public class SamlController extends BaseController {
 
     final ModelAndView mav = new ModelAndView();
     
-    final X509Certificate clientCertificate = hokFlag ? this.clientCertificateGetter.getClientCertificate(request) : null; 
+    final X509Certificate clientCertificate = hokFlag ? this.clientCertificateGetter.getClientCertificate(request) : null;
+    if (hokFlag) {
+      if (clientCertificate == null) {
+        log.info("No client certificate received");
+      }
+      else {
+        log.debug("Received client certificate: {}", clientCertificate);
+      }
+    }
 
     try {
+      final ValidationContext validationContext = this.buildValidationContext(signMessage != null);
       final ResponseProcessingResult result = this.responseProcessor.processSamlResponse(
-        samlResponse, relayState, new ResponseProcessingInputImpl(request, authnRequest, clientCertificate), null);
+        samlResponse, relayState, new ResponseProcessingInputImpl(request, authnRequest, clientCertificate), validationContext);
       log.debug("Successfully processed SAML response");
 
       if (signFlag && previousAuthentication != null) {
@@ -499,6 +521,13 @@ public class SamlController extends BaseController {
   private String buildRedirectUrl(final String path, final boolean debug) {
       return String.format("%s%s%s", 
         (debug ? this.debugBaseUri : this.baseUri), contextPath.equals("/") ? "" : this.contextPath, path);
+  }
+  
+  private ValidationContext buildValidationContext(final boolean signSp) {
+    Map<String, Object> pars = new HashMap<>();
+    pars.put(CoreValidatorParameters.SP_METADATA, signSp ? this.signSpMetadata : this.spMetadata);
+    final ValidationContext ctx = new ValidationContext(pars);    
+    return ctx;
   }
 
   /**
