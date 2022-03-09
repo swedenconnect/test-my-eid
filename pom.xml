@@ -15,7 +15,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.5.6</version>
+    <version>2.6.4</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
   
@@ -47,6 +47,8 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <java.version>11</java.version>
     <docker.image.prefix>docker.eidastest.se:5000</docker.image.prefix>
+    
+    <opensaml.version>4.1.1</opensaml.version>
   </properties>
   
   <repositories>
@@ -83,7 +85,29 @@
       <id>eidasrl</id>
       <url>https://maven.eidastest.se/artifactory/eidas-release-local</url>
     </repository>
-  </distributionManagement>  
+  </distributionManagement>
+  
+  <dependencyManagement>
+  
+    <dependencies>
+    
+      <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcprov-jdk15on</artifactId>
+        <version>1.70</version>
+      </dependency>    
+    
+      <dependency>
+        <groupId>org.opensaml</groupId>
+        <artifactId>opensaml-bom</artifactId>
+        <version>${opensaml.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    
+    </dependencies>
+  </dependencyManagement>
+  
 
   <dependencies>
 
@@ -129,33 +153,36 @@
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcprov-jdk15on</artifactId>
-      <version>[1.69,)</version>
-    </dependency>    
-            
+    </dependency>
+                
     <dependency>
       <groupId>se.swedenconnect.security</groupId>
       <artifactId>credentials-support</artifactId>
-      <version>[1.1.0,)</version>
+      <version>1.2.0</version>
     </dependency>
     
     <dependency>
       <groupId>se.swedenconnect.opensaml</groupId>
       <artifactId>opensaml-security-ext</artifactId>
-      <version>[3.1.0,)</version>
+      <version>3.1.0</version>
     </dependency>
 
     <dependency>
       <groupId>se.swedenconnect.opensaml</groupId>
       <artifactId>opensaml-addons</artifactId>
-      <!-- <version>[1.2.2,)</version>--> 
-      <version>1.2.3-SNAPSHOT</version>
+      <version>1.2.3</version>
     </dependency>
 
     <dependency>
       <groupId>se.swedenconnect.opensaml</groupId>
       <artifactId>opensaml-swedish-eid</artifactId>
-      <!-- <version>[1.2.1,)</version> -->
-      <version>1.2.2-SNAPSHOT</version>
+      <version>1.2.2</version>
+      <exclusions>
+        <exclusion>
+          <groupId>se.swedenconnect.opensaml</groupId>
+          <artifactId>opensaml-addons</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -231,7 +258,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.0.0-M3</version>
         <executions>
           <execution>
             <id>enforce</id>
