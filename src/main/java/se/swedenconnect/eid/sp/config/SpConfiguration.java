@@ -108,12 +108,12 @@ public class SpConfiguration implements InitializingBean {
   @Setter
   @Value("${sp.debug-hok-base-uri:}")
   private String debugHokBaseUri;
-  
+
   /** Header name from which we can read the mTls client certificate. */
   @Setter
   @Value("${sp.mtls.header-name:SSL_CLIENT_CERT}")
   private String mtlsHeaderName;
-  
+
   /** Attribute name from which we can read the mTls client certificate. */
   @Setter
   @Value("${sp.mtls.attribute-name:javax.servlet.request.X509Certificate}")
@@ -144,6 +144,11 @@ public class SpConfiguration implements InitializingBean {
   /** Algorithm requirements for encryption. */
   private List<EncryptionMethod> encryptionMethods;
 
+  @Bean("DebugFlag")
+  public Boolean debugFlag() {
+    return StringUtils.hasText(this.debugBaseUri);
+  }
+
   /**
    * Returns the SP entityID bean.
    *
@@ -163,21 +168,21 @@ public class SpConfiguration implements InitializingBean {
   public EntityID signSpEntityID() {
     return new EntityID(this.signSpEntityId);
   }
-  
-  @Bean  
+
+  @Bean
   @ConditionalOnProperty(name = "tomcat.ajp.enabled", havingValue = "true")
   public ClientCertificateGetter attributeBasedClientCertificateGetter() {
     return new FromRequestAttributeClientCertificateGetter(this.mtlsAttributeName);
   }
-    
+
   @Bean
   @Profile("!local")
-  @ConditionalOnProperty(name = "tomcat.ajp.enabled", matchIfMissing = true, havingValue = "false") 
+  @ConditionalOnProperty(name = "tomcat.ajp.enabled", matchIfMissing = true, havingValue = "false")
   public ClientCertificateGetter headerBasedClientCertificateGetter() {
     return new FromHeaderClientCertificateGetter(this.mtlsHeaderName);
   }
-  
-  @Bean  
+
+  @Bean
   @Profile("local")
   public ClientCertificateGetter attributeBasedClientCertificateGetter2() {
     return new FromRequestAttributeClientCertificateGetter(this.mtlsAttributeName);
@@ -440,7 +445,7 @@ public class SpConfiguration implements InitializingBean {
 
   @Bean(name = "spAuthnRequestGenerator", initMethod = "initialize")
   public TestMyEidAuthnRequestGenerator spAuthnRequestGenerator(
-      @Qualifier("spMetadata") final EntityDescriptor metadata, 
+      @Qualifier("spMetadata") final EntityDescriptor metadata,
       @Qualifier("signCredential") final X509Credential signCredential,
       final MetadataProvider metadataProvider) {
 
@@ -453,10 +458,10 @@ public class SpConfiguration implements InitializingBean {
       @Qualifier("signCredential") final X509Credential signCredential,
       final MetadataProvider metadataProvider,
       final SignMessageEncrypter signMessageEncrypter) {
-    
-    final TestMyEidAuthnRequestGenerator generator = 
+
+    final TestMyEidAuthnRequestGenerator generator =
         new TestMyEidAuthnRequestGenerator(metadata, signCredential, metadataProvider.getMetadataResolver());
-    generator.setSignMessageEncrypter(signMessageEncrypter);    
+    generator.setSignMessageEncrypter(signMessageEncrypter);
     return generator;
   }
 

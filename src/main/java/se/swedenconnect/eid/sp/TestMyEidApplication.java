@@ -19,14 +19,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import org.apache.tomcat.util.http.Rfc6265CookieProcessor;
-import org.apache.tomcat.util.http.SameSiteCookies;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.web.embedded.tomcat.TomcatContextCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.LocaleResolver;
@@ -44,7 +41,7 @@ import se.swedenconnect.opensaml.OpenSAMLSecurityExtensionConfig;
 
 /**
  * Application main.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @SpringBootApplication
@@ -55,7 +52,7 @@ public class TestMyEidApplication {
 
   /**
    * Program main.
-   * 
+   *
    * @param args
    *          program arguments
    */
@@ -80,10 +77,10 @@ public class TestMyEidApplication {
     resolver.setCookieMaxAge(31536000);
     return resolver;
   }
-  
+
   /**
    * The supported languages.
-   * 
+   *
    * @return a list of UI languages
    */
   @Bean
@@ -94,15 +91,6 @@ public class TestMyEidApplication {
 
   @Configuration
   public static class WebMvcConfig implements WebMvcConfigurer {
-
-    @Bean
-    public TomcatContextCustomizer sameSiteCookiesConfig() {
-      return context -> {
-        final Rfc6265CookieProcessor cookieProcessor = new Rfc6265CookieProcessor();
-        cookieProcessor.setSameSiteCookies(SameSiteCookies.NONE.getValue());
-        context.setCookieProcessor(cookieProcessor);
-      };
-    }
 
     @Bean
     public LocaleChangeInterceptor localeChangeInterceptor() {

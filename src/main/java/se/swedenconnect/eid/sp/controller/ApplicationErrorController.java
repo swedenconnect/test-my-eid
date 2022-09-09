@@ -16,7 +16,6 @@
 package se.swedenconnect.eid.sp.controller;
 
 import java.util.Map;
-import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -26,6 +25,7 @@ import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
@@ -42,18 +42,18 @@ import lombok.extern.slf4j.Slf4j;
 @ControllerAdvice
 @Slf4j
 public class ApplicationErrorController extends AbstractErrorController {
-  
+
   @Setter
-  @Value("${server.servlet.context-path}") 
+  @Value("${server.servlet.context-path}")
   private String contextPath;
-  
+
   @Setter
   @Value("${sp.base-uri}")
   private String baseUri;
-  
+
   @Setter
   @Value("${sp.debug-base-uri:}")
-  private String debugBaseUri;  
+  private String debugBaseUri;
 
   /**
    * Constructor.
@@ -105,18 +105,13 @@ public class ApplicationErrorController extends AbstractErrorController {
     }
 
     request.getSession().setAttribute("sp-result", mav);
-    
-    final boolean debug = Optional.ofNullable(request.getSession().getAttribute("sp-debug"))
-        .map(Boolean.class::cast)
-        .orElse(false);
-    
+
     final String url = String.format("%s%s/result",
-      (debug ? this.debugBaseUri : this.baseUri), contextPath.equals("/") ? "" : this.contextPath);
-    
-    //return new ModelAndView("redirect:/result");
+      StringUtils.hasText(this.debugBaseUri) ? this.debugBaseUri : this.baseUri, contextPath.equals("/") ? "" : this.contextPath);
+
     return new ModelAndView("redirect:" + url);
   }
-  
+
   /**
    * Returns the exception from the error attributes.
    *

@@ -29,7 +29,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.google.common.base.Objects;
@@ -66,22 +65,18 @@ public class SpController extends BaseController {
    *
    * @param device
    *          the type of device
-   * @param debug
-   *          debug flag
    *
    * @return a model and view object
    */
   @GetMapping
-  public ModelAndView home(final HttpServletRequest request, final Device device,
-      @RequestParam(value = "debug", required = false, defaultValue = "false") final Boolean debug) {
+  public ModelAndView home(final HttpServletRequest request, final Device device) {
     final ModelAndView mav = new ModelAndView("home");
-    mav.addObject("debug", debug);
     mav.addObject("idpList", this.idpListConfiguration.getIdps()
       .stream()
       .filter(idp -> device.isNormal() || idp.isMobileUse())
       .map(i -> i.getIdpModel(LocaleContextHolder.getLocale()))
       .collect(Collectors.toList()));
-    
+
     log.trace("Adding IdPs {}", this.idpListConfiguration.getIdps());
     return mav;
   }
@@ -89,15 +84,11 @@ public class SpController extends BaseController {
   /**
    * Controller that by-passes the discovery page and goes directly to the eIDAS connector.
    *
-   * @param debug
-   *          debug flag
    * @return a redirect string to the SAML request endpoint
    */
   @GetMapping("/eidas")
-  public ModelAndView eidas(
-      @RequestParam(value = "debug", required = false, defaultValue = "false") final Boolean debug) {
-
-    return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&debug=%s", this.eidasConnectorEntityId, debug));
+  public ModelAndView eidas() {
+    return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s", this.eidasConnectorEntityId));
   }
 
   /**
@@ -105,22 +96,19 @@ public class SpController extends BaseController {
    *
    * @param country
    *          the two-letter country code for the country to send the request from the connector to
-   * @param debug
-   *          debug flag
    * @return a redirect string to the SAML request endpoint
    */
   @GetMapping("/eidas/{country}")
   public ModelAndView eidasCountry(
-      @PathVariable(value = "country", required = true) final String country,
-      @RequestParam(value = "debug", required = false, defaultValue = "false") final Boolean debug) {
+      @PathVariable(value = "country", required = true) final String country) {
 
     if ("ping".equalsIgnoreCase(country)) {
-      return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&ping=true&debug=%s",
-        this.eidasConnectorEntityId, debug));
+      return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&ping=true",
+        this.eidasConnectorEntityId));
     }
     else {
-      return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&country=%s&debug=%s",
-        this.eidasConnectorEntityId, country, debug));
+      return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&country=%s",
+        this.eidasConnectorEntityId, country));
     }
   }
 
@@ -130,17 +118,14 @@ public class SpController extends BaseController {
    *
    * @param country
    *          the two-letter country code for the country to send the request from the connector to
-   * @param debug
-   *          debug flag
    * @return a redirect string to the SAML request endpoint
    */
   @GetMapping("/eidas/ping/{country}")
   public ModelAndView eidasPingCountry(
-      @PathVariable(value = "country", required = true) final String country,
-      @RequestParam(value = "debug", required = false, defaultValue = "false") final Boolean debug) {
+      @PathVariable(value = "country", required = true) final String country) {
 
-    return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&ping=true&country=%s&debug=%s",
-      this.eidasConnectorEntityId, country, debug));
+    return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&ping=true&country=%s",
+      this.eidasConnectorEntityId, country));
   }
 
   /**
@@ -166,7 +151,8 @@ public class SpController extends BaseController {
 
     final LastAuthentication lastAuthentication = (LastAuthentication) session.getAttribute("last-authentication");
     if (lastAuthentication != null) {
-      final IdpModel idpModel = this.idpListConfiguration.getIdps().stream()
+      final IdpModel idpModel = this.idpListConfiguration.getIdps()
+        .stream()
         .filter(idp -> Objects.equal(idp.getEntityID(), lastAuthentication.getIdp()))
         .map(idp -> idp.getIdpModel(LocaleContextHolder.getLocale()))
         .findFirst()
