@@ -5,17 +5,17 @@
 
   <groupId>se.swedenconnect.eid</groupId>
   <artifactId>test-my-eid</artifactId>
-  <version>2.0.3</version>
+  <version>2.0.4</version>
   <packaging>jar</packaging>
 
   <name>test-my-eid</name>
   <description>Sweden Connect - Test my eID</description>
-  <url>https://github.com/swedenconnect/swedenconnect-test-eid</url>
+  <url>https://github.com/swedenconnect/test-my-eid</url>
 
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.7.1</version>
+    <version>2.7.6</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
   
@@ -28,9 +28,9 @@
   </licenses>  
   
   <scm>
-    <connection>scm:https://github.com/swedenconnect/swedenconnect-test-eid.git</connection>
-    <developerConnection>scm:https://github.com/swedenconnect/swedenconnect-test-eid.git</developerConnection>
-    <url>https://github.com/swedenconnect/swedenconnect-test-eid/tree/master</url>
+    <connection>scm:https://github.com/swedenconnect/test-my-eid.git</connection>
+    <developerConnection>scm:https://github.com/swedenconnect/test-my-eid.git</developerConnection>
+    <url>https://github.com/swedenconnect/test-my-eid/tree/master</url>
   </scm>
 
   <developers>
@@ -90,102 +90,66 @@
   <dependencyManagement>
   
     <dependencies>
-    
+
       <dependency>
         <groupId>org.yaml</groupId>
         <artifactId>snakeyaml</artifactId>
         <version>1.33</version>
-      </dependency>   
-    
-      <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bcprov-jdk15on</artifactId>
-        <version>1.70</version>
       </dependency>
       
       <dependency>
         <groupId>org.cryptacular</groupId>
         <artifactId>cryptacular</artifactId>
-        <version>1.2.4</version>
+        <version>1.2.5</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+          </exclusion>
+        </exclusions>        
       </dependency>      
-      
-      <!-- OpenSAML -->
-      <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-core</artifactId>
-        <version>${opensaml.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-saml-api</artifactId>
-        <version>${opensaml.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-saml-impl</artifactId>
-        <version>${opensaml.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-security-api</artifactId>
-        <version>${opensaml.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-security-impl</artifactId>
-        <version>${opensaml.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-storage-api</artifactId>
-        <version>${opensaml.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-storage-impl</artifactId>
-        <version>${opensaml.version}</version>
-      </dependency>
-      
-      <dependency>
-          <groupId>org.opensaml</groupId>
-          <artifactId>opensaml-xmlsec-api</artifactId>
-          <version>${opensaml.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-xmlsec-impl</artifactId>
-        <version>${opensaml.version}</version>
-      </dependency>
-            
+                  
       <dependency>
         <groupId>se.swedenconnect.security</groupId>
         <artifactId>credentials-support</artifactId>
-        <version>1.2.4</version>
+        <version>1.2.5</version>
       </dependency>
       
       <dependency>
         <groupId>se.swedenconnect.opensaml</groupId>
         <artifactId>opensaml-security-ext</artifactId>
-        <version>3.1.1</version>
+        <version>3.1.2</version>
       </dependency>
   
       <dependency>
         <groupId>se.swedenconnect.opensaml</groupId>
         <artifactId>opensaml-addons</artifactId>
-        <version>1.2.4</version>
+        <version>1.2.5</version>
       </dependency>
   
       <dependency>
         <groupId>se.swedenconnect.opensaml</groupId>
         <artifactId>opensaml-swedish-eid</artifactId>
-        <version>1.2.2</version>
+        <version>1.2.3</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.apache.santuario</groupId>
+        <artifactId>xmlsec</artifactId>
+        <version>2.3.2</version>
+        <exclusions>
+          <!-- Version included has reported vulnerabilities -->
+          <exclusion>
+            <groupId>com.fasterxml.woodstox</groupId>
+            <artifactId>woodstox-core</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      
+      <dependency>
+        <groupId>com.fasterxml.woodstox</groupId>
+        <artifactId>woodstox-core</artifactId>
+        <version>6.4.0</version>
       </dependency>      
         
     </dependencies>
@@ -231,13 +195,7 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
     </dependency>
-    
-    <!-- Bouncy Castle -->
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk15on</artifactId>
-    </dependency>
-                
+                    
     <dependency>
       <groupId>se.swedenconnect.security</groupId>
       <artifactId>credentials-support</artifactId>
