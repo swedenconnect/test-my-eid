@@ -124,7 +124,7 @@
       <dependency>
         <groupId>se.swedenconnect.opensaml</groupId>
         <artifactId>opensaml-addons</artifactId>
-        <version>1.2.5</version>
+        <version>1.2.6</version>
       </dependency>
   
       <dependency>
@@ -294,7 +294,7 @@
             <id>enforce</id>
             <configuration>
               <rules>
-                <dependencyConvergence />
+                <dependencyConvergence/>
               </rules>
             </configuration>
             <goals>
