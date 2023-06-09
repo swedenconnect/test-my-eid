@@ -37,7 +37,7 @@ http://id.swedenconnect.se/general-ec/1.0/secure-authenticator-binding
           <mdui:Description xml:lang="en">BankID Identity Provider</mdui:Description>
           <mdui:Description xml:lang="sv">BankID legitimeringstjänst</mdui:Description>
           <mdui:Logo xmlns:mdui="urn:oasis:names:tc:SAML:metadata:ui" height="171" width="206">
-https://local.dev.swedenconnect.se:8443/idp/images/BankID_logo.svg
+https://local.dev.swedenconnect.se:8443/bankid/idp/images/BankID_logo.svg
 </mdui:Logo>
         </mdui:UIInfo>
         <psc:RequestedPrincipalSelection xmlns:psc="http://id.swedenconnect.se/authn/1.0/principal-selection/ns">
@@ -74,8 +74,8 @@ urn:oasis:names:tc:SAML:2.0:nameid-format:persistent
       <md:NameIDFormat>
 urn:oasis:names:tc:SAML:2.0:nameid-format:transient
 </md:NameIDFormat>
-      <md:SingleSignOnService xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://local.dev.swedenconnect.se:8443/idp/saml2/redirect/authn" />
-      <md:SingleSignOnService xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://local.dev.swedenconnect.se:8443/idp/saml2/post/authn" />
+      <md:SingleSignOnService xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://local.dev.swedenconnect.se:8443/bankid/idp/saml2/redirect/authn" />
+      <md:SingleSignOnService xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://local.dev.swedenconnect.se:8443/bankid/idp/saml2/post/authn" />
     </md:IDPSSODescriptor>
     <md:Organization xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata">
       <md:OrganizationName xml:lang="en">Sweden Connect</md:OrganizationName>
@@ -123,8 +123,8 @@ urn:oasis:names:tc:SAML:2.0:nameid-format:transient
           <mdui:DisplayName xmlns:xml="http://www.w3.org/XML/1998/namespace" xml:lang="sv">Local Sweden Connect Referens-IdP</mdui:DisplayName>
           <mdui:Description xmlns:xml="http://www.w3.org/XML/1998/namespace" xml:lang="en">Local Sweden Connect Reference Identity Provider</mdui:Description>
           <mdui:Description xmlns:xml="http://www.w3.org/XML/1998/namespace" xml:lang="sv">Local Sweden Connect referens-legitimeringstjänst</mdui:Description>
-          <mdui:Logo height="256" width="256" xmlns:mdui="urn:oasis:names:tc:SAML:metadata:ui">https://local.dev.swedenconnect.se:8443/idp/images/logo-notext.svg</mdui:Logo>
-          <mdui:Logo height="56" width="280" xmlns:mdui="urn:oasis:names:tc:SAML:metadata:ui">https://local.dev.swedenconnect.se:8443/idp/images/logo.svg</mdui:Logo>
+          <mdui:Logo height="256" width="256" xmlns:mdui="urn:oasis:names:tc:SAML:metadata:ui">https://local.dev.swedenconnect.se:8443/bankid/idp/images/logo-notext.svg</mdui:Logo>
+          <mdui:Logo height="56" width="280" xmlns:mdui="urn:oasis:names:tc:SAML:metadata:ui">https://local.dev.swedenconnect.se:8443/bankid/idp/images/logo.svg</mdui:Logo>
         </mdui:UIInfo>
         <psc:RequestedPrincipalSelection xmlns:psc="http://id.swedenconnect.se/authn/1.0/principal-selection/ns">
           <psc:MatchValue Name="urn:oid:1.2.752.29.4.13" xmlns:psc="http://id.swedenconnect.se/authn/1.0/principal-selection/ns" />
@@ -152,8 +152,8 @@ urn:oasis:names:tc:SAML:2.0:nameid-format:transient
       </md:KeyDescriptor>
       <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</md:NameIDFormat>
       <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</md:NameIDFormat>
-      <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://local.dev.swedenconnect.se:8443/idp/saml2/redirect/authn" xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" />
-      <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://local.dev.swedenconnect.se:8443/idp/saml2/post/authn" xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" />
+      <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://local.dev.swedenconnect.se:8443/bankid/idp/saml2/redirect/authn" xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" />
+      <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://local.dev.swedenconnect.se:8443/bankid/idp/saml2/post/authn" xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" />
     </md:IDPSSODescriptor>
     <md:Organization xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata">
       <md:OrganizationName xmlns:xml="http://www.w3.org/XML/1998/namespace" xml:lang="en">Sweden Connect</md:OrganizationName>
