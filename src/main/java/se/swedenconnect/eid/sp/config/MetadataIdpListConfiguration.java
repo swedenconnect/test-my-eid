@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 import lombok.extern.slf4j.Slf4j;
-import net.shibboleth.utilities.java.support.resolver.ResolverException;
+import net.shibboleth.shared.resolver.ResolverException;
 import se.swedenconnect.eid.sp.config.StaticIdpConfiguration.StaticIdpDiscoEntry;
 import se.swedenconnect.eid.sp.model.IdpDiscoveryInformation;
 import se.swedenconnect.opensaml.saml2.metadata.EntityDescriptorUtils;
@@ -55,9 +55,9 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration, Initi
   /** The metadata provider from where we get the IdP:s. */
   @Autowired
   private MetadataProvider metadataProvider;
-  
+
   /** The SP metadata. */
-  @Autowired 
+  @Autowired
   @Qualifier("spMetadata")
   private EntityDescriptor spMetadata;
 
@@ -86,14 +86,14 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration, Initi
 
   /** The last time the cache was updated. */
   private long lastUpdate = 0;
-  
+
   /** {@inheritDoc} */
   @Override
   public void afterPropertiesSet() throws Exception {
     this.spEntityCategories = EntityDescriptorUtils.getEntityCategories(this.spMetadata).stream()
         // Remove all loa4 entity categories if we don't support HoK
         .filter(c -> this.hokActive || (!this.hokActive && !c.contains("loa4")))
-        .collect(Collectors.toList());    
+        .collect(Collectors.toList());
   }
 
   /** {@inheritDoc} */
@@ -109,7 +109,7 @@ public class MetadataIdpListConfiguration implements IdpListConfiguration, Initi
     try {
       final List<EntityDescriptor> idps = this.metadataProvider.getIdentityProviders();
       for (final EntityDescriptor idp : idps) {
-        
+
         if (this.staticIdpConfiguration.isBlackListed(idp.getEntityID())) {
           log.debug("IdP '{}' is black-listed in configuration and will be excluded from IdP list", idp.getEntityID());
           continue;

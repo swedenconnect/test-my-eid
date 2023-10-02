@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import se.swedenconnect.opensaml.sweid.saml2.signservice.dss.SignMessageMimeType
 
 /**
  * Customized context for generating authentication requests.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @Slf4j
@@ -84,17 +84,17 @@ public class TestMyEidAuthnRequestGeneratorContext implements SwedishEidAuthnReq
 
     if (this.ping) {
       return (list, h) -> RequestedAuthnContextBuilder.builder()
-        .comparison(AuthnContextComparisonTypeEnumeration.EXACT)
-        .authnContextClassRefs(EIDAS_PING_LOA)
-        .build();
+          .comparison(AuthnContextComparisonTypeEnumeration.EXACT)
+          .authnContextClassRefs(EIDAS_PING_LOA)
+          .build();
     }
     else if (this.requestedAuthnContextUris != null) {
       return (list, h) -> list.isEmpty()
           ? null
           : RequestedAuthnContextBuilder.builder()
-            .comparison(AuthnContextComparisonTypeEnumeration.EXACT)
-            .authnContextClassRefs(this.requestedAuthnContextUris)
-            .build();
+              .comparison(AuthnContextComparisonTypeEnumeration.EXACT)
+              .authnContextClassRefs(this.requestedAuthnContextUris)
+              .build();
     }
     else {
       // TODO
@@ -114,11 +114,11 @@ public class TestMyEidAuthnRequestGeneratorContext implements SwedishEidAuthnReq
     return (metadata, encrypter) -> {
       if (this.signMessage != null) {
         final SignMessage signMessage = SignMessageBuilder.builder()
-          .displayEntity(metadata.getEntityID())
-          .mimeType(SignMessageMimeTypeEnum.TEXT)
-          .mustShow(true)
-          .message(this.signMessage)
-          .build();
+            .displayEntity(metadata.getEntityID())
+            .mimeType(SignMessageMimeTypeEnum.TEXT)
+            .mustShow(true)
+            .message(this.signMessage)
+            .build();
 
         if (encrypter != null) {
           try {
@@ -143,19 +143,19 @@ public class TestMyEidAuthnRequestGeneratorContext implements SwedishEidAuthnReq
         final List<MatchValue> matchValues = new ArrayList<>();
         if (this.personalIdentityNumberHint != null) {
           matchValues.add(MatchValueBuilder.builder()
-            .name(AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER)
-            .value(this.personalIdentityNumberHint)
-            .build());
+              .name(AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER)
+              .value(this.personalIdentityNumberHint)
+              .build());
         }
         if (this.pridHint != null) {
           matchValues.add(MatchValueBuilder.builder()
-            .name(AttributeConstants.ATTRIBUTE_NAME_PRID)
-            .value(this.pridHint)
-            .build());
+              .name(AttributeConstants.ATTRIBUTE_NAME_PRID)
+              .value(this.pridHint)
+              .build());
         }
         return PrincipalSelectionBuilder.builder()
-          .matchValues(matchValues)
-          .build();
+            .matchValues(matchValues)
+            .build();
       }
       else {
         return null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import lombok.ToString;
 
 /**
  * Representation of a SAML entityID.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @Getter
@@ -30,7 +30,7 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 public class EntityID {
-  
+
   /** The entityID. */
   private String entityID;
 

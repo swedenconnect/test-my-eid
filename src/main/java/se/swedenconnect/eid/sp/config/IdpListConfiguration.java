@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,14 @@ import se.swedenconnect.eid.sp.model.IdpDiscoveryInformation;
 
 /**
  * Interface for the list of IdP:s that should be displayed for the user.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 public interface IdpListConfiguration {
 
   /**
    * Returns a list of IdP:s that should be displayed for the user.
-   * 
+   *
    * @return a list of IdPs
    */
   List<IdpDiscoveryInformation> getIdps();

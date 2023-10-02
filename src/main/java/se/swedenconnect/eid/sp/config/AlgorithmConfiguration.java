@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import lombok.Data;
 
 /**
  * Configuration class for algorithm support.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @Configuration
@@ -39,13 +39,13 @@ public class AlgorithmConfiguration {
    * will used.
    */
   private Boolean useAesGcm;
-  
+
   /** Should RSA 1.5 be blacklisted? If {@code null}, RSA 1.5 is allowed. */
   private Boolean blacklistRsa15;
 
   /**
    * Predicate that tells whether any configuration has been set or not.
-   * 
+   *
    * @return true if no attributes have been configured
    */
   public boolean isEmpty() {

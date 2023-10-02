@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import se.swedenconnect.opensaml.sweid.xmlsec.config.SwedishEidSecurityConfigura
 
 /**
  * Security configuration class for initialization of algorithm support.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @Slf4j
@@ -47,14 +47,13 @@ public class CustomSwedishEidSecurityConfiguration extends SwedishEidSecurityCon
 
   /**
    * Constructor assigning the customized algorithm configuration.
-   * 
-   * @param algorithmConfiguration
-   *          customized algorithm configuration
+   *
+   * @param algorithmConfiguration customized algorithm configuration
    */
   public CustomSwedishEidSecurityConfiguration(final AlgorithmConfiguration algorithmConfiguration) {
     this.algorithmConfiguration = algorithmConfiguration;
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public String getProfileName() {
@@ -71,36 +70,36 @@ public class CustomSwedishEidSecurityConfiguration extends SwedishEidSecurityCon
     if (StringUtils.hasText(this.algorithmConfiguration.getRsaOaepDigest())) {
       log.debug("Using digest method '{}' for RSA-OAEP", this.algorithmConfiguration.getRsaOaepDigest());
       RSAOAEPParameters pars = config.getRSAOAEPParameters();
-      
+
       config.setRSAOAEPParameters(new RSAOAEPParameters(
-        this.algorithmConfiguration.getRsaOaepDigest(),
-        pars != null ? pars.getMaskGenerationFunction() : EncryptionConstants.ALGO_ID_MGF1_SHA1,
-        pars != null ? pars.getOAEPParams() : null));
+          this.algorithmConfiguration.getRsaOaepDigest(),
+          pars != null ? pars.getMaskGenerationFunction() : EncryptionConstants.ALGO_ID_MGF1_SHA1,
+          pars != null ? pars.getOAEPParams() : null));
     }
-    
+
     if (this.algorithmConfiguration.getUseAesGcm() != null) {
       // We could fix this prettier ...
       if (this.algorithmConfiguration.getUseAesGcm().booleanValue()) {
         log.debug("Setting AES-GCM as default block cipher");
         config.setDataEncryptionAlgorithms(Arrays.asList(
-          EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES256_GCM,
-          EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES192_GCM,
-          EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES128_GCM,
-          EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES256,
-          EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES192,
-          EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES128,
-          EncryptionConstants.ALGO_ID_BLOCKCIPHER_TRIPLEDES));
+            EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES256_GCM,
+            EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES192_GCM,
+            EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES128_GCM,
+            EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES256,
+            EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES192,
+            EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES128,
+            EncryptionConstants.ALGO_ID_BLOCKCIPHER_TRIPLEDES));
       }
       else {
         log.debug("Setting AES-CBC as default block cipher");
         config.setDataEncryptionAlgorithms(Arrays.asList(
-          EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES256,
-          EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES192,
-          EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES128,
-          EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES256_GCM,
-          EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES192_GCM,
-          EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES128_GCM,          
-          EncryptionConstants.ALGO_ID_BLOCKCIPHER_TRIPLEDES));
+            EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES256,
+            EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES192,
+            EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES128,
+            EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES256_GCM,
+            EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES192_GCM,
+            EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES128_GCM,
+            EncryptionConstants.ALGO_ID_BLOCKCIPHER_TRIPLEDES));
       }
     }
 
@@ -109,7 +108,7 @@ public class CustomSwedishEidSecurityConfiguration extends SwedishEidSecurityCon
 
   /**
    * Adds customized algorithm settings.
-   */  
+   */
   @Override
   protected DecryptionConfiguration createDefaultDecryptionConfiguration() {
     if (this.algorithmConfiguration.getBlacklistRsa15() != null) {
@@ -117,14 +116,14 @@ public class CustomSwedishEidSecurityConfiguration extends SwedishEidSecurityCon
       if (config == null) {
         config = DefaultSecurityConfigurationBootstrap.buildDefaultDecryptionConfiguration();
       }
-      
+
       Predicate<String> isNotRsa15 = alg -> !EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSA15.equals(alg);
-      
+
       if (this.algorithmConfiguration.getBlacklistRsa15().booleanValue()) {
         config.setIncludedAlgorithms(config.getIncludedAlgorithms().stream()
-          .filter(isNotRsa15)
-          .collect(Collectors.toList()));
-        
+            .filter(isNotRsa15)
+            .collect(Collectors.toList()));
+
         if (!config.getExcludedAlgorithms().contains(EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSA15)) {
           List<String> bl = new ArrayList<>(config.getExcludedAlgorithms());
           bl.add(EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSA15);
@@ -133,8 +132,8 @@ public class CustomSwedishEidSecurityConfiguration extends SwedishEidSecurityCon
       }
       else {
         config.setExcludedAlgorithms(config.getExcludedAlgorithms().stream()
-          .filter(isNotRsa15)
-          .collect(Collectors.toList()));          
+            .filter(isNotRsa15)
+            .collect(Collectors.toList()));
       }
       return config;
     }
@@ -142,7 +141,5 @@ public class CustomSwedishEidSecurityConfiguration extends SwedishEidSecurityCon
       return super.createDefaultDecryptionConfiguration();
     }
   }
-  
-  
 
 }

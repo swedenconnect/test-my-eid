@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import se.swedenconnect.opensaml.sweid.saml2.request.SwedishEidAuthnRequestGener
 
 /**
  * Customized {@link AuthnRequestGenerator} for this application.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @Slf4j
@@ -50,13 +50,10 @@ public class TestMyEidAuthnRequestGenerator extends SwedishEidAuthnRequestGenera
 
   /**
    * Constructor.
-   * 
-   * @param spEntityID
-   *          the SP entityID
-   * @param signCredential
-   *          the signing credential
-   * @param metadataResolver
-   *          the metadata resolver
+   *
+   * @param spEntityID the SP entityID
+   * @param signCredential the signing credential
+   * @param metadataResolver the metadata resolver
    */
   public TestMyEidAuthnRequestGenerator(final EntityDescriptor spMetadata, final X509Credential signCredential,
       final MetadataResolver metadataResolver) {
@@ -74,8 +71,8 @@ public class TestMyEidAuthnRequestGenerator extends SwedishEidAuthnRequestGenera
     if (StringUtils.hasText(country)) {
       final String countryUri = "http://id.swedenconnect.se/eidas/1.0/proxy-service/" + country;
       builder.scoping(ScopingBuilder.builder()
-        .idpList(null, ScopingBuilder.idpEntry(countryUri, null, null))
-        .build());
+          .idpList(null, ScopingBuilder.idpEntry(countryUri, null, null))
+          .build());
     }
   }
 
@@ -89,13 +86,14 @@ public class TestMyEidAuthnRequestGenerator extends SwedishEidAuthnRequestGenera
     final List<String> defaultUris = super.getAssuranceCertificationUris(idpMetadata, context);
 
     final boolean isEidasConnector = EntityDescriptorUtils.getEntityCategories(idpMetadata)
-      .contains(EntityCategoryConstants.SERVICE_ENTITY_CATEGORY_EIDAS_NATURAL_PERSON.getUri());
+        .contains(EntityCategoryConstants.SERVICE_ENTITY_CATEGORY_EIDAS_NATURAL_PERSON.getUri());
 
     if (isEidasConnector) {
       final List<String> uris = new ArrayList<>();
       for (final String uri : defaultUris) {
         if (uri.contains("eidas")) {
-          log.debug("Excluding '{}' from metadata for '{}' since the URI is intended for eIDAS", uri, idpMetadata.getEntityID());
+          log.debug("Excluding '{}' from metadata for '{}' since the URI is intended for eIDAS", uri,
+              idpMetadata.getEntityID());
         }
         else {
           uris.add(uri);
@@ -108,19 +106,19 @@ public class TestMyEidAuthnRequestGenerator extends SwedishEidAuthnRequestGenera
         if (((TestMyEidAuthnRequestGeneratorContext) context).getHokRequirement().equals(HokRequirement.REQUIRED)) {
           // only use loa4
           return defaultUris.stream()
-            .filter(u -> u.contains("loa4"))
-            .collect(Collectors.toList());
+              .filter(u -> u.contains("loa4"))
+              .collect(Collectors.toList());
         }
       }
     }
-    
+
     return defaultUris;
   }
 
   public HokSupport getIdpHokSupport(final String idpEntityID) {
     final IDPSSODescriptor descriptor = Optional.ofNullable(this.getIdpMetadata(idpEntityID))
-      .map(m -> m.getIDPSSODescriptor(SAMLConstants.SAML20P_NS))
-      .orElse(null);
+        .map(m -> m.getIDPSSODescriptor(SAMLConstants.SAML20P_NS))
+        .orElse(null);
 
     if (descriptor == null) {
       return HokSupport.NONE;

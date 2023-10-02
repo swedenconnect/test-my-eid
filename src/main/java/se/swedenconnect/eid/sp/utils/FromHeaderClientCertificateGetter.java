@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,26 +24,25 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.springframework.util.StringUtils;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Implementation that gets the client certificate from a header.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @Slf4j
 public class FromHeaderClientCertificateGetter implements ClientCertificateGetter {
-  
+
   /** Indicates that the certificate is in PEM-format. */
   private static final String BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
-  
+
   /** Factory for creating X.509 certificates. */
   private static final CertificateFactory factory;
-  
+
   static {
     try {
       factory = CertificateFactory.getInstance("X.509");
@@ -55,10 +54,10 @@ public class FromHeaderClientCertificateGetter implements ClientCertificateGette
 
   /** The name of the header that contains the client certificate. */
   private final String headerName;
-  
+
   /**
    * Constructor.
-   * 
+   *
    * @param headerName the header name
    */
   public FromHeaderClientCertificateGetter(final String headerName) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ package se.swedenconnect.eid.sp.controller;
 
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.web.servlet.error.AbstractErrorController;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
@@ -30,6 +28,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -65,8 +64,7 @@ public class ApplicationErrorController extends AbstractErrorController {
   /**
    * Error handler.
    *
-   * @param request
-   *          the HTTP request
+   * @param request the HTTP request
    * @return a model and view object
    */
   @RequestMapping("/error")
@@ -107,7 +105,8 @@ public class ApplicationErrorController extends AbstractErrorController {
     request.getSession().setAttribute("sp-result", mav);
 
     final String url = String.format("%s%s/result",
-      StringUtils.hasText(this.debugBaseUri) ? this.debugBaseUri : this.baseUri, contextPath.equals("/") ? "" : this.contextPath);
+        StringUtils.hasText(this.debugBaseUri) ? this.debugBaseUri : this.baseUri,
+        contextPath.equals("/") ? "" : this.contextPath);
 
     return new ModelAndView("redirect:" + url);
   }
@@ -115,10 +114,8 @@ public class ApplicationErrorController extends AbstractErrorController {
   /**
    * Returns the exception from the error attributes.
    *
-   * @param request
-   *          the HTTP request
-   * @param exceptionClass
-   *          the exception class we are looking for
+   * @param request the HTTP request
+   * @param exceptionClass the exception class we are looking for
    * @return the exception or {@code null}
    */
   protected <T extends Exception> T getException(final HttpServletRequest request, final Class<T> exceptionClass) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,20 +63,16 @@ public class IdpDiscoveryInformation {
   /**
    * Constructor setting up an IdP info entry.
    *
-   * @param entityID
-   *          the IdP entityID
-   * @param displayNames
-   *          the display names found in metadata
-   * @param logotypes
-   *          the logotypes found in metadata
-   * @param mobileAuth
-   *          is the {@code http://id.elegnamnden.se/sprop/1.0/mobile-auth} service property category present in IdP
-   *          metadata?
-   * @param discoInfo
-   *          statically configured data for the IdP
+   * @param entityID the IdP entityID
+   * @param displayNames the display names found in metadata
+   * @param logotypes the logotypes found in metadata
+   * @param mobileAuth is the {@code http://id.elegnamnden.se/sprop/1.0/mobile-auth} service property category present
+   *          in IdP metadata?
+   * @param discoInfo statically configured data for the IdP
    */
   public IdpDiscoveryInformation(
-      final String entityID, final Collection<DisplayName> displayNames, final Collection<Logo> logotypes, final boolean mobileAuth,
+      final String entityID, final Collection<DisplayName> displayNames, final Collection<Logo> logotypes,
+      final boolean mobileAuth,
       final StaticIdpDiscoEntry discoInfo) {
 
     this.entityID = entityID;
@@ -116,7 +112,7 @@ public class IdpDiscoveryInformation {
         }
         else {
           final double factor = this.getWidthHeightFactor(logo);
-          if (factor == (double) 1) {
+          if (factor == 1) {
             selected = logo;
             break;
           }
@@ -135,8 +131,7 @@ public class IdpDiscoveryInformation {
   /**
    * Returns an IdP list for the given locale.
    *
-   * @param locale
-   *          the locale (language)
+   * @param locale the locale (language)
    * @return the IdP list
    */
   public IdpModel getIdpModel(final Locale locale) {
@@ -158,8 +153,7 @@ public class IdpDiscoveryInformation {
   /**
    * Calculates width - height factor.
    *
-   * @param logo
-   *          the logotype
+   * @param logo the logotype
    * @return width - height factor
    */
   private double getWidthHeightFactor(final Logo logo) {
