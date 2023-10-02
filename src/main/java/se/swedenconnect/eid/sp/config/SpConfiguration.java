@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.http.conn.ssl.DefaultHostnameVerifier;
+import org.apache.hc.client5.http.ssl.DefaultHostnameVerifier;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.saml.common.xml.SAMLConstants;
@@ -54,7 +54,7 @@ import org.springframework.util.StringUtils;
 import org.w3c.dom.Element;
 
 import lombok.Setter;
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
+import net.shibboleth.shared.component.ComponentInitializationException;
 import se.swedenconnect.eid.sp.saml.TestMyEidAuthnRequestGenerator;
 import se.swedenconnect.eid.sp.utils.ClientCertificateGetter;
 import se.swedenconnect.eid.sp.utils.FromHeaderClientCertificateGetter;
@@ -155,7 +155,7 @@ public class SpConfiguration implements InitializingBean {
    * @return SP entityID
    */
   @Bean(name = "spEntityID")
-  public EntityID spEntityID() {
+  EntityID spEntityID() {
     return new EntityID(this.spEntityId);
   }
 
@@ -165,26 +165,26 @@ public class SpConfiguration implements InitializingBean {
    * @return sign service entityID
    */
   @Bean(name = "signSpEntityID")
-  public EntityID signSpEntityID() {
+  EntityID signSpEntityID() {
     return new EntityID(this.signSpEntityId);
   }
 
   @Bean
   @ConditionalOnProperty(name = "tomcat.ajp.enabled", havingValue = "true")
-  public ClientCertificateGetter attributeBasedClientCertificateGetter() {
+  ClientCertificateGetter attributeBasedClientCertificateGetter() {
     return new FromRequestAttributeClientCertificateGetter(this.mtlsAttributeName);
   }
 
   @Bean
   @Profile("!local")
   @ConditionalOnProperty(name = "tomcat.ajp.enabled", matchIfMissing = true, havingValue = "false")
-  public ClientCertificateGetter headerBasedClientCertificateGetter() {
+  ClientCertificateGetter headerBasedClientCertificateGetter() {
     return new FromHeaderClientCertificateGetter(this.mtlsHeaderName);
   }
 
   @Bean
   @Profile("local")
-  public ClientCertificateGetter attributeBasedClientCertificateGetter2() {
+  ClientCertificateGetter attributeBasedClientCertificateGetter2() {
     return new FromRequestAttributeClientCertificateGetter(this.mtlsAttributeName);
   }
 
@@ -198,7 +198,7 @@ public class SpConfiguration implements InitializingBean {
    *           for errors
    */
   @Bean(initMethod = "initialize")
-  public ResponseProcessor responseProcessor(final MetadataProvider metadataProvider) throws Exception {
+  ResponseProcessor responseProcessor(final MetadataProvider metadataProvider) throws Exception {
 
     final SwedishEidResponseProcessorImpl responseProcessor = new SwedishEidResponseProcessorImpl();
     responseProcessor.setMetadataResolver(metadataProvider.getMetadataResolver());

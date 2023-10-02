@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
  */
 package se.swedenconnect.eid.sp;
 
-import java.io.FileNotFoundException;
-
 import org.apache.catalina.connector.Connector;
 import org.apache.coyote.http11.Http11NioProtocol;
+import org.apache.tomcat.util.net.SSLHostConfig;
+import org.apache.tomcat.util.net.SSLHostConfigCertificate;
+import org.apache.tomcat.util.net.SSLHostConfigCertificate.Type;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
@@ -49,14 +50,14 @@ public class DebugTomcatWebServerConfiguration implements WebServerFactoryCustom
       try {
         factory.addAdditionalTomcatConnectors(this.createSslConnector());
       }
-      catch (final FileNotFoundException e) {
+      catch (final Exception e) {
         log.error("Failed to configure mTLS connector", e);
         throw new RuntimeException("Failed to configure mTLS connector", e);
       }
     }
   }
 
-  private Connector createSslConnector() throws FileNotFoundException {
+  private Connector createSslConnector() throws Exception {
     final Connector connector = new Connector(Http11NioProtocol.class.getName());
     connector.setPort(this.additionalConnectorSettings.getPort());
     connector.setSecure(true);
@@ -67,24 +68,37 @@ public class DebugTomcatWebServerConfiguration implements WebServerFactoryCustom
       protocol.setSSLEnabled(false);
     }
     else {
+      final SSLHostConfig sslHostConfig = new SSLHostConfig();
+      sslHostConfig.setSslProtocol("TLS");
+      protocol.addSslHostConfig(sslHostConfig);
       protocol.setSSLEnabled(true);
-      protocol.setKeystoreFile(ResourceUtils.getFile(this.additionalConnectorSettings.getSsl().getKeyStore()).getAbsolutePath());
-      protocol.setKeyAlias(this.additionalConnectorSettings.getSsl().getKeyAlias());
-      protocol.setKeystorePass(this.additionalConnectorSettings.getSsl().getKeyStorePassword());
-      protocol.setKeyPass(this.additionalConnectorSettings.getSsl().getKeyPassword());      
-      protocol.setSslProtocol("TLS");
-      
+
+      if (this.additionalConnectorSettings.getSsl().getKeyStore() != null) {
+        final SSLHostConfigCertificate clientCert = new SSLHostConfigCertificate(sslHostConfig, Type.UNDEFINED);
+        clientCert.setCertificateKeystoreFile(
+            ResourceUtils.getFile(this.additionalConnectorSettings.getSsl().getKeyStore()).getAbsolutePath());
+        clientCert.setCertificateKeystorePassword(this.additionalConnectorSettings.getSsl().getKeyStorePassword());
+        clientCert.setCertificateKeyAlias(this.additionalConnectorSettings.getSsl().getKeyAlias());
+        clientCert.setCertificateKeyPassword(this.additionalConnectorSettings.getSsl().getKeyPassword());
+
+        sslHostConfig.addCertificate(clientCert);
+      }
+
       if (this.additionalConnectorSettings.getSsl().getClientAuth() != null
           && !ClientAuth.NONE.equals(this.additionalConnectorSettings.getSsl().getClientAuth())) {
         if (ClientAuth.NEED.equals(this.additionalConnectorSettings.getSsl().getClientAuth())) {
-          protocol.setClientAuth("required");
+          sslHostConfig.setCertificateVerification("required");
         }
         else {
-          protocol.setClientAuth("optional");          
+          sslHostConfig.setCertificateVerification("optional");
         }
-        protocol.setTruststoreFile(ResourceUtils.getFile(
-          this.additionalConnectorSettings.getSsl().getTrustStore()).getAbsolutePath());
-        protocol.setTruststorePass(this.additionalConnectorSettings.getSsl().getTrustStorePassword());
+      }
+
+      if (this.additionalConnectorSettings.getSsl().getTrustStore() != null) {
+        sslHostConfig.setTruststoreFile(ResourceUtils.getFile(
+            this.additionalConnectorSettings.getSsl().getTrustStore()).getAbsolutePath());
+        sslHostConfig.setTruststorePassword(
+            this.additionalConnectorSettings.getSsl().getTrustStorePassword());
       }
     }
     return connector;

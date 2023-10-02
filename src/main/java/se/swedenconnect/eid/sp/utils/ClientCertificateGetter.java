@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ package se.swedenconnect.eid.sp.utils;
 
 import java.security.cert.X509Certificate;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Functional interface for getting the client TLS certificate (for HoK).
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @FunctionalInterface
@@ -29,9 +29,8 @@ public interface ClientCertificateGetter {
 
   /**
    * Gets the client TLS certificate.
-   * 
-   * @param request
-   *          the HTTP servlet request
+   *
+   * @param request the HTTP servlet request
    * @return the certificate, or null if none is found
    */
   X509Certificate getClientCertificate(final HttpServletRequest request);

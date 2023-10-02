@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,10 +47,8 @@ public class AttributeInfoRegistry {
   /**
    * Resolves the supplied SAML attribute into an attribute info model object.
    *
-   * @param attribute
-   *          the SAML attribute to resolve
-   * @param eidasFlag
-   *          a flag telling whether we process an eIDAS assertion
+   * @param attribute the SAML attribute to resolve
+   * @param eidasFlag a flag telling whether we process an eIDAS assertion
    * @return the attribute model
    */
   public AttributeInfo resolve(final Attribute attribute, final boolean eidasFlag) {
@@ -102,8 +100,7 @@ public class AttributeInfoRegistry {
     /**
      * Returns the message code for the attribute.
      *
-     * @param eidasFlag
-     *          is eIDAS used?
+     * @param eidasFlag is eIDAS used?
      * @return the message code to use for the attribute
      */
     public String getMessageCode(final boolean eidasFlag) {
@@ -113,8 +110,7 @@ public class AttributeInfoRegistry {
     /**
      * Returns the message code for the description field.
      *
-     * @param eidasFlag
-     *          is eIDAS used?
+     * @param eidasFlag is eIDAS used?
      * @return the message code for the description field
      */
     public String getDescriptionMessageCode(final boolean eidasFlag) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
 import org.opensaml.saml.common.assertion.ValidationContext;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.Attribute;
@@ -46,6 +42,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.eid.sp.config.EntityID;
@@ -147,17 +146,12 @@ public class SamlController extends BaseController {
   /**
    * Builds an {@code AuthnRequest}.
    *
-   * @param request
-   *          the HTTP request
-   * @param response
-   *          the HTTP response
-   * @param selectedIdp
-   *          the selected IdP
-   * @param country
-   *          optional parameter for direct requests to an eIDAS country
+   * @param request the HTTP request
+   * @param response the HTTP response
+   * @param selectedIdp the selected IdP
+   * @param country optional parameter for direct requests to an eIDAS country
    * @return a model and view object
-   * @throws ApplicationException
-   *           for errors
+   * @throws ApplicationException for errors
    */
   @RequestMapping("/request")
   public ModelAndView sendRequest(final HttpServletRequest request, final HttpServletResponse response,
@@ -167,7 +161,7 @@ public class SamlController extends BaseController {
       @RequestParam(value = "useHok", required = false) final Boolean useHok) throws ApplicationException {
 
     log.debug("Request for generating an AuthnRequest to '{}' [client-ip-address='{}', country='{}']",
-      selectedIdp, request.getRemoteAddr(), country);
+        selectedIdp, request.getRemoteAddr(), country);
 
     // Special handling for LoA 4 and Holder-of-key
     //
@@ -226,16 +220,14 @@ public class SamlController extends BaseController {
    * Controller method that is invoked when the user wants to use his or hers eID to "sign", i.e., to send an
    * {@code AuthnRequest} from the Test my eID signature service SP.
    *
-   * @param request
-   *          the HTTP request
-   * @param response
-   *          the HTTP response
+   * @param request the HTTP request
+   * @param response the HTTP response
    * @return a model and view object
-   * @throws ApplicationException
-   *           for errors (session errors)
+   * @throws ApplicationException for errors (session errors)
    */
   @RequestMapping("/request/next")
-  public ModelAndView sendNextRequest(final HttpServletRequest request, final HttpServletResponse response) throws ApplicationException {
+  public ModelAndView sendNextRequest(final HttpServletRequest request, final HttpServletResponse response)
+      throws ApplicationException {
 
     final HttpSession session = request.getSession();
     final LastAuthentication lastAuthentication = (LastAuthentication) session.getAttribute("last-authentication");
@@ -244,28 +236,21 @@ public class SamlController extends BaseController {
       throw new ApplicationException("sp.msg.error.no-session");
     }
     return this.sendSignRequest(request, response, lastAuthentication.getIdp(),
-      lastAuthentication.getPersonalIdentityNumber(), lastAuthentication.getPrid(), lastAuthentication.getGivenName(),
-      lastAuthentication.getAuthnContextUri(), lastAuthentication.isHokUsed());
+        lastAuthentication.getPersonalIdentityNumber(), lastAuthentication.getPrid(), lastAuthentication.getGivenName(),
+        lastAuthentication.getAuthnContextUri(), lastAuthentication.isHokUsed());
   }
 
   /**
    * Controller method for sending a request to force signature behaviour at the IdP.
    *
-   * @param request
-   *          the HTTP request
-   * @param response
-   *          the HTTP response
-   * @param idp
-   *          the IdP entityID
-   * @param personalIdentityNumber
-   *          the personal identity number (optional)
-   * @param givenName
-   *          the user given name (optional)
-   * @param loa
-   *          the level of assurance (sig-message URI), optional
+   * @param request the HTTP request
+   * @param response the HTTP response
+   * @param idp the IdP entityID
+   * @param personalIdentityNumber the personal identity number (optional)
+   * @param givenName the user given name (optional)
+   * @param loa the level of assurance (sig-message URI), optional
    * @return a model and view object
-   * @throws ApplicationException
-   *           for errors
+   * @throws ApplicationException for errors
    */
   @RequestMapping("/request/sign")
   public ModelAndView sendSignRequest(final HttpServletRequest request, final HttpServletResponse response,
@@ -274,17 +259,18 @@ public class SamlController extends BaseController {
       @RequestParam(value = "prid", required = false) final String prid,
       @RequestParam(value = "givenName", required = false) final String givenName,
       @RequestParam(value = "loa", required = false) final String loa,
-      @RequestParam(value = "hok", required = false, defaultValue = "false") final Boolean hokUsed) throws ApplicationException {
+      @RequestParam(value = "hok", required = false, defaultValue = "false") final Boolean hokUsed)
+      throws ApplicationException {
 
     log.debug(
-      "Request for generating an AuthnRequest for a signature authentication to '{}' [client-ip-address='{}', personal-number='{}']",
-      idp, request.getRemoteAddr(), personalIdentityNumber);
+        "Request for generating an AuthnRequest for a signature authentication to '{}' [client-ip-address='{}', personal-number='{}']",
+        idp, request.getRemoteAddr(), personalIdentityNumber);
 
     try {
       final HttpSession session = request.getSession();
 
       final TestMyEidAuthnRequestGeneratorContext input = new TestMyEidAuthnRequestGeneratorContext(
-        hokUsed ? HokRequirement.REQUIRED : HokRequirement.DONT_USE);
+          hokUsed ? HokRequirement.REQUIRED : HokRequirement.DONT_USE);
       input.setDebug(this.debugFlag);
       input.setPersonalIdentityNumberHint(personalIdentityNumber);
       input.setPridHint(prid);
@@ -293,7 +279,8 @@ public class SamlController extends BaseController {
       // Load signature message ...
       //
       final String signMessage = givenName != null
-          ? this.messageSource.getMessage("sp.msg.sign-message", new Object[] { givenName }, LocaleContextHolder.getLocale())
+          ? this.messageSource.getMessage("sp.msg.sign-message", new Object[] { givenName },
+              LocaleContextHolder.getLocale())
           : this.messageSource.getMessage("sp.msg.sigm-message-noname", null, LocaleContextHolder.getLocale());
 
       input.setSignMessage(signMessage);
@@ -326,17 +313,12 @@ public class SamlController extends BaseController {
   /**
    * Endpoint for receiving and processing SAML responses.
    *
-   * @param request
-   *          the HTTP request
-   * @param response
-   *          the HTTP response
-   * @param samlResponse
-   *          the base64-encoded SAML response
-   * @param relayState
-   *          the relay state
+   * @param request the HTTP request
+   * @param response the HTTP response
+   * @param samlResponse the base64-encoded SAML response
+   * @param relayState the relay state
    * @return a model and view
-   * @throws ApplicationException
-   *           for application errors
+   * @throws ApplicationException for application errors
    */
   @PostMapping("/post")
   public ModelAndView processResponse(final HttpServletRequest request, final HttpServletResponse response,
@@ -360,17 +342,12 @@ public class SamlController extends BaseController {
   /**
    * Endpoint for receiving and processing SAML responses for "sign requests".
    *
-   * @param request
-   *          the HTTP request
-   * @param response
-   *          the HTTP response
-   * @param samlResponse
-   *          the base64-encoded SAML response
-   * @param relayState
-   *          the relay state
+   * @param request the HTTP request
+   * @param response the HTTP response
+   * @param samlResponse the base64-encoded SAML response
+   * @param relayState the relay state
    * @return a model and view
-   * @throws ApplicationException
-   *           for application errors
+   * @throws ApplicationException for application errors
    */
   @PostMapping("/sign")
   public ModelAndView processSignResponse(final HttpServletRequest request, final HttpServletResponse response,
@@ -395,21 +372,14 @@ public class SamlController extends BaseController {
   /**
    * Support method for processing responses.
    *
-   * @param request
-   *          the HTTP request
-   * @param response
-   *          the HTTP response
-   * @param signFlag
-   *          indicates whether this is a response for a "sign" AuthnRequest or a plain one
-   * @param hokFlag
-   *          indicates whether the response was received on a holder-of-key endpoint
-   * @param samlResponse
-   *          the base64-encoded SAML response
-   * @param relayState
-   *          the relay state
+   * @param request the HTTP request
+   * @param response the HTTP response
+   * @param signFlag indicates whether this is a response for a "sign" AuthnRequest or a plain one
+   * @param hokFlag indicates whether the response was received on a holder-of-key endpoint
+   * @param samlResponse the base64-encoded SAML response
+   * @param relayState the relay state
    * @return a model and view
-   * @throws ApplicationException
-   *           for application errors
+   * @throws ApplicationException for application errors
    */
   private ModelAndView processResponse(final HttpServletRequest request, final HttpServletResponse response,
       final boolean signFlag, final boolean hokFlag,
@@ -440,7 +410,8 @@ public class SamlController extends BaseController {
 
     final ModelAndView mav = new ModelAndView();
 
-    final X509Certificate clientCertificate = hokFlag ? this.clientCertificateGetter.getClientCertificate(request) : null;
+    final X509Certificate clientCertificate =
+        hokFlag ? this.clientCertificateGetter.getClientCertificate(request) : null;
     if (hokFlag) {
       if (clientCertificate == null) {
         log.info("No client certificate received");
@@ -453,7 +424,8 @@ public class SamlController extends BaseController {
     try {
       final ValidationContext validationContext = this.buildValidationContext(signMessage != null);
       final ResponseProcessingResult result = this.responseProcessor.processSamlResponse(
-        samlResponse, relayState, new ResponseProcessingInputImpl(request, authnRequest, clientCertificate), validationContext);
+          samlResponse, relayState, new ResponseProcessingInputImpl(request, authnRequest, clientCertificate),
+          validationContext);
       log.debug("Successfully processed SAML response");
 
       if (signFlag && previousAuthentication != null) {
@@ -499,12 +471,12 @@ public class SamlController extends BaseController {
     }
 
     session.setAttribute("sp-result", mav);
-    //return new ModelAndView("redirect:../result");
+    // return new ModelAndView("redirect:../result");
     return new ModelAndView("redirect:" + this.buildRedirectUrl("/result", this.debugFlag));
   }
 
   private String buildRedirectUrl(final String path, final boolean debug) {
-      return String.format("%s%s%s",
+    return String.format("%s%s%s",
         (debug ? this.debugBaseUri : this.baseUri), contextPath.equals("/") ? "" : this.contextPath, path);
   }
 
@@ -518,8 +490,7 @@ public class SamlController extends BaseController {
   /**
    * Creates an authentication info model object based on the response result.
    *
-   * @param result
-   *          the result from the response processing
+   * @param result the result from the response processing
    * @return the model
    */
   private AuthenticationInfo createAuthenticationInfo(final ResponseProcessingResult result) {
@@ -658,14 +629,14 @@ public class SamlController extends BaseController {
     }
 
     authenticationInfo.setAttributes(authenticationInfo.getAttributes()
-      .stream()
-      .sorted(Comparator.comparing(AttributeInfo::getSortOrder))
-      .collect(Collectors.toList()));
+        .stream()
+        .sorted(Comparator.comparing(AttributeInfo::getSortOrder))
+        .collect(Collectors.toList()));
 
     authenticationInfo.setAdvancedAttributes(authenticationInfo.getAdvancedAttributes()
-      .stream()
-      .sorted(Comparator.comparing(AttributeInfo::getSortOrder))
-      .collect(Collectors.toList()));
+        .stream()
+        .sorted(Comparator.comparing(AttributeInfo::getSortOrder))
+        .collect(Collectors.toList()));
 
     return authenticationInfo;
   }

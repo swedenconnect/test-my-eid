@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.springframework.util.Assert;
 public class ApplicationException extends Exception {
 
   /** For serializing. */
-  private static final long serialVersionUID = 5950708628760407672L;
+  private static final long serialVersionUID = 1564108817874835701L;
 
   /** The message code. */
   private final String messageCode;
@@ -33,8 +33,7 @@ public class ApplicationException extends Exception {
   /**
    * Constructor assigning the message code for the error.
    *
-   * @param messageCode
-   *          the message code
+   * @param messageCode the message code
    */
   public ApplicationException(final String messageCode) {
     Assert.hasText(messageCode, "messageCode must not be null or empty");
@@ -44,10 +43,8 @@ public class ApplicationException extends Exception {
   /**
    * Constructor assigning the message code and the message text for the error.
    *
-   * @param messageCode
-   *          the message code
-   * @param message
-   *          the error message
+   * @param messageCode the message code
+   * @param message the error message
    */
   public ApplicationException(final String messageCode, final String message) {
     super(message);
@@ -57,10 +54,8 @@ public class ApplicationException extends Exception {
   /**
    * Constructor assigning the message code and the cause of the error.
    *
-   * @param messageCode
-   *          the message code
-   * @param cause
-   *          the cause of the error
+   * @param messageCode the message code
+   * @param cause the cause of the error
    */
   public ApplicationException(final String messageCode, final Throwable cause) {
     super(cause.getMessage(), cause);
@@ -70,12 +65,9 @@ public class ApplicationException extends Exception {
   /**
    * Constructor assigning the message code, the message text and the cause of the error.
    *
-   * @param messageCode
-   *          the message code
-   * @param message
-   *          the error message
-   * @param cause
-   *          the cause of the error
+   * @param messageCode the message code
+   * @param message the error message
+   * @param cause the cause of the error
    */
   public ApplicationException(final String messageCode, final String message, final Throwable cause) {
     super(message, cause);

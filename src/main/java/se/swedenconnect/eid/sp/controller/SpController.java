@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,21 @@
  */
 package se.swedenconnect.eid.sp.controller;
 
+import java.util.Objects;
 import java.util.stream.Collectors;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.mobile.device.Device;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
-import com.google.common.base.Objects;
-
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.eid.sp.config.IdpListConfiguration;
 import se.swedenconnect.eid.sp.model.IdpDiscoveryInformation.IdpModel;
@@ -63,19 +60,17 @@ public class SpController extends BaseController {
   /**
    * Controller method for the home endpoint.
    *
-   * @param device
-   *          the type of device
+   * @param device the type of device
    *
    * @return a model and view object
    */
   @GetMapping
-  public ModelAndView home(final HttpServletRequest request, final Device device) {
+  public ModelAndView home(final HttpServletRequest request) {
     final ModelAndView mav = new ModelAndView("home");
     mav.addObject("idpList", this.idpListConfiguration.getIdps()
-      .stream()
-      .filter(idp -> device.isNormal() || idp.isMobileUse())
-      .map(i -> i.getIdpModel(LocaleContextHolder.getLocale()))
-      .collect(Collectors.toList()));
+        .stream()
+        .map(i -> i.getIdpModel(LocaleContextHolder.getLocale()))
+        .collect(Collectors.toList()));
 
     log.trace("Adding IdPs {}", this.idpListConfiguration.getIdps());
     return mav;
@@ -94,8 +89,7 @@ public class SpController extends BaseController {
   /**
    * Controller that by-passes the discovery page and goes directly to the eIDAS connector with a pre-selected country.
    *
-   * @param country
-   *          the two-letter country code for the country to send the request from the connector to
+   * @param country the two-letter country code for the country to send the request from the connector to
    * @return a redirect string to the SAML request endpoint
    */
   @GetMapping("/eidas/{country}")
@@ -104,11 +98,11 @@ public class SpController extends BaseController {
 
     if ("ping".equalsIgnoreCase(country)) {
       return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&ping=true",
-        this.eidasConnectorEntityId));
+          this.eidasConnectorEntityId));
     }
     else {
       return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&country=%s",
-        this.eidasConnectorEntityId, country));
+          this.eidasConnectorEntityId, country));
     }
   }
 
@@ -116,8 +110,7 @@ public class SpController extends BaseController {
    * Controller that by-passes the discovery page and goes directly to the eIDAS connector with a pre-selected country
    * and sends an authentication request for an eIDAS ping authentication request.
    *
-   * @param country
-   *          the two-letter country code for the country to send the request from the connector to
+   * @param country the two-letter country code for the country to send the request from the connector to
    * @return a redirect string to the SAML request endpoint
    */
   @GetMapping("/eidas/ping/{country}")
@@ -125,19 +118,16 @@ public class SpController extends BaseController {
       @PathVariable(value = "country", required = true) final String country) {
 
     return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&ping=true&country=%s",
-      this.eidasConnectorEntityId, country));
+        this.eidasConnectorEntityId, country));
   }
 
   /**
    * Displays the result of an authentication.
    *
-   * @param request
-   *          the HTTP request
-   * @param response
-   *          the HTTP response
+   * @param request the HTTP request
+   * @param response the HTTP response
    * @return a model and view object
-   * @throws ApplicationException
-   *           for
+   * @throws ApplicationException for
    */
   @GetMapping("/result")
   public ModelAndView displayResult(final HttpServletRequest request, final HttpServletResponse response) {
@@ -152,11 +142,11 @@ public class SpController extends BaseController {
     final LastAuthentication lastAuthentication = (LastAuthentication) session.getAttribute("last-authentication");
     if (lastAuthentication != null) {
       final IdpModel idpModel = this.idpListConfiguration.getIdps()
-        .stream()
-        .filter(idp -> Objects.equal(idp.getEntityID(), lastAuthentication.getIdp()))
-        .map(idp -> idp.getIdpModel(LocaleContextHolder.getLocale()))
-        .findFirst()
-        .orElse(null);
+          .stream()
+          .filter(idp -> Objects.equals(idp.getEntityID(), lastAuthentication.getIdp()))
+          .map(idp -> idp.getIdpModel(LocaleContextHolder.getLocale()))
+          .findFirst()
+          .orElse(null);
       if (idpModel != null) {
         mav.addObject("signIdp", idpModel);
       }

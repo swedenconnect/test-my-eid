@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,26 +31,26 @@ import se.swedenconnect.security.credential.opensaml.OpenSamlCredential;
 
 /**
  * Configuration class for credentials.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @Configuration
 @ConfigurationProperties(prefix = "sp.credential")
 @DependsOn("openSAML")
 public class SpCredentialConfiguration {
-  
+
   /** The signing credentials. */
   @Setter
   private CredentialsWrapper sign;
-  
+
   /** The decryption credentials. */
   @Setter
   private CredentialsWrapper decrypt;
-  
+
   /** The metadata signing credentials. */
   @Setter
   private CredentialsWrapper mdSign;
-  
+
   @Bean("signCredential")
   public X509Credential signCredential() throws Exception {
     return this.sign != null ? new OpenSamlCredential(this.sign.getCredential()) : null;
@@ -65,18 +65,18 @@ public class SpCredentialConfiguration {
   public X509Credential mdSignCredential() throws Exception {
     return this.mdSign != null ? new OpenSamlCredential(this.mdSign.getCredential()) : null;
   }
-  
+
   /**
    * A wrapper to a {@link KeyStoreCredential}.
    */
   public static class CredentialsWrapper extends PkiCredentialConfigurationProperties {
-    
+
     public void setFile(final Resource resource) {
       this.setResource(resource);
     }
-        
+
     private PkiCredentialFactoryBean factory;
-    
+
     public PkiCredential getCredential() throws Exception {
       if (this.factory == null) {
         this.factory = new PkiCredentialFactoryBean(this);

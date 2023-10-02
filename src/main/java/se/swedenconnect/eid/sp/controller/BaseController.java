@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,16 +40,15 @@ public class BaseController {
   /**
    * Updates the MVC model with common attributes such as possible languages.
    *
-   * @param model
-   *          the model
+   * @param model the model
    */
   @ModelAttribute
   public void updateModel(final Model model) {
     final Locale locale = LocaleContextHolder.getLocale();
 
     model.addAttribute("languages", this.languages.stream()
-      .filter(lang -> !lang.getLanguageTag().equals(locale.getLanguage()))
-      .collect(Collectors.toList()));
+        .filter(lang -> !lang.getLanguageTag().equals(locale.getLanguage()))
+        .collect(Collectors.toList()));
   }
 
 }

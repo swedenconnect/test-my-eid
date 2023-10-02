@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,10 +77,10 @@ public class MetadataConfiguration {
    */
   public UIInfo getUIInfoElement(final String baseUri, final String contextPath) {
     return UIInfoBuilder.builder()
-      .displayNames(this.uiinfo.getDisplayNames())
-      .descriptions(this.uiinfo.getDescriptions())
-      .logos(this.uiinfo.getUiInfoLogos(baseUri, contextPath))
-      .build();
+        .displayNames(this.uiinfo.getDisplayNames())
+        .descriptions(this.uiinfo.getDescriptions())
+        .logos(this.uiinfo.getUiInfoLogos(baseUri, contextPath))
+        .build();
   }
 
   /**
@@ -90,10 +90,10 @@ public class MetadataConfiguration {
    */
   public Organization getOrganizationElement() {
     return OrganizationBuilder.builder()
-      .organizationNames(this.organization.getNames())
-      .organizationDisplayNames(this.organization.getDisplayNames())
-      .organizationURLs(this.organization.getUrls())
-      .build();
+        .organizationNames(this.organization.getNames())
+        .organizationDisplayNames(this.organization.getDisplayNames())
+        .organizationURLs(this.organization.getUrls())
+        .build();
   }
 
   /**
@@ -108,10 +108,10 @@ public class MetadataConfiguration {
     final List<ContactPerson> persons = new ArrayList<>();
     for (final Map.Entry<ContactPersonTypeEnumeration, ContactPersonConfig> e : this.contactPersons.entrySet()) {
       final ContactPersonBuilder b = ContactPersonBuilder.builder()
-        .type(e.getKey())
-        .company(e.getValue().getCompany())
-        .givenName(e.getValue().getGivenName())
-        .surname(e.getValue().getSurname());
+          .type(e.getKey())
+          .company(e.getValue().getCompany())
+          .givenName(e.getValue().getGivenName())
+          .surname(e.getValue().getSurname());
       if (StringUtils.hasText(e.getValue().getEmailAddress())) {
         b.emailAddresses(e.getValue().getEmailAddress());
       }
@@ -129,7 +129,7 @@ public class MetadataConfiguration {
    * @return the AttributeConsumingService element
    */
   public AttributeConsumingService getAttributeConsumingService() {
-    if ((this.serviceNames == null || this.serviceNames.isEmpty()) 
+    if ((this.serviceNames == null || this.serviceNames.isEmpty())
         && (this.requestedAttributes == null || this.requestedAttributes.isEmpty())) {
       return null;
     }
@@ -139,9 +139,9 @@ public class MetadataConfiguration {
 
     if (this.requestedAttributes != null) {
       builder.requestedAttributes(this.requestedAttributes.stream()
-        .filter(ra -> ra.getName() != null)
-        .map(ra -> RequestedAttributeBuilder.builder(ra.getName()).isRequired(ra.isRequired()).build())
-        .collect(Collectors.toList()));
+          .filter(ra -> ra.getName() != null)
+          .map(ra -> RequestedAttributeBuilder.builder(ra.getName()).isRequired(ra.isRequired()).build())
+          .collect(Collectors.toList()));
     }
 
     return builder.build();
@@ -167,8 +167,9 @@ public class MetadataConfiguration {
       }
       final String _contextPath = "/".equals(contextPath) ? "" : contextPath;
       return this.logos.stream()
-        .map(l -> LogoBuilder.logo(String.format("%s%s%s", baseUri, _contextPath, l.getPath()), l.getHeight(), l.getWidth()))
-        .collect(Collectors.toList());
+          .map(l -> LogoBuilder.logo(String.format("%s%s%s", baseUri, _contextPath, l.getPath()), l.getHeight(),
+              l.getWidth()))
+          .collect(Collectors.toList());
     }
 
     /**

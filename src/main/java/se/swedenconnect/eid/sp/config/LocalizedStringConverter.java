@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import se.swedenconnect.opensaml.common.utils.LocalizedString;
 
 /**
  * Converts from a string to a localized string.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @Component
@@ -33,16 +33,15 @@ public class LocalizedStringConverter implements Converter<String, LocalizedStri
   /**
    * Converts strings on the format {@code <lang-tag>-<string according to language>}. The string "en-Hello" will give a
    * LocalizedString where:
-   * 
+   *
    * <pre>{@code
    * ls.getLanguage() => "en"
    * ls.getLocalString() => "Hello"}
    * </pre>
    */
   @Override
-  public LocalizedString convert(String source) {    
+  public LocalizedString convert(String source) {
     return new LocalizedString(source);
   }
 
 }
-

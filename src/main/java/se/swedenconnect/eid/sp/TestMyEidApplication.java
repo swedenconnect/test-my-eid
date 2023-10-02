@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package se.swedenconnect.eid.sp;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -53,8 +54,7 @@ public class TestMyEidApplication {
   /**
    * Program main.
    *
-   * @param args
-   *          program arguments
+   * @param args program arguments
    */
   public static void main(String[] args) {
     SpringApplication.run(TestMyEidApplication.class, args);
@@ -63,18 +63,18 @@ public class TestMyEidApplication {
   @Bean("openSAML")
   public OpenSAMLInitializer openSAML() throws Exception {
     OpenSAMLInitializer.getInstance()
-      .initialize(
-        new OpenSAMLSecurityDefaultsConfig(new CustomSwedishEidSecurityConfiguration(this.algorithmConfiguration)),
-        new OpenSAMLSecurityExtensionConfig());
+        .initialize(
+            new OpenSAMLSecurityDefaultsConfig(new CustomSwedishEidSecurityConfiguration(this.algorithmConfiguration)),
+            new OpenSAMLSecurityExtensionConfig());
     return OpenSAMLInitializer.getInstance();
   }
 
   @Bean
-  public LocaleResolver localeResolver(@Value("${server.servlet.context-path}") String contextPath) {
+  LocaleResolver localeResolver(@Value("${server.servlet.context-path}") String contextPath) {
     CookieLocaleResolver resolver = new CookieLocaleResolver();
     resolver.setDefaultLocale(new Locale("en"));
     resolver.setCookiePath(contextPath);
-    resolver.setCookieMaxAge(31536000);
+    resolver.setCookieMaxAge(Duration.ofDays(365));
     return resolver;
   }
 
@@ -85,7 +85,7 @@ public class TestMyEidApplication {
    */
   @Bean
   @ConfigurationProperties(prefix = "sp.ui.lang")
-  public List<UiLanguage> languages() {
+  List<UiLanguage> languages() {
     return new ArrayList<>();
   }
 
@@ -93,7 +93,7 @@ public class TestMyEidApplication {
   public static class WebMvcConfig implements WebMvcConfigurer {
 
     @Bean
-    public LocaleChangeInterceptor localeChangeInterceptor() {
+    LocaleChangeInterceptor localeChangeInterceptor() {
       LocaleChangeInterceptor interceptor = new LocaleChangeInterceptor();
       interceptor.setParamName("lang");
       return interceptor;
@@ -107,7 +107,7 @@ public class TestMyEidApplication {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
       registry.addInterceptor(localeChangeInterceptor());
-      //registry.addInterceptor(deviceResolverHandlerInterceptor());
+      // registry.addInterceptor(deviceResolverHandlerInterceptor());
     }
 
 //    @Bean

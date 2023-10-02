@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class LastAuthentication {
   /** The AuthnContext to request. */
   @Getter
   private final String authnContextUri;
-  
+
   @Getter
   @Setter
   private boolean hokUsed = false;
@@ -74,49 +74,49 @@ public class LastAuthentication {
   /**
    * Constructor.
    *
-   * @param authnResult
-   *          authentication result
+   * @param authnResult authentication result
    */
   public LastAuthentication(final ResponseProcessingResult authnResult) {
     this.idp = authnResult.getIssuer();
     this.personalIdentityNumber = Optional.ofNullable(
-      AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER, authnResult.getAttributes()))
-      .map(AttributeUtils::getAttributeStringValue)
-      .orElse(null);
+        AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER,
+            authnResult.getAttributes()))
+        .map(AttributeUtils::getAttributeStringValue)
+        .orElse(null);
     this.givenName = Optional.ofNullable(
-      AttributeUtils.getAttribute(
-        AttributeConstants.ATTRIBUTE_NAME_GIVEN_NAME, authnResult.getAttributes()))
-      .map(AttributeUtils::getAttributeStringValue)
-      .orElse(null);
+        AttributeUtils.getAttribute(
+            AttributeConstants.ATTRIBUTE_NAME_GIVEN_NAME, authnResult.getAttributes()))
+        .map(AttributeUtils::getAttributeStringValue)
+        .orElse(null);
     this.surName = Optional.ofNullable(
-      AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_SN, authnResult.getAttributes()))
-      .map(AttributeUtils::getAttributeStringValue)
-      .orElse(null);
+        AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_SN, authnResult.getAttributes()))
+        .map(AttributeUtils::getAttributeStringValue)
+        .orElse(null);
     this.displayName = Optional.ofNullable(
-      AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_DISPLAY_NAME, authnResult.getAttributes()))
-      .map(AttributeUtils::getAttributeStringValue)
-      .orElse(null);
+        AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_DISPLAY_NAME, authnResult.getAttributes()))
+        .map(AttributeUtils::getAttributeStringValue)
+        .orElse(null);
     this.prid = Optional.ofNullable(
-      AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_PRID, authnResult.getAttributes()))
-      .map(AttributeUtils::getAttributeStringValue)
-      .orElse(null);
+        AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_PRID, authnResult.getAttributes()))
+        .map(AttributeUtils::getAttributeStringValue)
+        .orElse(null);
     this.country = Optional.ofNullable(
-      AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_C, authnResult.getAttributes()))
-      .map(AttributeUtils::getAttributeStringValue)
-      .orElse(null);
+        AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_C, authnResult.getAttributes()))
+        .map(AttributeUtils::getAttributeStringValue)
+        .orElse(null);
     this.authnContextUri = authnResult.getAuthnContextClassUri();
   }
 
   /**
    * Given the list of attributes, this method checks if they match this object.
    *
-   * @param attributes
-   *          attributes
+   * @param attributes attributes
    * @return {@code true} if we have a match for identities, and {@code false} otherwise
    */
   public boolean isIdentityMatch(final List<Attribute> attributes) {
     for (final Attribute a : attributes) {
-      if (this.personalIdentityNumber != null && AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER.equals(a.getName())) {
+      if (this.personalIdentityNumber != null
+          && AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER.equals(a.getName())) {
         return this.personalIdentityNumber.equals(AttributeUtils.getAttributeStringValue(a));
       }
       if (this.prid != null && AttributeConstants.ATTRIBUTE_NAME_PRID.equals(a.getName())) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Configuration settings for Tomcat.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @Component
@@ -51,7 +51,7 @@ public class TomcatWebServerConfiguration implements WebServerFactoryCustomizer<
   /** {@inheritDoc} */
   @Override
   public void customize(final TomcatServletWebServerFactory factory) {
-        
+
     if (this.tomcatAjpEnabled) {
       Connector ajpConnector = new Connector("AJP/1.3");
       ajpConnector.setPort(this.ajpPort);
@@ -73,7 +73,7 @@ public class TomcatWebServerConfiguration implements WebServerFactoryCustomizer<
 
       factory.addAdditionalTomcatConnectors(ajpConnector);
     }
-        
+
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Sweden Connect
+ * Copyright 2018-2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
-import net.shibboleth.utilities.java.support.resolver.ResolverException;
+import net.shibboleth.shared.resolver.ResolverException;
 import se.swedenconnect.opensaml.saml2.metadata.provider.MetadataProvider;
 
 /**
  * Health indicator for the application.
- * 
+ *
  * @author Martin Lindström (martin@idsec.se)
  */
 @Component
@@ -35,14 +35,14 @@ public class TestMyEidHealthIndicator implements HealthIndicator {
 
   /** The federation metadata provider. */
   @Autowired
-  private MetadataProvider metadataProvider;  
+  private MetadataProvider metadataProvider;
 
   /**
    * The health implementation for the application.
    */
   @Override
   public Health health() {
-      
+
     // Assert that we have at least one IdP ...
     //
     try {
@@ -57,7 +57,7 @@ public class TestMyEidHealthIndicator implements HealthIndicator {
       log.error("Health check: {}", msg, e);
       return Health.outOfService().withDetail("error-message", msg).withException(e).build();
     }
-    
+
     log.debug("Health check: Application status is UP");
     return Health.up().build();
   }
