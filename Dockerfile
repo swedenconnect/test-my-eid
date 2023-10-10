@@ -1,4 +1,4 @@
-FROM openjdk:11-jre
+FROM openjdk:18.0.2.1-slim
 
 VOLUME /etc/test-my-eid
 RUN mkdir /opt/test-my-eid
