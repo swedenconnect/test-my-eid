@@ -506,6 +506,8 @@ urn:oasis:names:tc:SAML:2.0:nameid-format:transient
           </ds:X509Data>
         </ds:KeyInfo>
       </md:KeyDescriptor>
+      <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</md:NameIDFormat>
+      <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</md:NameIDFormat>
       <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         Location="https://localhost:9200/idp/profile/SAML2/Redirect/SSO" xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" />
       <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://localhost:9200/idp/profile/SAML2/POST/SSO" xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" />
