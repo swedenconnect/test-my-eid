@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Controller;
@@ -31,8 +32,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
-import se.swedenconnect.eid.sp.config.IdpListConfiguration;
+import se.swedenconnect.eid.sp.config.EntityID;
 import se.swedenconnect.eid.sp.model.IdpDiscoveryInformation.IdpModel;
+import se.swedenconnect.eid.sp.saml.IdpList;
 import se.swedenconnect.eid.sp.model.LastAuthentication;
 
 /**
@@ -47,11 +49,12 @@ public class SpController extends BaseController {
 
   /** Holds the IdPs to display for the user. */
   @Autowired
-  private IdpListConfiguration idpListConfiguration;
+  private IdpList idpListConfiguration;
 
   /** The entityID for the eIDAS connector. */
-  @Value("${sp.eidas-connector.entity-id}")
-  private String eidasConnectorEntityId;
+  @Autowired
+  @Qualifier("eidasConnectorEntityID")
+  private EntityID eidasConnectorEntityId;
 
   /** Needed so that we can configure paths. For overloading this app. */
   @Value("${sp.sign-path:/saml2/request/next}")
@@ -83,7 +86,7 @@ public class SpController extends BaseController {
    */
   @GetMapping("/eidas")
   public ModelAndView eidas() {
-    return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s", this.eidasConnectorEntityId));
+    return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s", this.eidasConnectorEntityId.getEntityID()));
   }
 
   /**
@@ -98,11 +101,11 @@ public class SpController extends BaseController {
 
     if ("ping".equalsIgnoreCase(country)) {
       return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&ping=true",
-          this.eidasConnectorEntityId));
+          this.eidasConnectorEntityId.getEntityID()));
     }
     else {
       return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&country=%s",
-          this.eidasConnectorEntityId, country));
+          this.eidasConnectorEntityId.getEntityID(), country));
     }
   }
 
@@ -118,7 +121,7 @@ public class SpController extends BaseController {
       @PathVariable(value = "country", required = true) final String country) {
 
     return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&ping=true&country=%s",
-        this.eidasConnectorEntityId, country));
+        this.eidasConnectorEntityId.getEntityID(), country));
   }
 
   /**

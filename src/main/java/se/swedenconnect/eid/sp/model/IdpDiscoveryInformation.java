@@ -15,18 +15,22 @@
  */
 package se.swedenconnect.eid.sp.model;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
-import org.opensaml.saml.ext.saml2mdui.DisplayName;
+import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.ext.saml2mdui.Logo;
+import org.opensaml.saml.ext.saml2mdui.UIInfo;
+import org.opensaml.saml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml.saml2.metadata.SSODescriptor;
 
 import lombok.Data;
 import lombok.Getter;
 import lombok.ToString;
-import se.swedenconnect.eid.sp.config.StaticIdpConfiguration.StaticIdpDiscoEntry;
+import se.swedenconnect.eid.sp.saml.IdpList.StaticIdpDiscoEntry;
+import se.swedenconnect.opensaml.saml2.metadata.EntityDescriptorUtils;
 
 /**
  * Model object representing info elements of an IdP for display in the UI.
@@ -56,56 +60,26 @@ public class IdpDiscoveryInformation {
   @Getter
   private Integer sortOrder = Integer.MAX_VALUE;
 
-  /** Can the IdP be used from a mobile device? */
-  @Getter
-  private boolean mobileUse = true;
-
   /**
-   * Constructor setting up an IdP info entry.
+   * Constructor.
    *
-   * @param entityID the IdP entityID
-   * @param displayNames the display names found in metadata
-   * @param logotypes the logotypes found in metadata
-   * @param mobileAuth is the {@code http://id.elegnamnden.se/sprop/1.0/mobile-auth} service property category present
-   *          in IdP metadata?
-   * @param discoInfo statically configured data for the IdP
+   * @param metadata the IdP metadata
    */
-  public IdpDiscoveryInformation(
-      final String entityID, final Collection<DisplayName> displayNames, final Collection<Logo> logotypes,
-      final boolean mobileAuth,
-      final StaticIdpDiscoEntry discoInfo) {
-
-    this.entityID = entityID;
-
-    this.sortOrder = discoInfo.getSortOrder();
-
-    this.mobileUse = discoInfo.getMobileUse() != null ? discoInfo.getMobileUse().booleanValue() : mobileAuth;
+  public IdpDiscoveryInformation(final EntityDescriptor metadata) {
+    this.entityID = metadata.getEntityID();
+    this.sortOrder = Integer.MAX_VALUE;
 
     this.displayNames = new HashMap<>();
-    displayNames.stream().forEach(d -> this.displayNames.put(d.getXMLLang(), d.getValue()));
-
-    if (discoInfo.getDisplayNameSv() != null) {
-      this.displayNames.put("sv", discoInfo.getDisplayNameSv());
-    }
-    if (discoInfo.getDisplayNameEn() != null) {
-      this.displayNames.put("en", discoInfo.getDisplayNameEn());
-    }
     this.descriptions = new HashMap<>();
-    if (discoInfo.getDescriptionSv() != null) {
-      this.descriptions.put("sv", discoInfo.getDescriptionSv());
-    }
-    if (discoInfo.getDescriptionEn() != null) {
-      this.descriptions.put("en", discoInfo.getDescriptionEn());
-    }
 
-    if (discoInfo.getLogoUrl() != null) {
-      this.logotype = discoInfo.getLogoUrl();
-    }
-    else {
+    final UIInfo uiInfo = this.getUIInfo(metadata);
+    if (uiInfo != null) {
+      uiInfo.getDisplayNames().stream().forEach(d -> this.displayNames.put(d.getXMLLang(), d.getValue()));
+
       // Prefer a square logo, and if not found, the one that is nearest a square.
       Logo selected = null;
       double widthHeightFactor = Double.MAX_VALUE;
-      for (final Logo logo : logotypes) {
+      for (final Logo logo : uiInfo.getLogos()) {
         if (selected == null) {
           selected = logo;
           widthHeightFactor = this.getWidthHeightFactor(logo);
@@ -126,6 +100,42 @@ public class IdpDiscoveryInformation {
       }
       this.logotype = selected != null ? selected.getURI() : null;
     }
+  }
+
+  /**
+   * Constructor for a static entry.
+   *
+   * @param metadata the IdP metadata
+   * @param staticEntry the static entry
+   * @param sortOrder the sort order
+   */
+  public IdpDiscoveryInformation(
+      final EntityDescriptor metadata,
+      final StaticIdpDiscoEntry staticEntry,
+      final int sortOrder) {
+
+    this(metadata);
+    this.sortOrder = sortOrder;
+
+    Optional.ofNullable(staticEntry.getDisplayNameSv()).ifPresent(d -> this.displayNames.put("sv", d));
+    Optional.ofNullable(staticEntry.getDisplayNameEn()).ifPresent(d -> this.displayNames.put("en", d));
+    Optional.ofNullable(staticEntry.getDescriptionSv()).ifPresent(d -> this.descriptions.put("sv", d));
+    Optional.ofNullable(staticEntry.getDescriptionEn()).ifPresent(d -> this.descriptions.put("en", d));
+    Optional.ofNullable(staticEntry.getLogoUrl()).ifPresent(logo -> { this.logotype = logo; });
+  }
+
+  /**
+   * Returns the UIInfo extension from the IdP metadata.
+   *
+   * @param idp the IdP metadata
+   * @return the UIInfo extension
+   */
+  private UIInfo getUIInfo(final EntityDescriptor idp) {
+    final SSODescriptor ssoDescriptor = idp.getIDPSSODescriptor(SAMLConstants.SAML20P_NS);
+    if (ssoDescriptor == null) {
+      return null;
+    }
+    return EntityDescriptorUtils.getMetadataExtension(ssoDescriptor.getExtensions(), UIInfo.class);
   }
 
   /**

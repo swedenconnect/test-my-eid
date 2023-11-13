@@ -1,0 +1,114 @@
+#
+# Discovery settings for Sweden Connect Sandbox
+#
+
+idp:
+  - entity-id: https://idp-sweden-connect-valfr-2017-sandbox.test.frejaeid.com
+    display-name-sv: Freja eID+
+    display-name-en: Freja eID+
+    logo-url: https://idp-sweden-connect-valfr-2017-sandbox.test.frejaeid.com/idp/images/frejaeid_logo_vertical.svg
+    logo-width: 120
+    logo-height: 120
+    enabled: true
+  - entity-id: https://testegov.absvenskapass.se/authn
+    logo-url: https://testegov.absvenskapass.se/idp/authn/logo/svenskapass_transparent.png
+    logo-width: 658
+    logo-height: 236
+    display-name-sv: Svenska Pass
+    display-name-en: Svenska Pass
+    enabled: false
+  - entity-id: http://dev.test.swedenconnect.se/idp
+  - entity-id: https://dev.connector.swedenconnect.se/eidas
+    display-name-sv: Utländskt eID
+    description-sv: eIDAS-nod för utveckling och test
+    display-name-en: Foreign eID
+    description-en: eIDAS node for development and test
+  - entity-id: https://sandbox.swedenconnect.se/bankid/idp
+    display-name-sv: BankID
+    description-sv: Sweden Connect:s Open Source IdP för BankID
+    display-name-en: BankID
+    description-en: Sweden Connect Open Source IdP for BankID
+    logo-url: /images/idps/bankid.svg
+    logo-width: 107
+    logo-height: 101
+  - entity-id: https://devidp.identityhub.se/bankid 
+    display-name-sv: BankID på fil eller kort
+    description-sv: Knowit BankID IdP för test
+    display-name-en: BankID on file or card
+    description-en: Knowit BankID IdP for test
+    logo-url: /images/idps/bankid.svg
+    logo-width: 107
+    logo-height: 101
+  - entity-id: https://devidp.identityhub.se/mobilt-bankid
+    display-name-sv: Mobilt BankID
+    description-sv: Knowit test-IdP för Mobilt BankID
+    display-name-en: Mobile BankID
+    description-en: Knowit test IdP for Mobile BankID
+    logo-url: /images/idps/bankid.svg
+    logo-width: 107
+    logo-height: 101
+  - entity-id: https://devidp.identityhub.se/telia-browserplugin
+    display-name-sv: Telia
+    description-sv: Knowit Telia IdP för test
+    display-name-en: Telia
+    description-en: Cybercom Telia IdP for test
+    logo-url: /images/idps/telia.jpg
+    logo-width: 343
+    logo-height: 279
+  - entity-id: https://devidp.identityhub.se/mock
+  - entity-id: urn:visma:idp-test.ciceron.cloud:saml20.bankid
+    display-name-sv: BankID på fil eller kort
+    description-sv: Vismas BankID IdP för test
+    display-name-en: BankID on file or card
+    description-en: Visma BankID IdP for test
+    logo-url: /images/idps/bankid.svg
+    logo-width: 107
+    logo-height: 101
+  - entity-id: urn:visma:idp-test.ciceron.cloud:saml20.bankid-mobile
+    display-name-sv: Mobilt BankID
+    description-sv: Vismas test-IdP för Mobilt BankID
+    display-name-en: Mobile BankID
+    description-en: Visma test IdP for Mobile BankID
+    logo-url: /images/idps/bankid.svg
+    logo-width: 107
+    logo-height: 101
+  - entity-id: urn:visma:idp-test.ciceron.cloud:saml20.telia   
+    display-name-sv: Telia
+    description-sv: Vismas Telia IdP för test
+    display-name-en: Telia
+    description-en: Visma Telia IdP for test
+    logo-url: /images/idps/telia.jpg
+    logo-width: 343
+    logo-height: 279    
+  - entity-id: urn:visma:idp-test.ciceron.cloud:saml20
+    display-name-sv: Visma Proxy-IdP
+    description-sv: Vismas Proxy-IdP för BankID och Freja eID+
+    display-name-en: Visma Proxy IdP
+    description-en: Visma Proxy IdP for BankID and Freja eID+
+    logo-url: https://www.visma.com/contentassets/ce3e4a8f642e4f848ba78168a926d666/logohoy_ny.jpg
+    logo-width: 225
+    logo-height: 51
+  - entity-id: https://m00-mg-local.testidp.funktionstjanster.se/samlv2/idp/metadata/0/24
+    display-name-sv: CGI Funktionstjänster Test - BankID på annan enhet
+    description-sv: Ej öppen för alla SP:ar
+    display-name-en: CGI Funktionstjänster Test - BankID on other device
+    description-en: Not open for all SP:s
+  - entity-id: https://integration.phenixid.se/saml/idp/efos_idp
+  - entity-id: http://anvil.fortifiedid.se
+  - entity-id: https://idp.efos.se
+    display-name-sv: EFOS
+    description-sv: EFOS test-IdP
+    display-name-en: EFOS
+    description-en: Test IdP
+    logo-url: https://www.efos.se/bilder/EFOS_logga.png
+    logo-width: 150
+    logo-height: 150
+  - entity-id: https://efos.local:8443/saml/authenticate/start_efos_test  
+    display-name-sv: EFOS (efos.local)
+    description-sv: Lokal test-IdP
+    display-name-en: EFOS (efos.local)
+    description-en: Local test IdP
+    logo-url: https://www.efos.se/bilder/EFOS_logga.png
+    logo-width: 150
+    logo-height: 150
+

@@ -43,7 +43,7 @@ Or, you can assign the corresponding environment variables:
 
 The **Test my eID** application has four pre-defined Spring profiles (that are mutually exclusive). They are `prod`, for Sweden Connect production, `qa`, for running in the Sweden Connect QA federation, `sandbox`, for the Sweden Connect Sandbox federation and `local` for local deployment.
 
-See the corresponding `application-<profile>.properties` files under [src/main/resources](https://github.com/swedenconnect/test-my-eid/tree/master/src/main/resources) for the default values for each profile.
+See the corresponding `application-<profile>.yml` files under [src/main/resources](https://github.com/swedenconnect/test-my-eid/tree/master/src/main/resources) for the default values for each profile.
 
 **General servlet settings**:
 
@@ -60,20 +60,24 @@ See the corresponding `application-<profile>.properties` files under [src/main/r
 | `server.ssl.key-password`<br/>`SERVER_SSL_KEY_PASSWORD` | The password to unlock the TLS key. | `secret` |
 | `tomcat.ajp.enabled`<br />`TOMCAT_AJP_ENABLED` | Is the AJP protocol enabled? | `false` |
 | `tomcat.ajp.port`<br />`TOMCAT_AJP_PORT` | The AJP port. | 8009 |
-| `tomcat.ajp.remoteauthentication`<br />`TOMCAT_AJP_`<br />`REMOTEAUTHENTICATION` | Whether remote authentication for AJP is required. | `false` |
+| `tomcat.ajp.secret-required`<br />`TOMCAT_AJP_SECRET_REQUIRED` | Whether AJP secret is required. | `false` |
+| `tomcat.ajp.secret`<br />`TOMCAT_AJP_SECRET` | Tomcat AJP secret. | `-` |
 
 **Application settings**:
 
 | Property<br />Environment variable | Description | Default value |
 | :--- | :--- | :--- |
 | `sp.entity-id`<br />`SP_ENTITY_ID` | The SAML entityID for the **Test my eID** application. | `http://test.swedenconnect.se/testmyeid` |
-| `sign-sp.entity-id`<br />`SIGN_SP_ENTITY_ID` | The SAML entityID for the **Test my eID** application when it acts as a signature service. | `http://test.swedenconnect.se/testmyeid-sign` |
+| `sp.sign-entity-id`<br />`SP_SIGN_ENTITY_ID` | The SAML entityID for the **Test my eID** application when it acts as a signature service. | `http://test.swedenconnect.se/testmyeid-sign` |
+| ~~`sign-sp.entity-id`~~<br />~~`SIGN_SP_ENTITY_ID`~~ | Deprecated. Use `sp.sign-entity-id`. | `http://test.swedenconnect.se/testmyeid-sign` |
 | `sp.base-uri`<br />`SP_BASE_URI` | The base URI for the SP application, e.g., `https://test.swedenconnect.se`. | - |
 | `sp.federation.metadata.url`<br />`SP_FEDERATION_METADATA_URL` | The URL from which federation metadata is periodically downloaded. | For production:<br/> `https://md.swedenconnect.se/role/idp.xml`<br /> For QA:<br/> `https://qa.md.swedenconnect.se/role/idp.xml`<br />For sandbox:<br/> `https://eid.svelegtest.se/metadata/`<br/>`mdx/role/idp.xml` |
 | `sp.federation.metadata.`<br />`validation-certificate`<br />`SP_FEDERATION_METADATA_`<br />`VALIDATION_CERTIFICATE` | Path to the certificate that is to be used to verify metadata signatures. The application classpath contains valid certificates for the `sandbox`, `qa` and `prod` profiles. To override any of the default values give the full path prefixed with `file:`. | For production:<br/>`classpath:prod/sc-metadata.crt`<br/>For QA:<br />`classpath:qa/sc-qa-metadata.crt`<br />For sandbox:<br/>`classpath:sandbox/sandbox-metadata.crt` |
-| `sp.discovery.`<br/>`static-idp-configuration`<br/>`SP_DISCOVERY_`<br />`STATIC_IDP_CONFIGURATION` | Optional configuration file that tells how the IdP discovery page should be displayed. See further the "IdP Discovery Configuration" section below.<br/>To override a default value give the full path prefixed with `file:`.  | Default (no profile):<br/>-<br />For production:<br/>[`classpath:prod/idp-disco-prod.properties`](https://github.com/swedenconnect/test-my-eid/blob/master/src/main/resources/prod/idp-disco-prod.properties)<br/>For QA:<br/>[`classpath:qa/idp-disco-qa.properties`](https://github.com/swedenconnect/test-my-eid/blob/master/src/main/resources/qa/idp-disco-qa.properties)<br/>For sandbox:<br/>[`classpath:qa/idp-disco-sandbox.properties`](https://github.com/swedenconnect/test-my-eid/blob/master/src/main/resources/sandbox/idp-disco-sandbox.properties) |
+| `sp.discovery.`<br/>`static-idp-configuration`<br/>`SP_DISCOVERY_`<br />`STATIC_IDP_CONFIGURATION` | Optional configuration file that tells how the IdP discovery page should be displayed. See further the "IdP Discovery Configuration" section below.<br/>To override a default value give the full path prefixed with `file:`.  | Default (no profile):<br/>-<br />For production:<br/>[`classpath:prod/idp-disco-prod.yml`](https://github.com/swedenconnect/test-my-eid/blob/master/src/main/resources/prod/idp-disco-prod.yml)<br/>For QA:<br/>[`classpath:qa/idp-disco-qa.yml`](https://github.com/swedenconnect/test-my-eid/blob/master/src/main/resources/qa/idp-disco-qa.yml)<br/>For sandbox:<br/>[`classpath:qa/idp-disco-sandbox.yml`](https://github.com/swedenconnect/test-my-eid/blob/master/src/main/resources/sandbox/idp-disco-sandbox.yml) |
+| `sp.discovery.black-list`<br />`SP_DISCOVERY_BLACK_LIST` | A list of black-listed IdP:s (entity ID:s) | - |
+| `sp.discovery.include-only-static`<br />`SP_DISCOVERY_INCLUDE_ONLY_STATIC` | Whether only statically configured IdP:s should be selectable (see above). | `false` |
 | `sp.discovery.cache-time`<br />`SP_DISCOVERY_CACHE_TIME` | Number of seconds the application should keep discovery cache. | `600` (10 minutes) |
-| `sp.discovery.ignore-contracts`<br />`SP_DISCOVERY_IGNORE_CONTRACTS` | Should contract entity categories be ignored during discovery matching? | `false` for production and `true` otherwise. |
+| `sp.discovery.ignore-contracts`<br />`SP_DISCOVERY_IGNORE_CONTRACTS` | Should contract entity categories be ignored during discovery matching? | `true` |
 | `sp.security.algorithm-config.`<br/>`rsa-oaep-digest`<br/>`SP_SECURITY_ALGORITHM_CONFIG_`<br />`RSA_OAEP_DIGEST` | Which digest method to use as default for RSA-OAEP encryption. Consider using `http://www.w3.org/2000/09/xmldsig#sha1` if we run into too many interop issues with the SHA-256 default. | `http://www.w3.org/2001/04/xmlenc#sha256` |
 | ``sp.security.algorithm-config.`<br/>`use-aes-gcm`<br/>`SP_SECURITY_ALGORITHM_CONFIG_`<br />`USE_AES_GCM` | Should AES-GCM block cipher be used? The alternative is AES-CBC. | `true` |
 
@@ -87,25 +91,19 @@ The table below shows the configuration settings for the three credentials used.
 
 | Property<br />Environment variable | Description | Default value |
 | :--- | :--- | :--- |
-| `sp.credential.<usage>.file`<br />`SP_CREDENTIAL_<usage>_FILE` | The file holding the keystore file. To override the default setting give the full path prefixed with `file:` | For sign and decrypt:<br />`classpath:sp-keys.jks`<br />For metadata sign:<br />`classpath:metadata-sign.jks` |
+| `sp.credential.<usage>.resource`<br />`SP_CREDENTIAL_<usage>_RESOURCE` | The resource holding the keystore file. To override the default setting give the full path prefixed with `file:` | For sign and decrypt:<br />`classpath:sp-keys.jks`<br />For metadata sign:<br />`classpath:metadata-sign.jks` |
+| ~~`sp.credential.<usage>.file`~~<br />~~`SP_CREDENTIAL_<usage>_FILE`~~ | Deprecated. Use `sp.credential.<usage>.resource`. | See above. |
 | `sp.credential.<usage>.type`<br />`SP_CREDENTIAL_<usage>_type` | The type of keystore - `JKS` or `PKCS12`. | `JKS` |
 | `sp.credential.<usage>.password`<br />`SP_CREDENTIAL_<usage>_PASSWORD` | The password to unlock the keystore. | `secret` |
 | `sp.credential.<usage>.alias`<br />`SP_CREDENTIAL_<usage>_ALIAS` | The alias for the key entry in the store. | For sign: `sign`<br />For decrypt: `encrypt`<br/>For metadata sign: `mdsign` |
 | `sp.credential.<usage>.key-password`<br />`SP_CREDENTIAL_<usage>_KEY_PASSWORD` | The password to unlock the key entry. | `secret` |
 
-SAML metadata for the SP application is put together using a set of configurable properties and published on `/testmyeid/metadata`. All metadata properties are prefixed with `sp.metadata.` and control entity categories, display name, logotype, organization name and contact details. See further the [application.properties](https://github.com/swedenconnect/test-my-eid/blob/master/src/main/resources/application.properties) file. To override a property simply define your own value for it.
+SAML metadata for the SP application is put together using a set of configurable properties and published on `/testmyeid/metadata`. All metadata properties are prefixed with `sp.metadata.` and control entity categories, display name, logotype, organization name and contact details. See further the [application.yml](https://github.com/swedenconnect/test-my-eid/blob/master/src/main/resources/application.yml) file. To override a property simply define your own value for it.
 
 
 **Management API settings**:
 
-| Property<br />Environment variable | Description | Default value |
-| :--- | :--- | :--- |
-| `management.server.port`<br />`MANAGEMENT_SERVER_PORT` | The port on which the application listens for management operations (see below). | `8444` |
-| `management.server.servlet.context-path`<br/>`MANAGEMENT_SERVER_`<br/>`SERVLET_CONTEXT_PATH` | The context path for the management API. | `${server.servlet.context-path}` |
-| `management.endpoints.web.base-path`<br />`MANAGEMENT_ENDPOINTS_`<br/>`WEB_BASE_PATH` | The base path for the management API. | `/manage` |
-| `management.server.ssl.*`<br/>`MANAGEMENT_SERVER_SSL_*` | TLS settings for the management API. | Same values as for `server.ssl.*` |
-
-For other settings concerning the Spring Boot management API, see the property values prefixed with `management` of [application.properties](https://github.com/swedenconnect/test-my-eid/blob/master/src/main/resources/application.properties).
+For settings concerning the Spring Boot management API, see the property values prefixed with `management` of [application.yml](https://github.com/swedenconnect/test-my-eid/blob/master/src/main/resources/application.yml).
 
 **Log settings**:
 
@@ -122,50 +120,32 @@ For controlling the log level for a specific package assign a property/variable 
 
 The page where the user selects which IdP (or authentication method) to use is normally called "IdP Discovery". It is possible to construct such a list only based on the IdP:s found in the SAML metadata, where each IdP declares its display name and logotype. However, for an optimal user interface you may want to add extra information, display a more suitable logotype, filter out some of the IdP:s found and perhaps most important, to display the options in the order that you decide.
 
-Therefore, the **Test my eID** application may be supplied with a IDP discovery configuration file (by assigning the property `sp.discovery.static-idp-configuration`). This configuration file has the following properties:
-
-* `include-unlisted` - A boolean that tells whether an IdP found in the federation metadata that is not listed among the statically configured IdP:s (see below) should be displayed as a selectable option in the discovery UI. The default is `true`.
-
-* `black-list` - A list containing entityID:s of IdP:s that should not be visible in the discovery UI. This list is only valid if `include-unlisted` is `true`. Example:
-
-```
-    black-list[0]=http://bad.idp.com
-    black-list[1]=http://www.acme.com/idp
-```
-
-* `idp.<symbolic-name>` - A map of statically configured IdP:s. See table below.
+Therefore, the **Test my eID** application may be supplied with a IDP discovery configuration file (by assigning the property `sp.discovery.static-idp-configuration`). This configuration file is a list under the `idp` key where each item may contain:
 
 | Property | Description | Default |
 | :--- | :--- | :--- |
 | `entity-id` | The entityID of the IdP. | Required field - no default |
-| `sort-order` | The order index. The discovery UI will display the IdP:s in order starting with the lowest sort order (0). | `MAX_INT` |
 | `display-name-sv`<br />`display-name-en` | The display name in Swedish/English for the IdP. | IdP metadata entry (`mdui:DisplayName` element with language tag "sv"/"en"). |
 | `description-sv`<br />`description-en` | For some IdP:s we may want to add additional information. This property provides this information in Swedish/English. | - |
 | `logo-url` | An URL for the IdP logotype that should be displayed in the UI. | IdP metadata entry (`mdui:Logo` element with the most "square" dimensions). |
 | `logo-width`<br />`logo-height` | The width/height for `logo-url` | - |
-| `mobile-use` | Can this IdP be used by users having a mobile device? | `true` if the IdP metadata entry declares the entity category [mobile-auth](http://docs.swedenconnect.se/technical-framework/updates/ELN-0606_-_Entity_Categories_for_the_Swedish_eID_Framework.html#mobile-auth) and `false` otherwise. |
 | `enabled` | Enable flag. May be used if a configuration for an IdP is set up, but it should not be active until later. | `true` |
-| `skip-entity-category-matching` | Even if an IdP is statically configured, the **Test my eID** will check if it is usable for the SP by matching the SP entity categories against the IdP entity categories according to the [Entity Categories for the Swedish eID Framework](https://docs.swedenconnect.se/technical-framework/updates/ELN-0606_-_Entity_Categories_for_the_Swedish_eID_Framework.html#consuming-and-providing-services) specification. By setting this value to `false` no such checks are made. | `false` |
 
 **Example:**
 
 The default IdP configuration file for the Sweden Connect QA profile looks like:
 
 ```
-include-unlisted=false
-
-idp.eidas.entity-id=https://qa.connector.eidas.swedenconnect.se/eidas
-idp.eidas.sort-order=0
-
-# Freja defines two logotypes. We control which is displayed.
-idp.freja.entity-id=https://idp-sweden-connect-valfr-2017-ct.test.frejaeid.com
-idp.freja.sort-order=1
-idp.freja.logo-url=https://idp-sweden-connect-valfr-2017-ct.test.frejaeid.com/idp/images/frejaeid_logo.svg
-idp.freja.logo-width=75
-idp.freja.logo-height=75
-
-idp.refidp.entity-id=https://qa.md.swedenconnect.se/
-idp.refidp.sort-order=2
+idp:
+  # The eIDAS connect
+  - entity-id: https://qa.connector.eidas.swedenconnect.se/eidas
+  # Freja eID Plus
+  - entity-id: https://idp-sweden-connect-valfr-2017-ct.test.frejaeid.com
+    logo-url: https://idp-sweden-connect-valfr-2017-ct.test.frejaeid.com/idp/images/frejaeid_logo.svg
+    logo-height: 75
+    logo-width: 75
+  # The Sweden Connect Reference IdP
+  - entity-id: http://qa.test.swedenconnect.se/idp
 ```
 
 ### Management API

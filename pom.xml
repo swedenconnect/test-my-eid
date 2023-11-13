@@ -15,7 +15,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.1.4</version>
+    <version>3.1.5</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
   
@@ -56,32 +56,21 @@
       <name>Maven Central</name>
       <url>https://repo1.maven.org/maven2/</url>
     </repository>
-    
-    <repository>
-      <id>spring-milestones</id>
-      <name>Spring Milestones</name>
-      <url>https://repo.spring.io/milestone</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    
     <repository>
       <id>shibboleth</id>
       <name>Shibboleth Maven Repo</name>
       <url>https://build.shibboleth.net/nexus/content/repositories/releases</url>
     </repository>
-
-  </repositories>
+  </repositories>  
   
   <distributionManagement>
     <snapshotRepository>
-      <id>eidassh</id>
-      <url>https://maven.eidastest.se/artifactory/eidas-snapshot-local</url>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </snapshotRepository>
     <repository>
-      <id>eidasrl</id>
-      <url>https://maven.eidastest.se/artifactory/eidas-release-local</url>
+    <id>ossrh</id>
+    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
     </repository>
   </distributionManagement>
   
@@ -212,6 +201,29 @@
   <build>
 
     <plugins>
+      
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <release>${java.version}</release>
+        </configuration>
+      </plugin>
+      
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-clean-plugin</artifactId>
+      </plugin>      
 
       <plugin>
         <groupId>org.springframework.boot</groupId>
@@ -258,6 +270,24 @@
 
       <build>
         <plugins>
+          
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <version>1.6.13</version>
+            <extensions>true</extensions>
+            <configuration>
+              <serverId>ossrh</serverId>
+              <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+              <autoReleaseAfterClose>true</autoReleaseAfterClose>
+              <!--
+                Allows manual inspection of the staging repo before deploying
+                it to the central repo.
+                Use 'mvn nexus-staging:release -Prelease' to release and
+                'mvn nexus-staging:drop' to abort. 
+               -->
+            </configuration>
+          </plugin>          
 
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>

@@ -1,0 +1,21 @@
+
+sp:
+  entity-id: https://test.swedenconnect.se/testmyeid
+  sign-entity-id: https://test.swedenconnect.se/testmyeid-sign
+  eidas-connector:
+    entity-id: https://connector.eidas.swedenconnect.se/eidas  
+  discovery:
+    include-only-static: true
+    static-idp-configuration: classpath:prod/idp-disco-prod.yml
+  federation:
+    metadata:
+      url: https://md.swedenconnect.se/role/idp.xml
+      validation-certificate: classpath:prod/sc-metadata.crt
+  security:
+    algorithm-config:
+      use-aes-gcm: false
+      
+logging:
+  level:
+    root: WARN
+    testmyeid: INFO

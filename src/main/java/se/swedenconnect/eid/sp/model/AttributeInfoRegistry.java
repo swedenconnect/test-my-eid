@@ -16,15 +16,11 @@
 package se.swedenconnect.eid.sp.model;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.opensaml.saml.saml2.core.Attribute;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
-import lombok.Data;
-import lombok.Setter;
-import lombok.ToString;
+import se.swedenconnect.eid.sp.config.SpConfigurationProperties.UiConfiguration.AttributeConfig;
 import se.swedenconnect.opensaml.saml2.attribute.AttributeUtils;
 
 /**
@@ -33,16 +29,22 @@ import se.swedenconnect.opensaml.saml2.attribute.AttributeUtils;
  *
  * @author Martin Lindström (martin@idsec.se)
  */
-@Component
-@ConfigurationProperties(prefix = "sp.ui")
 public class AttributeInfoRegistry {
 
   /** Max length for attributes being displayed. */
   public static final int MAX_ATTR_DISPLAY_LENGTH = 25;
 
   /** A list of attribute info model objects. */
-  @Setter
-  private List<AttrInfo> attributes;
+  private final List<AttributeConfig> attributes;
+
+  /**
+   * Constructor.
+   *
+   * @param attributes the attribute configuration
+   */
+  public AttributeInfoRegistry(final List<AttributeConfig> attributes) {
+    this.attributes = Objects.requireNonNull(attributes, "attributes must not be null");
+  }
 
   /**
    * Resolves the supplied SAML attribute into an attribute info model object.
@@ -57,7 +59,7 @@ public class AttributeInfoRegistry {
 
   public AttributeInfo resolve(final String attributeName, final String attributeValue, final boolean eidasFlag) {
     for (int i = 0; i < this.attributes.size(); i++) {
-      final AttrInfo ai = this.attributes.get(i);
+      final AttributeConfig ai = this.attributes.get(i);
       if (ai.getAttributeName().equals(attributeName)) {
         final AttributeInfo attributeInfo = new AttributeInfo();
         attributeInfo.setAttributeNameCode(ai.getMessageCode(eidasFlag));
@@ -70,52 +72,6 @@ public class AttributeInfoRegistry {
       }
     }
     return null;
-  }
-
-  /**
-   * Attribute info model class.
-   */
-  @Data
-  @ToString
-  public static class AttrInfo {
-
-    /** The name of the attribute. */
-    private String attributeName;
-
-    /** The message code for the attribute. */
-    private String messageCode;
-
-    /** The message code the attribute if eIDAS is used. If {@code null}, the value for {@code messageCode} is used. */
-    private String messageCodeEidas;
-
-    /** The message code for the attribute description. */
-    private String descriptionMessageCode;
-
-    /** The message code the for attribute description in eIDAS context. */
-    private String descriptionMessageCodeEidas;
-
-    /** Flag telling whether this attribute is "advanced" (to be displayed under the advanced section). */
-    private boolean advanced;
-
-    /**
-     * Returns the message code for the attribute.
-     *
-     * @param eidasFlag is eIDAS used?
-     * @return the message code to use for the attribute
-     */
-    public String getMessageCode(final boolean eidasFlag) {
-      return eidasFlag && StringUtils.hasText(this.messageCodeEidas) ? this.messageCodeEidas : this.messageCode;
-    }
-
-    /**
-     * Returns the message code for the description field.
-     *
-     * @param eidasFlag is eIDAS used?
-     * @return the message code for the description field
-     */
-    public String getDescriptionMessageCode(final boolean eidasFlag) {
-      return eidasFlag ? this.descriptionMessageCodeEidas : this.descriptionMessageCode;
-    }
   }
 
 }
