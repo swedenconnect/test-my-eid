@@ -3,7 +3,6 @@ server:
     session:
       cookie:
         domain: idsec.se
-        http-only: true
 
 tomcat:
   ajp:
