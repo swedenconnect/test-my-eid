@@ -1,0 +1,39 @@
+server:
+  port: 9445
+server2:
+  port: 9446
+  ssl:
+    client-auth: want
+    enabled: true
+    key-alias: localhost
+    key-password: secret
+    key-store: classpath:snakeoil-localhost.p12
+    key-store-password: secret
+    key-store-type: PKCS12
+    trust-store: classpath:local/sandbox.jks
+    trust-store-password: secret
+    
+management:
+  server:
+    port: 9447
+
+sp:
+  base-uri: https://eid.idsec.se
+  debug-base-uri: https://localhost:9445
+  hok-base-uri: https://hok.idsec.se
+  debug-hok-base-uri: https://localhost:9446
+  entity-id: http://sandbox.swedenconnect.se/testmyeid
+  sign-entity-id: http://sandbox.swedenconnect.se/testmyeid-sign
+  eidas-connector:
+    entity-id: https://eunode.eidastest.se/idp2
+  discovery:
+    include-only-static: true
+    static-idp-configuration: classpath:local/idp-disco-local.yml  
+  federation:
+    metadata:
+      url: classpath:local/local-metadata.xml
+
+logging:
+  level:
+    root: INFO
+    testmyeid: TRACE

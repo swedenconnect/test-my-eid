@@ -1,11 +1,9 @@
 FROM openjdk:18.0.2.1-slim
 
-VOLUME /etc/test-my-eid
-RUN mkdir /opt/test-my-eid
-ADD target/test-my-eid-*-exec.jar /opt/test-my-eid/test-my-eid.jar
+ADD target/test-my-eid-*-exec.jar /test-my-eid.jar
 
-ENV JAVA_OPTS="-Djava.security.egd=file:/cfg/./urandom -Dserver.port=8443 -Dserver.ssl.enabled=true -Dmanagement.server.port=8444 -Djava.net.preferIPv4Stack=true"
-  
-ENTRYPOINT exec java $JAVA_OPTS -jar /opt/test-my-eid/test-my-eid.jar
+ENV JAVA_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED -Djava.net.preferIPv4Stack=true -Dorg.apache.xml.security.ignoreLineBreaks=true"
+
+ENTRYPOINT exec java $JAVA_OPTS -jar /test-my-eid.jar
 
 EXPOSE 8443 8444 8009

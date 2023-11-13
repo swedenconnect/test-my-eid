@@ -1,0 +1,13 @@
+#
+# Default file for static IdP:s (empty)
+#
+
+sp:
+  discovery:
+    idp:
+      - entity-id: https://bankid.swedenconnect.se/idp/local
+        display-name-sv: BankID (local)
+        display-name-en: BankID (local)
+
+
+

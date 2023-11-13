@@ -31,7 +31,7 @@ import org.opensaml.xmlsec.impl.BasicEncryptionConfiguration;
 import org.springframework.util.StringUtils;
 
 import lombok.extern.slf4j.Slf4j;
-import se.swedenconnect.eid.sp.config.AlgorithmConfiguration;
+import se.swedenconnect.eid.sp.config.AlgorithmConfiguration.CustomAlgorithms;
 import se.swedenconnect.opensaml.sweid.xmlsec.config.SwedishEidSecurityConfiguration;
 
 /**
@@ -43,14 +43,14 @@ import se.swedenconnect.opensaml.sweid.xmlsec.config.SwedishEidSecurityConfigura
 public class CustomSwedishEidSecurityConfiguration extends SwedishEidSecurityConfiguration {
 
   /** Customized algorithm configuration. */
-  private AlgorithmConfiguration algorithmConfiguration;
+  private CustomAlgorithms algorithmConfiguration;
 
   /**
    * Constructor assigning the customized algorithm configuration.
    *
    * @param algorithmConfiguration customized algorithm configuration
    */
-  public CustomSwedishEidSecurityConfiguration(final AlgorithmConfiguration algorithmConfiguration) {
+  public CustomSwedishEidSecurityConfiguration(final CustomAlgorithms algorithmConfiguration) {
     this.algorithmConfiguration = algorithmConfiguration;
   }
 

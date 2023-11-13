@@ -19,9 +19,11 @@ import java.io.File;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
-import org.apache.hc.client5.http.ssl.DefaultHostnameVerifier;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.saml.common.xml.SAMLConstants;
@@ -39,22 +41,29 @@ import org.opensaml.xmlsec.encryption.OAEPparams;
 import org.opensaml.xmlsec.encryption.support.EncryptionConstants;
 import org.opensaml.xmlsec.encryption.support.RSAOAEPParameters;
 import org.opensaml.xmlsec.signature.DigestMethod;
+import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.system.ApplicationTemp;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.util.StringUtils;
-import org.w3c.dom.Element;
+import org.w3c.dom.Document;
 
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import net.shibboleth.shared.component.ComponentInitializationException;
+import se.swedenconnect.eid.sp.model.AttributeInfoRegistry;
+import se.swedenconnect.eid.sp.saml.IdpList;
+import se.swedenconnect.eid.sp.saml.IdpList.StaticIdpDiscoEntry;
 import se.swedenconnect.eid.sp.saml.TestMyEidAuthnRequestGenerator;
 import se.swedenconnect.eid.sp.utils.ClientCertificateGetter;
 import se.swedenconnect.eid.sp.utils.FromHeaderClientCertificateGetter;
@@ -66,6 +75,8 @@ import se.swedenconnect.opensaml.saml2.metadata.build.EntityDescriptorBuilder;
 import se.swedenconnect.opensaml.saml2.metadata.build.ExtensionsBuilder;
 import se.swedenconnect.opensaml.saml2.metadata.build.KeyDescriptorBuilder;
 import se.swedenconnect.opensaml.saml2.metadata.build.SPSSODescriptorBuilder;
+import se.swedenconnect.opensaml.saml2.metadata.provider.AbstractMetadataProvider;
+import se.swedenconnect.opensaml.saml2.metadata.provider.FilesystemMetadataProvider;
 import se.swedenconnect.opensaml.saml2.metadata.provider.HTTPMetadataProvider;
 import se.swedenconnect.opensaml.saml2.metadata.provider.MetadataProvider;
 import se.swedenconnect.opensaml.saml2.metadata.provider.StaticMetadataProvider;
@@ -76,67 +87,23 @@ import se.swedenconnect.opensaml.sweid.saml2.signservice.SignMessageEncrypter;
 import se.swedenconnect.opensaml.sweid.saml2.validation.SwedishEidResponseProcessorImpl;
 import se.swedenconnect.opensaml.xmlsec.encryption.support.SAMLObjectDecrypter;
 import se.swedenconnect.opensaml.xmlsec.encryption.support.SAMLObjectEncrypter;
+import se.swedenconnect.security.credential.opensaml.OpenSamlCredential;
 
 /**
- * Configuration for the eIDAS Test SP.
+ * Configuration for the Test SP.
  *
  * @author Martin Lindström (martin.lindstrom@idsec.se)
  */
 @Configuration
+@EnableConfigurationProperties({ SpConfigurationProperties.class })
 @DependsOn("openSAML")
+@Slf4j
 public class SpConfiguration implements InitializingBean {
 
+  /** For backwards compatibility. */
   @Setter
-  @Value("${sp.entity-id}")
-  private String spEntityId;
-
-  @Setter
-  @Value("${sign-sp.entity-id}")
+  @Value("${sign-sp.entity-id:#{null}}")
   private String signSpEntityId;
-
-  /** The Base URI when debugging. */
-  @Setter
-  @Value("${sp.debug-base-uri:}")
-  private String debugBaseUri;
-
-  /** Base URI for holder of key profile. */
-  @Setter
-  @Value("${sp.hok-base-uri:}")
-  private String hokBaseUri;
-
-  /** Base URI for holder of key profile in debug. */
-  @Setter
-  @Value("${sp.debug-hok-base-uri:}")
-  private String debugHokBaseUri;
-
-  /** Header name from which we can read the mTls client certificate. */
-  @Setter
-  @Value("${sp.mtls.header-name:SSL_CLIENT_CERT}")
-  private String mtlsHeaderName;
-
-  /** Attribute name from which we can read the mTls client certificate. */
-  @Setter
-  @Value("${sp.mtls.attribute-name:javax.servlet.request.X509Certificate}")
-  private String mtlsAttributeName;
-
-  @Setter
-  @Autowired
-  private MetadataConfiguration metadataConfiguration;
-
-  @Setter
-  @Autowired
-  @Qualifier("signCredential")
-  private X509Credential signCredential;
-
-  @Setter
-  @Autowired
-  @Qualifier("encryptCredential")
-  private X509Credential encryptCredential;
-
-  @Setter
-  @Autowired
-  @Qualifier("mdSignCredential")
-  private X509Credential mdSignCredential;
 
   /** Temporary directory for caches. */
   private final ApplicationTemp tempDir = new ApplicationTemp();
@@ -144,9 +111,37 @@ public class SpConfiguration implements InitializingBean {
   /** Algorithm requirements for encryption. */
   private List<EncryptionMethod> encryptionMethods;
 
+  /** Configuration properties. */
+  private final SpConfigurationProperties properties;
+
+  /**
+   * Constructor.
+   *
+   * @param properties the configuration properties
+   */
+  public SpConfiguration(final SpConfigurationProperties properties) {
+    this.properties = properties;
+  }
+
+  /**
+   * Gets the {@code DebugFlag} bean telling whether we are running in debug mode.
+   *
+   * @return {@link Boolean}
+   */
   @Bean("DebugFlag")
-  public Boolean debugFlag() {
-    return StringUtils.hasText(this.debugBaseUri);
+  Boolean debugFlag() {
+    return StringUtils.hasText(this.properties.getDebugBaseUri());
+  }
+
+  /**
+   * Gets the {@code hokActive} bean telling whether the Holder-of-key feature is enabled.
+   *
+   * @return {@link Boolean}
+   */
+  @Bean("hokActive")
+  Boolean hokActive() {
+    return StringUtils.hasText(this.properties.getHokBaseUri())
+        || StringUtils.hasText(this.properties.getDebugHokBaseUri());
   }
 
   /**
@@ -156,7 +151,7 @@ public class SpConfiguration implements InitializingBean {
    */
   @Bean(name = "spEntityID")
   EntityID spEntityID() {
-    return new EntityID(this.spEntityId);
+    return new EntityID(this.properties.getEntityId());
   }
 
   /**
@@ -166,285 +161,339 @@ public class SpConfiguration implements InitializingBean {
    */
   @Bean(name = "signSpEntityID")
   EntityID signSpEntityID() {
-    return new EntityID(this.signSpEntityId);
+    if (StringUtils.hasText(this.properties.getSignEntityId())) {
+      return new EntityID(this.properties.getSignEntityId());
+    }
+    else if (StringUtils.hasText(this.signSpEntityId)) {
+      log.warn("Use sp.sign-entity-id instead of sp-sign.entity-id");
+      return new EntityID(this.signSpEntityId);
+    }
+    throw new BeanCreationException("Missing sp.sign-entity-id");
+  }
+
+  @Bean(name = "eidasConnectorEntityID")
+  EntityID eidasConnectorEntityID() {
+    return new EntityID(this.properties.getEidasConnector().getEntityId());
+  }
+
+  @Bean("signCredential")
+  X509Credential signCredential() throws Exception {
+    return new OpenSamlCredential(this.properties.getCredential().getSign().createCredential());
+  }
+
+  @Bean("encryptCredential")
+  X509Credential encryptCredential() throws Exception {
+    return new OpenSamlCredential(this.properties.getCredential().getDecrypt().createCredential());
+  }
+
+  @Bean("mdSignCredential")
+  X509Credential mdSignCredential() throws Exception {
+    if (this.properties.getCredential().getMdSign() != null) {
+      return new OpenSamlCredential(this.properties.getCredential().getMdSign().createCredential());
+    }
+    else {
+      return this.signCredential();
+    }
+  }
+
+  @Bean
+  List<UiLanguage> languages() {
+    return this.properties.getUi().getLang();
+  }
+
+  @Bean
+  AttributeInfoRegistry attributeInfoRegistry() {
+    return new AttributeInfoRegistry(this.properties.getUi().getAttributes());
   }
 
   @Bean
   @ConditionalOnProperty(name = "tomcat.ajp.enabled", havingValue = "true")
   ClientCertificateGetter attributeBasedClientCertificateGetter() {
-    return new FromRequestAttributeClientCertificateGetter(this.mtlsAttributeName);
+    return new FromRequestAttributeClientCertificateGetter(this.properties.getMtls().getAttributeName());
   }
 
   @Bean
   @Profile("!local")
   @ConditionalOnProperty(name = "tomcat.ajp.enabled", matchIfMissing = true, havingValue = "false")
   ClientCertificateGetter headerBasedClientCertificateGetter() {
-    return new FromHeaderClientCertificateGetter(this.mtlsHeaderName);
+    return new FromHeaderClientCertificateGetter(this.properties.getMtls().getHeaderName());
   }
 
   @Bean
   @Profile("local")
   ClientCertificateGetter attributeBasedClientCertificateGetter2() {
-    return new FromRequestAttributeClientCertificateGetter(this.mtlsAttributeName);
+    return new FromRequestAttributeClientCertificateGetter(this.properties.getMtls().getAttributeName());
   }
 
-  /**
-   * The response processor.
-   *
-   * @param metadataProvider
-   *          the metadata provider
-   * @return the response processor
-   * @throws Exception
-   *           for errors
-   */
+  @Bean
+  IdpList idpList(final MetadataProvider metadataProvider,
+      @Qualifier("staticIdps") final List<StaticIdpDiscoEntry> staticIdps,
+      @Qualifier("spMetadata") final EntityDescriptor spMetadata,
+      @Qualifier("hokActive") final Boolean hokActive) {
+
+    // Merge static IdP:s from configuration and those supplied in separate file
+    //
+    final List<StaticIdpDiscoEntry> idps = new ArrayList<>(
+        Optional.ofNullable(this.properties.getDiscovery().getIdp())
+        .orElseGet(() -> Collections.emptyList()));
+    staticIdps.stream()
+      .filter(i -> idps.stream().noneMatch(i2 -> i2.getEntityId().equals(i.getEntityId())))
+      .forEach(i -> idps.add(i));
+
+    final IdpList idpList = new IdpList(metadataProvider, spMetadata, idps,
+        this.properties.getDiscovery().getBlackList(),
+        this.properties.getDiscovery().isIncludeOnlyStatic(),
+        hokActive);
+
+    idpList.setCacheTime(this.properties.getDiscovery().getCacheTime());
+    idpList.setIgnoreContracts(this.properties.getDiscovery().isIgnoreContracts());
+
+    return idpList;
+  }
+
   @Bean(initMethod = "initialize")
-  ResponseProcessor responseProcessor(final MetadataProvider metadataProvider) throws Exception {
+  ResponseProcessor responseProcessor(final MetadataProvider metadataProvider,
+      @Qualifier("encryptCredential") final X509Credential encryptCredential) throws Exception {
 
     final SwedishEidResponseProcessorImpl responseProcessor = new SwedishEidResponseProcessorImpl();
     responseProcessor.setMetadataResolver(metadataProvider.getMetadataResolver());
-    responseProcessor.setDecrypter(new SAMLObjectDecrypter(this.encryptCredential));
+    responseProcessor.setDecrypter(new SAMLObjectDecrypter(encryptCredential));
     responseProcessor.setMessageReplayChecker(new InMemoryReplayChecker());
     return responseProcessor;
   }
 
-  /**
-   * Returns the metadata provider that downloads the federation metadata.
-   *
-   * @param federationMetadataUrl
-   *          the federation metadata URL
-   * @param validationCertificate
-   *          the metadata validation certificate
-   * @return a metadata provider
-   * @throws Exception
-   *           for init errors
-   */
   @Bean(initMethod = "initialize")
-  @Profile("!local")
-  public MetadataProvider metadataProvider(
-      @Value("${sp.federation.metadata.url}") final String federationMetadataUrl,
-      @Value("${sp.federation.metadata.validation-certificate}") final Resource validationCertificate) throws Exception {
+  MetadataProvider metadataProvider() throws Exception {
 
-    final X509Certificate cert = (X509Certificate) CertificateFactory.getInstance("X.509")
-      .generateCertificate(validationCertificate.getInputStream());
+    final X509Certificate cert = this.properties.getFederation().getMetadata().getValidationCertificate() != null
+        ? (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(
+            this.properties.getFederation().getMetadata().getValidationCertificate().getInputStream())
+        : null;
 
-    final File backupFile = new File(this.tempDir.getDir(), "metadata-cache.xml");
-    final HTTPMetadataProvider provider = new HTTPMetadataProvider(federationMetadataUrl, backupFile.getAbsolutePath(),
-      HTTPMetadataProvider.createDefaultHttpClient(null /* trust all */, new DefaultHostnameVerifier()));
+    final Resource location = this.properties.getFederation().getMetadata().getUrl();
+    AbstractMetadataProvider provider;
+    if (location instanceof UrlResource urlResource && !urlResource.isFile()) {
+
+      final File backupFile = new File(this.tempDir.getDir(), "metadata-cache.xml");
+
+      provider = new HTTPMetadataProvider(location.getURL().toString(),
+          backupFile.getAbsolutePath(),
+          HTTPMetadataProvider.createDefaultHttpClient(null /* trust all */, new NoopHostnameVerifier()));
+
+      if (cert != null) {
+        provider.setSignatureVerificationCertificate(cert);
+      }
+      else {
+        log.warn("No validation certificate assigned for metadata source {} "
+            + "- downloaded metadata can not be trusted", location.getURL().toString());
+      }
+    }
+    else if (FileSystemResource.class.isInstance(location)) {
+      provider = new FilesystemMetadataProvider(location.getFile());
+      if (cert != null) {
+        provider.setSignatureVerificationCertificate(cert);
+      }
+    }
+    else {
+      final Document doc =
+          XMLObjectProviderRegistrySupport.getParserPool().parse(location.getInputStream());
+      provider = new StaticMetadataProvider(doc.getDocumentElement());
+    }
     provider.setPerformSchemaValidation(false);
-    provider.setSignatureVerificationCertificate(cert);
+
     return provider;
   }
 
-  /**
-   * Returns a static metadata provider for local testing.
-   *
-   * @param metadataResource
-   *          the resource holding the metadata
-   * @return a metadata provider
-   * @throws Exception
-   *           for init errors
-   */
-  @Bean(initMethod = "initialize")
-  @Profile("local")
-  public MetadataProvider localMetadataProvider(
-      @Value("${sp.federation.metadata.url}") final Resource metadataResource) throws Exception {
-
-    final Element element = XMLObjectProviderRegistrySupport.getParserPool()
-      .parse(metadataResource.getInputStream()).getDocumentElement();
-    return new StaticMetadataProvider(element);
-  }
-
-  @Bean("hokActive")
-  public Boolean hokActive() {
-    return StringUtils.hasText(this.hokBaseUri) || StringUtils.hasText(this.debugHokBaseUri);
-  }
-
-  /**
-   * Returns the SP metadata.
-   *
-   * @param contextPath
-   *          the context path for the application (needed when building URL:s)
-   * @param baseUri
-   *          the base URI for the application
-   * @param serverPort
-   *          the server port (for building debug AssertionConsumerServiceURL locations)
-   * @return the SP metadata (entity descriptor)
-   */
   @Bean("spMetadata")
-  public EntityDescriptor spMetadata(
+  EntityDescriptor spMetadata(
       @Value("${server.servlet.context-path}") final String contextPath,
-      @Value("${sp.base-uri}") final String baseUri,
-      @Value("${server.port}") final int serverPort) {
+      @Value("${server.port}") final int serverPort,
+      @Qualifier("signCredential") final X509Credential signCredential,
+      @Qualifier("encryptCredential") final X509Credential encryptCredential) {
 
     final List<AssertionConsumerService> acs = new ArrayList<>();
     int index = 0;
     acs.add(AssertionConsumerServiceBuilder.builder()
-      .binding(SAMLConstants.SAML2_POST_BINDING_URI)
-      .location(String.format("%s%s/saml2/post", baseUri, contextPath.equals("/") ? "" : contextPath))
-      .index(index++)
-      .isDefault(true)
-      .build());
-
-    if (StringUtils.hasText(this.debugBaseUri)) {
-      acs.add(AssertionConsumerServiceBuilder.builder()
         .binding(SAMLConstants.SAML2_POST_BINDING_URI)
-        .location(String.format("%s%s/saml2/post", this.debugBaseUri.trim(), contextPath.equals("/") ? "" : contextPath))
+        .location(
+            String.format("%s%s/saml2/post", this.properties.getBaseUri(), contextPath.equals("/") ? "" : contextPath))
         .index(index++)
-        .isDefault(false)
+        .isDefault(true)
         .build());
-    }
-    if (StringUtils.hasText(this.hokBaseUri)) {
+
+    if (StringUtils.hasText(this.properties.getDebugBaseUri())) {
       acs.add(AssertionConsumerServiceBuilder.builder()
-        .hokPostBinding()
-        .location(String.format("%s%s/saml2/hok", this.hokBaseUri.trim(), contextPath.equals("/") ? "" : contextPath))
-        .index(index++)
-        .isDefault(false)
-        .build());
+          .binding(SAMLConstants.SAML2_POST_BINDING_URI)
+          .location(
+              String.format("%s%s/saml2/post", this.properties.getDebugBaseUri().trim(),
+                  contextPath.equals("/") ? "" : contextPath))
+          .index(index++)
+          .isDefault(false)
+          .build());
     }
-    if (StringUtils.hasText(this.debugHokBaseUri)) {
+    if (StringUtils.hasText(this.properties.getHokBaseUri())) {
       acs.add(AssertionConsumerServiceBuilder.builder()
-        .hokPostBinding()
-        .location(String.format("%s%s/saml2/hok", this.debugHokBaseUri.trim(), contextPath.equals("/") ? "" : contextPath))
-        .index(index++)
-        .isDefault(false)
-        .build());
+          .hokPostBinding()
+          .location(String.format("%s%s/saml2/hok", this.properties.getHokBaseUri().trim(),
+              contextPath.equals("/") ? "" : contextPath))
+          .index(index++)
+          .isDefault(false)
+          .build());
+    }
+    if (StringUtils.hasText(this.properties.getDebugHokBaseUri())) {
+      acs.add(AssertionConsumerServiceBuilder.builder()
+          .hokPostBinding()
+          .location(
+              String.format("%s%s/saml2/hok", this.properties.getDebugHokBaseUri().trim(),
+                  contextPath.equals("/") ? "" : contextPath))
+          .index(index++)
+          .isDefault(false)
+          .build());
     }
 
     return EntityDescriptorBuilder.builder()
-      .entityID(this.spEntityID().getEntityID())
-      .extensions(ExtensionsBuilder.builder()
-        .extension(EntityAttributesBuilder.builder()
-          .entityCategoriesAttribute(this.metadataConfiguration.getEntityCategories())
-          .build())
-        .build())
-      .ssoDescriptor(SPSSODescriptorBuilder.builder()
-        .authnRequestsSigned(true)
-        .wantAssertionsSigned(false)
+        .entityID(this.spEntityID().getEntityID())
         .extensions(ExtensionsBuilder.builder()
-          .extension(this.metadataConfiguration.getUIInfoElement(baseUri, contextPath))
-          .build())
-        .keyDescriptors(
-          KeyDescriptorBuilder.builder()
-            .use(UsageType.SIGNING)
-            .keyName("Signing")
-            .certificate(this.signCredential.getEntityCertificate())
-            .build(),
-          KeyDescriptorBuilder.builder()
-            .use(UsageType.ENCRYPTION)
-            .keyName("Encryption")
-            .certificate(this.encryptCredential.getEntityCertificate())
-            .encryptionMethodsExt(this.encryptionMethods)
+            .extension(EntityAttributesBuilder.builder()
+                .entityCategoriesAttribute(this.properties.getMetadata().getEntityCategories())
+                .build())
             .build())
-        .nameIDFormats(NameID.PERSISTENT, NameID.TRANSIENT)
-        .attributeConsumingServices(this.metadataConfiguration.getAttributeConsumingService())
-        .assertionConsumerServices(acs)
-        .build())
-      .organization(this.metadataConfiguration.getOrganizationElement())
-      .contactPersons(this.metadataConfiguration.getContactPersonElements())
-      .build();
+        .ssoDescriptor(SPSSODescriptorBuilder.builder()
+            .authnRequestsSigned(true)
+            .wantAssertionsSigned(false)
+            .extensions(ExtensionsBuilder.builder()
+                .extension(MetadataUtils.getUIInfoElement(
+                    this.properties.getMetadata().getUiinfo(), this.properties.getBaseUri(), contextPath))
+                .build())
+            .keyDescriptors(
+                KeyDescriptorBuilder.builder()
+                    .use(UsageType.SIGNING)
+                    .keyName("Signing")
+                    .certificate(signCredential.getEntityCertificate())
+                    .build(),
+                KeyDescriptorBuilder.builder()
+                    .use(UsageType.ENCRYPTION)
+                    .keyName("Encryption")
+                    .certificate(encryptCredential.getEntityCertificate())
+                    .encryptionMethodsExt(this.encryptionMethods)
+                    .build())
+            .nameIDFormats(NameID.PERSISTENT, NameID.TRANSIENT)
+            .attributeConsumingServices(MetadataUtils.getAttributeConsumingService(
+                this.properties.getMetadata().getServiceNames(),
+                this.properties.getMetadata().getRequestedAttributes()))
+            .assertionConsumerServices(acs)
+            .build())
+        .organization(MetadataUtils.getOrganizationElement(this.properties.getMetadata().getOrganization()))
+        .contactPersons(MetadataUtils.getContactPersonElements(this.properties.getMetadata().getContactPersons()))
+        .build();
   }
 
   @Bean("spEntityDescriptorContainer")
-  public EntityDescriptorContainer entityDescriptorContainer(@Qualifier("spMetadata") final EntityDescriptor spMetadata) {
-    return new EntityDescriptorContainer(spMetadata, this.mdSignCredential);
+  EntityDescriptorContainer entityDescriptorContainer(
+      @Qualifier("spMetadata") final EntityDescriptor spMetadata,
+      @Qualifier("mdSignCredential") final X509Credential mdSignCredential) {
+    return new EntityDescriptorContainer(spMetadata, mdSignCredential);
   }
 
-  /**
-   * Returns the metadata for the signature service SP.
-   *
-   * @param contextPath
-   *          the context path for the application (needed when building URL:s)
-   * @param baseUri
-   *          the base URI for the application
-   * @param serverPort
-   *          the server port (for building debug AssertionConsumerServiceURL locations)
-   * @return the SP metadata (entity descriptor)
-   */
   @Bean("signSpMetadata")
-  public EntityDescriptor signSpMetadata(
+  EntityDescriptor signSpMetadata(
       @Value("${server.servlet.context-path}") final String contextPath,
-      @Value("${sp.base-uri}") final String baseUri,
-      @Value("${server.port}") final int serverPort) {
+      @Value("${server.port}") final int serverPort,
+      @Qualifier("signCredential") final X509Credential signCredential,
+      @Qualifier("encryptCredential") final X509Credential encryptCredential) {
 
     final List<AssertionConsumerService> acs = new ArrayList<>();
     int index = 0;
     acs.add(AssertionConsumerServiceBuilder.builder()
-      .binding(SAMLConstants.SAML2_POST_BINDING_URI)
-      .location(String.format("%s%s/saml2/sign", baseUri, contextPath.equals("/") ? "" : contextPath))
-      .index(index++)
-      .isDefault(true)
-      .build());
-
-    if (StringUtils.hasText(this.debugBaseUri)) {
-      acs.add(AssertionConsumerServiceBuilder.builder()
         .binding(SAMLConstants.SAML2_POST_BINDING_URI)
-        .location(String.format("%s%s/saml2/sign", this.debugBaseUri.trim(), contextPath.equals("/") ? "" : contextPath))
+        .location(
+            String.format("%s%s/saml2/sign", this.properties.getBaseUri(), contextPath.equals("/") ? "" : contextPath))
         .index(index++)
-        .isDefault(false)
+        .isDefault(true)
         .build());
-    }
-    if (StringUtils.hasText(this.hokBaseUri)) {
+
+    if (StringUtils.hasText(this.properties.getDebugBaseUri())) {
       acs.add(AssertionConsumerServiceBuilder.builder()
-        .hokPostBinding()
-        .location(String.format("%s%s/saml2/signhok", this.hokBaseUri.trim(), contextPath.equals("/") ? "" : contextPath))
-        .index(index++)
-        .isDefault(false)
-        .build());
+          .binding(SAMLConstants.SAML2_POST_BINDING_URI)
+          .location(
+              String.format("%s%s/saml2/sign", this.properties.getDebugBaseUri().trim(),
+                  contextPath.equals("/") ? "" : contextPath))
+          .index(index++)
+          .isDefault(false)
+          .build());
     }
-    if (StringUtils.hasText(this.debugHokBaseUri)) {
+    if (StringUtils.hasText(this.properties.getHokBaseUri())) {
       acs.add(AssertionConsumerServiceBuilder.builder()
-        .hokPostBinding()
-        .location(String.format("%s%s/saml2/signhok", this.debugHokBaseUri.trim(), contextPath.equals("/") ? "" : contextPath))
-        .index(index++)
-        .isDefault(false)
-        .build());
+          .hokPostBinding()
+          .location(
+              String.format("%s%s/saml2/signhok", this.properties.getHokBaseUri().trim(),
+                  contextPath.equals("/") ? "" : contextPath))
+          .index(index++)
+          .isDefault(false)
+          .build());
+    }
+    if (StringUtils.hasText(this.properties.getDebugHokBaseUri())) {
+      acs.add(AssertionConsumerServiceBuilder.builder()
+          .hokPostBinding()
+          .location(String.format("%s%s/saml2/signhok", this.properties.getDebugHokBaseUri().trim(),
+              contextPath.equals("/") ? "" : contextPath))
+          .index(index++)
+          .isDefault(false)
+          .build());
     }
 
     final List<String> entityCategories = new ArrayList<>();
     entityCategories.add(EntityCategoryConstants.SERVICE_TYPE_CATEGORY_SIGSERVICE.getUri());
-    entityCategories.addAll(this.metadataConfiguration.getEntityCategories());
+    entityCategories.addAll(Optional.ofNullable(this.properties.getMetadata().getEntityCategories())
+        .orElseGet(() -> Collections.emptyList()));
 
     return EntityDescriptorBuilder.builder()
-      .entityID(this.signSpEntityID().getEntityID())
-      .extensions(ExtensionsBuilder.builder()
-        .extension(EntityAttributesBuilder.builder()
-          .entityCategoriesAttribute(entityCategories)
-          .build())
-        .build())
-      .ssoDescriptor(SPSSODescriptorBuilder.builder()
-        .authnRequestsSigned(true)
-        .wantAssertionsSigned(true)
+        .entityID(this.signSpEntityID().getEntityID())
         .extensions(ExtensionsBuilder.builder()
-          .extension(this.metadataConfiguration.getUIInfoElement(baseUri, contextPath))
-          .build())
-        .keyDescriptors(
-          KeyDescriptorBuilder.builder()
-            .use(UsageType.SIGNING)
-            .keyName("Signing")
-            .certificate(this.signCredential.getEntityCertificate())
-            .build(),
-          KeyDescriptorBuilder.builder()
-            .use(UsageType.ENCRYPTION)
-            .keyName("Encryption")
-            .certificate(this.encryptCredential.getEntityCertificate())
-            .encryptionMethodsExt(this.encryptionMethods)
+            .extension(EntityAttributesBuilder.builder()
+                .entityCategoriesAttribute(entityCategories)
+                .build())
             .build())
-        .nameIDFormats(NameID.PERSISTENT, NameID.TRANSIENT)
-        .attributeConsumingServices(this.metadataConfiguration.getAttributeConsumingService())
-        .assertionConsumerServices(acs)
-        .build())
-      .organization(this.metadataConfiguration.getOrganizationElement())
-      .contactPersons(this.metadataConfiguration.getContactPersonElements())
-      .build();
+        .ssoDescriptor(SPSSODescriptorBuilder.builder()
+            .authnRequestsSigned(true)
+            .wantAssertionsSigned(true)
+            .extensions(ExtensionsBuilder.builder()
+                .extension(MetadataUtils.getUIInfoElement(
+                    this.properties.getMetadata().getUiinfo(),
+                    this.properties.getBaseUri(), contextPath))
+                .build())
+            .keyDescriptors(
+                KeyDescriptorBuilder.builder()
+                    .use(UsageType.SIGNING)
+                    .keyName("Signing")
+                    .certificate(signCredential.getEntityCertificate())
+                    .build(),
+                KeyDescriptorBuilder.builder()
+                    .use(UsageType.ENCRYPTION)
+                    .keyName("Encryption")
+                    .certificate(encryptCredential.getEntityCertificate())
+                    .encryptionMethodsExt(this.encryptionMethods)
+                    .build())
+            .nameIDFormats(NameID.PERSISTENT, NameID.TRANSIENT)
+            .attributeConsumingServices(MetadataUtils.getAttributeConsumingService(
+                this.properties.getMetadata().getServiceNames(),
+                this.properties.getMetadata().getRequestedAttributes()))
+            .assertionConsumerServices(acs)
+            .build())
+        .organization(MetadataUtils.getOrganizationElement(this.properties.getMetadata().getOrganization()))
+        .contactPersons(MetadataUtils.getContactPersonElements(this.properties.getMetadata().getContactPersons()))
+        .build();
   }
 
   @Bean("signSpEntityDescriptorContainer")
-  public EntityDescriptorContainer signSpEntityDescriptorContainer(@Qualifier("signSpMetadata") final EntityDescriptor signSpMetadata) {
-    return new EntityDescriptorContainer(signSpMetadata, this.mdSignCredential);
+  EntityDescriptorContainer signSpEntityDescriptorContainer(
+      @Qualifier("signSpMetadata") final EntityDescriptor signSpMetadata,
+      @Qualifier("mdSignCredential") final X509Credential mdSignCredential) {
+    return new EntityDescriptorContainer(signSpMetadata, mdSignCredential);
   }
 
   @Bean(name = "spAuthnRequestGenerator", initMethod = "initialize")
-  public TestMyEidAuthnRequestGenerator spAuthnRequestGenerator(
+  TestMyEidAuthnRequestGenerator spAuthnRequestGenerator(
       @Qualifier("spMetadata") final EntityDescriptor metadata,
       @Qualifier("signCredential") final X509Credential signCredential,
       final MetadataProvider metadataProvider) {
@@ -453,7 +502,7 @@ public class SpConfiguration implements InitializingBean {
   }
 
   @Bean(name = "signSpAuthnRequestGenerator", initMethod = "initialize")
-  public TestMyEidAuthnRequestGenerator signSpAuthnRequestGenerator(
+  TestMyEidAuthnRequestGenerator signSpAuthnRequestGenerator(
       @Qualifier("signSpMetadata") final EntityDescriptor metadata,
       @Qualifier("signCredential") final X509Credential signCredential,
       final MetadataProvider metadataProvider,
@@ -466,7 +515,8 @@ public class SpConfiguration implements InitializingBean {
   }
 
   @Bean
-  public SignMessageEncrypter signMessageEncrypter(final MetadataProvider metadataProvider) throws ComponentInitializationException {
+  SignMessageEncrypter signMessageEncrypter(final MetadataProvider metadataProvider)
+      throws ComponentInitializationException {
     return new SignMessageEncrypter(new SAMLObjectEncrypter(metadataProvider.getMetadataResolver()));
   }
 
@@ -486,9 +536,14 @@ public class SpConfiguration implements InitializingBean {
       if (algoDesc == null) {
         continue;
       }
+
+      final X509Credential encryptCredential = new OpenSamlCredential(
+          this.properties.getCredential().getDecrypt().createCredential());
+
       if (AlgorithmDescriptor.AlgorithmType.KeyTransport.equals(algoDesc.getType())
-          && AlgorithmSupport.credentialSupportsAlgorithmForEncryption(this.encryptCredential, algoDesc)) {
-        final EncryptionMethod method = (EncryptionMethod) XMLObjectSupport.buildXMLObject(EncryptionMethod.DEFAULT_ELEMENT_NAME);
+          && AlgorithmSupport.credentialSupportsAlgorithmForEncryption(encryptCredential, algoDesc)) {
+        final EncryptionMethod method =
+            (EncryptionMethod) XMLObjectSupport.buildXMLObject(EncryptionMethod.DEFAULT_ELEMENT_NAME);
         method.setAlgorithm(algo);
         if (AlgorithmSupport.isRSAOAEP(algo)) {
           final RSAOAEPParameters pars = encryptionConfig.getRSAOAEPParameters();
@@ -499,7 +554,8 @@ public class SpConfiguration implements InitializingBean {
               method.getUnknownXMLObjects().add(dm);
             }
             if (pars.getOAEPParams() != null) {
-              final OAEPparams oaepParams = (OAEPparams) XMLObjectSupport.buildXMLObject(OAEPparams.DEFAULT_ELEMENT_NAME);
+              final OAEPparams oaepParams =
+                  (OAEPparams) XMLObjectSupport.buildXMLObject(OAEPparams.DEFAULT_ELEMENT_NAME);
               oaepParams.setValue(pars.getOAEPParams());
               method.setOAEPparams(oaepParams);
             }
@@ -514,7 +570,8 @@ public class SpConfiguration implements InitializingBean {
       if (algo.equals(EncryptionConstants.ALGO_ID_BLOCKCIPHER_TRIPLEDES)) {
         continue;
       }
-      final EncryptionMethod method = (EncryptionMethod) XMLObjectSupport.buildXMLObject(EncryptionMethod.DEFAULT_ELEMENT_NAME);
+      final EncryptionMethod method =
+          (EncryptionMethod) XMLObjectSupport.buildXMLObject(EncryptionMethod.DEFAULT_ELEMENT_NAME);
       method.setAlgorithm(algo);
       this.encryptionMethods.add(method);
     }

@@ -16,15 +16,12 @@
 package se.swedenconnect.eid.sp;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.LocaleResolver;
@@ -33,8 +30,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 
-import se.swedenconnect.eid.sp.config.AlgorithmConfiguration;
-import se.swedenconnect.eid.sp.config.UiLanguage;
+import lombok.Setter;
+import se.swedenconnect.eid.sp.config.AlgorithmConfiguration.CustomAlgorithms;
 import se.swedenconnect.eid.sp.saml.CustomSwedishEidSecurityConfiguration;
 import se.swedenconnect.opensaml.OpenSAMLInitializer;
 import se.swedenconnect.opensaml.OpenSAMLSecurityDefaultsConfig;
@@ -48,20 +45,21 @@ import se.swedenconnect.opensaml.OpenSAMLSecurityExtensionConfig;
 @SpringBootApplication
 public class TestMyEidApplication {
 
+  @Setter
   @Autowired
-  AlgorithmConfiguration algorithmConfiguration;
+  CustomAlgorithms algorithmConfiguration;
 
   /**
    * Program main.
    *
    * @param args program arguments
    */
-  public static void main(String[] args) {
+  public static void main(final String[] args) {
     SpringApplication.run(TestMyEidApplication.class, args);
   }
 
   @Bean("openSAML")
-  public OpenSAMLInitializer openSAML() throws Exception {
+  OpenSAMLInitializer openSAML() throws Exception {
     OpenSAMLInitializer.getInstance()
         .initialize(
             new OpenSAMLSecurityDefaultsConfig(new CustomSwedishEidSecurityConfiguration(this.algorithmConfiguration)),
@@ -70,23 +68,12 @@ public class TestMyEidApplication {
   }
 
   @Bean
-  LocaleResolver localeResolver(@Value("${server.servlet.context-path}") String contextPath) {
-    CookieLocaleResolver resolver = new CookieLocaleResolver();
+  LocaleResolver localeResolver(@Value("${server.servlet.context-path}") final String contextPath) {
+    final CookieLocaleResolver resolver = new CookieLocaleResolver();
     resolver.setDefaultLocale(new Locale("en"));
     resolver.setCookiePath(contextPath);
     resolver.setCookieMaxAge(Duration.ofDays(365));
     return resolver;
-  }
-
-  /**
-   * The supported languages.
-   *
-   * @return a list of UI languages
-   */
-  @Bean
-  @ConfigurationProperties(prefix = "sp.ui.lang")
-  List<UiLanguage> languages() {
-    return new ArrayList<>();
   }
 
   @Configuration
@@ -94,31 +81,15 @@ public class TestMyEidApplication {
 
     @Bean
     LocaleChangeInterceptor localeChangeInterceptor() {
-      LocaleChangeInterceptor interceptor = new LocaleChangeInterceptor();
+      final LocaleChangeInterceptor interceptor = new LocaleChangeInterceptor();
       interceptor.setParamName("lang");
       return interceptor;
     }
 
-//    @Bean
-//    public DeviceResolverHandlerInterceptor deviceResolverHandlerInterceptor() {
-//      return new DeviceResolverHandlerInterceptor();
-//    }
-
     @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-      registry.addInterceptor(localeChangeInterceptor());
-      // registry.addInterceptor(deviceResolverHandlerInterceptor());
+    public void addInterceptors(final InterceptorRegistry registry) {
+      registry.addInterceptor(this.localeChangeInterceptor());
     }
-
-//    @Bean
-//    public DeviceHandlerMethodArgumentResolver deviceHandlerMethodArgumentResolver() {
-//      return new DeviceHandlerMethodArgumentResolver();
-//    }
-//
-//    @Override
-//    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
-//      argumentResolvers.add(deviceHandlerMethodArgumentResolver());
-//    }
 
   }
 

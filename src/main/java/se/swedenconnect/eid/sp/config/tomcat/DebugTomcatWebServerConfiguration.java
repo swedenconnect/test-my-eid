@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package se.swedenconnect.eid.sp;
+package se.swedenconnect.eid.sp.config.tomcat;
 
 import org.apache.catalina.connector.Connector;
 import org.apache.coyote.http11.Http11NioProtocol;
@@ -108,7 +108,16 @@ public class DebugTomcatWebServerConfiguration implements WebServerFactoryCustom
   @ConfigurationProperties("server2")
   @Data
   public static class AdditionalConnectorSettings {
+
+    /**
+     * Server HTTP port.
+     */
     private Integer port;
+
+    /**
+     * SSL settings.
+     */
     private Ssl ssl;
   }
+
 }

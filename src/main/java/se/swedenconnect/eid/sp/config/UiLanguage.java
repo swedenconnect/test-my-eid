@@ -29,6 +29,14 @@ import lombok.ToString;
 @ToString
 public class UiLanguage {
 
+  /**
+   * The language tag, i.e., "en".
+   */
   private String languageTag;
+
+  /**
+   * The text to display for the language, i.e., "English".
+   */
   private String text;
+
 }

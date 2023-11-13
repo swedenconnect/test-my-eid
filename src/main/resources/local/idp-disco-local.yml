@@ -1,0 +1,23 @@
+idp:
+  - entity-id: https://bankid.swedenconnect.se/idp/local
+    display-name-sv: BankID (local)
+    display-name-en: BankID (local)
+  - entity-id: https://local.dev.swedenconnect.se/ref-idp
+    display-name-sv: Nya Referens-IdP:n (local)
+    display-name-en: New Reference IdP (local)
+    logo-url: /images/logo-notext.svg
+    logo-height: 200
+    logo-width: 200
+  - entity-id: https://idp.svelegtest.se/idpref
+    display-name-sv: Gamla Referens-IdP (local)
+    display-name-en: Old Reference IdP (local)
+    logo-url: /images/logo-notext.svg
+    logo-height: 200
+    logo-width: 200
+  - entity-id: https://eunode.eidastest.se/idp2
+    display-name-sv: eIDAS Connector (local)
+    display-name-en: eIDAS Connector (local)
+    logo-url: /images/logo-notext.svg
+    logo-height: 200
+    logo-width: 200
+      

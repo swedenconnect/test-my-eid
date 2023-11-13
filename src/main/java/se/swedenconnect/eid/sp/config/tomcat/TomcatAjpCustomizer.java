@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 Sweden Connect
+ * Copyright 2023 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,58 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package se.swedenconnect.eid.sp;
+package se.swedenconnect.eid.sp.config.tomcat;
 
 import org.apache.catalina.connector.Connector;
 import org.apache.coyote.ajp.AbstractAjpProtocol;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.stereotype.Component;
 
+import lombok.Setter;
+
 /**
- * Configuration settings for Tomcat.
+ * Configuration settings for Tomcat AJP.
  *
- * @author Martin Lindström (martin@idsec.se)
+ * @author Martin Lindström
  */
 @Component
 @ConditionalOnProperty(name = "tomcat.ajp.enabled", havingValue = "true")
-public class TomcatWebServerConfiguration implements WebServerFactoryCustomizer<TomcatServletWebServerFactory> {
+@EnableConfigurationProperties(TomcatAjpConfigurationProperties.class)
+public class TomcatAjpCustomizer implements WebServerFactoryCustomizer<TomcatServletWebServerFactory> {
 
-  /** The Tomcat AJP port. */
-  @Value("${tomcat.ajp.port:8009}")
-  private int ajpPort;
-
-  /** Is AJP enabled? */
-  @Value("${tomcat.ajp.enabled:false}")
-  private boolean tomcatAjpEnabled;
-
-  /** AJP secret */
-  @Value("${tomcat.ajp.secret:#{null}}")
-  private String ajpSecret;
-
-  /** Is AJP secret required? */
-  @Value("${tomcat.ajp.secretRequired:false}")
-  private boolean ajpSecretRequired;
+  @Autowired
+  @Setter
+  private TomcatAjpConfigurationProperties ajp;
 
   /** {@inheritDoc} */
   @Override
   public void customize(final TomcatServletWebServerFactory factory) {
 
-    if (this.tomcatAjpEnabled) {
+    if (this.ajp.isEnabled()) {
       Connector ajpConnector = new Connector("AJP/1.3");
-      ajpConnector.setPort(this.ajpPort);
+      ajpConnector.setPort(this.ajp.getPort());
       ajpConnector.setAllowTrace(false);
       ajpConnector.setScheme("http");
       ajpConnector.setProperty("address", "0.0.0.0");
       ajpConnector.setProperty("allowedRequestAttributesPattern", ".*");
 
       final AbstractAjpProtocol<?> protocol = (AbstractAjpProtocol<?>) ajpConnector.getProtocolHandler();
-      if (this.ajpSecretRequired) {
+      if (this.ajp.isSecretRequired()) {
         ajpConnector.setSecure(true);
         protocol.setSecretRequired(true);
-        protocol.setSecret(this.ajpSecret);
+        protocol.setSecret(this.ajp.getSecret());
       }
       else {
         ajpConnector.setSecure(false);
