@@ -412,7 +412,7 @@ public class SpConfigurationProperties implements InitializingBean {
         this.headerName = "SSL_CLIENT_CERT";
       }
       if (!StringUtils.hasText(this.attributeName)) {
-        this.attributeName = "javax.servlet.request.X509Certificate";
+        this.attributeName = "jakarta.servlet.request.X509Certificate";
       }
     }
 
