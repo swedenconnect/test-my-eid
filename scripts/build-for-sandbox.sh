@@ -17,11 +17,7 @@ if [ -z "$SANDBOX_DOCKER_PW" ]; then
   exit 1
 fi
 
-pushd ${SCRIPT_DIR}/..
-mvn clean install
-popd
-
-docker build -f ${SCRIPT_DIR}/../Dockerfile -t ${IMAGE_NAME} --platform linux/amd64 ${SCRIPT_DIR}/..
+source ${SCRIPT_DIR}/build.sh -i ${IMAGE_NAME} -p linux/amd64
 
 echo "Logging in to ${SANDBOX_DOCKER_REPO} ..."
 echo $SANDBOX_DOCKER_PW | docker login $SANDBOX_DOCKER_REPO -u $SANDBOX_DOCKER_USER --password-stdin

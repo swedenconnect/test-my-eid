@@ -19,11 +19,7 @@ if [ -z "$GITHUB_ACCESS_TOKEN" ]; then
   exit 1
 fi
 
-pushd ${SCRIPT_DIR}/..
-mvn clean install
-popd
-
-docker build -f ${SCRIPT_DIR}/../Dockerfile -t ${IMAGE_NAME} --platform linux/arm64 ${SCRIPT_DIR}/..
+source ${SCRIPT_DIR}/build.sh -i ${IMAGE_NAME} -p linux/arm64
 
 echo "Logging in to ${GITHUB_DOCKER_REPO} ..."
 echo $GITHUB_ACCESS_TOKEN | docker login $GITHUB_DOCKER_REPO -u $GITHUB_USER --password-stdin

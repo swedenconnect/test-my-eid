@@ -64,7 +64,7 @@ if [ "$PLATFORM_PAR" != "" ]; then
 fi
 
 echo
-echo "Building SignService source ..."
+echo "Building source ..."
 echo
 
 mvn -f ${SCRIPT_DIR}/../pom.xml clean install
