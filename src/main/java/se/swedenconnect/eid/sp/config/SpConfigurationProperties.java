@@ -96,6 +96,13 @@ public class SpConfigurationProperties implements InitializingBean {
   private String signPath;
 
   /**
+   * Whether we are in local debug mode.
+   */
+  @Getter
+  @Setter
+  private boolean debugMode = false;
+
+  /**
    * eIDAS connector configuration.
    */
   @NestedConfigurationProperty

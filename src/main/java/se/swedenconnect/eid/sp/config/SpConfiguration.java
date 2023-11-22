@@ -130,7 +130,7 @@ public class SpConfiguration implements InitializingBean {
    */
   @Bean("DebugFlag")
   Boolean debugFlag() {
-    return StringUtils.hasText(this.properties.getDebugBaseUri());
+    return this.properties.isDebugMode() && StringUtils.hasText(this.properties.getDebugBaseUri());
   }
 
   /**
