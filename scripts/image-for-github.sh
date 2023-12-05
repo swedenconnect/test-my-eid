@@ -1,10 +1,12 @@
 #!/bin/bash
 #
-# Build script for depoying a Docker image to the GitHib docker repo
+# Build script for building and depoying a Docker image to the GitHib docker repo
 #
 # See https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+#
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BUILD_DIR=${SCRIPT_DIR}/..
 
 GITHUB_DOCKER_REPO=ghcr.io
 IMAGE_NAME=${GITHUB_DOCKER_REPO}/swedenconnect/test-my-eid
@@ -19,13 +21,7 @@ if [ -z "$GITHUB_ACCESS_TOKEN" ]; then
   exit 1
 fi
 
-source ${SCRIPT_DIR}/build.sh -i ${IMAGE_NAME} -p linux/arm64
-
 echo "Logging in to ${GITHUB_DOCKER_REPO} ..."
 echo $GITHUB_ACCESS_TOKEN | docker login $GITHUB_DOCKER_REPO -u $GITHUB_USER --password-stdin
 
-echo "Pushing image to ${GITHUB_DOCKER_REPO} ..."
-docker push ${IMAGE_NAME}:latest
-
- 
-
+source ${SCRIPT_DIR}/build-image.sh -i ${IMAGE_NAME} -s -d ${BUILD_DIR} -p
