@@ -32,6 +32,7 @@ sp:
   federation:
     metadata:
       url: classpath:local/local-metadata.xml
+  debug-mode: true
 
 logging:
   level:
