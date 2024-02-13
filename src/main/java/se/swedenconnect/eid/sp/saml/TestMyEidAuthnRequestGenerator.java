@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 Sweden Connect
+ * Copyright 2018-2024 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 package se.swedenconnect.eid.sp.saml;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.metadata.resolver.MetadataResolver;
@@ -27,13 +25,11 @@ import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.x509.X509Credential;
 import org.springframework.util.StringUtils;
 
-import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.opensaml.saml2.core.build.AuthnRequestBuilder;
 import se.swedenconnect.opensaml.saml2.core.build.ScopingBuilder;
 import se.swedenconnect.opensaml.saml2.metadata.HolderOfKeyMetadataSupport;
 import se.swedenconnect.opensaml.saml2.request.AuthnRequestGenerator;
 import se.swedenconnect.opensaml.saml2.request.AuthnRequestGeneratorContext;
-import se.swedenconnect.opensaml.saml2.request.AuthnRequestGeneratorContext.HokRequirement;
 import se.swedenconnect.opensaml.saml2.request.RequestGenerationException;
 import se.swedenconnect.opensaml.sweid.saml2.request.SwedishEidAuthnRequestGenerator;
 
@@ -42,7 +38,6 @@ import se.swedenconnect.opensaml.sweid.saml2.request.SwedishEidAuthnRequestGener
  *
  * @author Martin Lindström (martin@idsec.se)
  */
-@Slf4j
 public class TestMyEidAuthnRequestGenerator extends SwedishEidAuthnRequestGenerator {
 
   /**
@@ -71,45 +66,6 @@ public class TestMyEidAuthnRequestGenerator extends SwedishEidAuthnRequestGenera
           .idpList(null, ScopingBuilder.idpEntry(countryUri, null, null))
           .build());
     }
-  }
-
-  /**
-   * Filters away those URI:s that does not make sense for the Test my eID-application.
-   */
-  @Override
-  protected List<String> getAssuranceCertificationUris(final EntityDescriptor idpMetadata,
-      final AuthnRequestGeneratorContext context) throws RequestGenerationException {
-
-    final List<String> defaultUris = super.getAssuranceCertificationUris(idpMetadata, context);
-
-//    final boolean isEidasConnector = EntityDescriptorUtils.getEntityCategories(idpMetadata)
-//        .contains(EntityCategoryConstants.SERVICE_ENTITY_CATEGORY_EIDAS_NATURAL_PERSON.getUri());
-//
-//    if (isEidasConnector) {
-//      final List<String> uris = new ArrayList<>();
-//      for (final String uri : defaultUris) {
-//        if (uri.contains("eidas")) {
-//          log.debug("Excluding '{}' from metadata for '{}' since the URI is intended for eIDAS", uri,
-//              idpMetadata.getEntityID());
-//        }
-//        else {
-//          uris.add(uri);
-//        }
-//      }
-//      return uris;
-//    }
-//    else {
-      if (context instanceof TestMyEidAuthnRequestGeneratorContext && defaultUris.size() > 1) {
-        if (((TestMyEidAuthnRequestGeneratorContext) context).getHokRequirement().equals(HokRequirement.REQUIRED)) {
-          // only use loa4
-          return defaultUris.stream()
-              .filter(u -> u.contains("loa4"))
-              .collect(Collectors.toList());
-        }
-      }
-//    }
-
-    return defaultUris;
   }
 
   public HokSupport getIdpHokSupport(final String idpEntityID) {

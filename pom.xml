@@ -15,7 +15,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.1.5</version>
+    <version>3.2.2</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
   
@@ -93,13 +93,13 @@
       <dependency>
         <groupId>se.swedenconnect.opensaml</groupId>
         <artifactId>opensaml-addons</artifactId>
-        <version>2.0.1</version>
+        <version>2.0.2</version>
       </dependency>
   
       <dependency>
         <groupId>se.swedenconnect.opensaml</groupId>
         <artifactId>opensaml-swedish-eid</artifactId>
-        <version>2.0.0</version>
+        <version>2.1.0</version>
       </dependency>
       
     </dependencies>
@@ -187,7 +187,7 @@
     <dependency>
       <groupId>org.webjars</groupId>
       <artifactId>jquery</artifactId>
-      <version>3.6.1</version>
+      <version>3.7.1</version>
     </dependency>
 
     <dependency>
@@ -259,6 +259,50 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      
+      <plugin>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>jib-maven-plugin</artifactId>
+        <version>3.4.0</version>
+        <configuration>
+          <from>
+            <image>openjdk:18.0.2.1-slim</image>
+            <platforms>
+              <platform>
+                <architecture>amd64</architecture>
+                <os>linux</os>
+              </platform>
+              <platform>
+                <architecture>arm64</architecture>
+                <os>linux</os>
+              </platform>
+            </platforms>
+          </from>
+          <to>
+            <image>${DOCKER_REPO}/swedenconnect/test-my-eid</image>
+          </to>
+          <container>
+            <creationTime>USE_CURRENT_TIMESTAMP</creationTime>
+            <jvmFlags>
+              <jvmFlag>-Djava.net.preferIPv4Stack=true</jvmFlag>
+              <jvmFlag>-Dorg.apache.xml.security.ignoreLineBreaks=true</jvmFlag>
+            </jvmFlags>
+            <ports>
+              <port>8443</port>
+              <port>8444</port>
+            </ports>
+            <labels>
+              <org.opencontainers.image.source>
+                https://github.com/swedenconnect/test-my-eid
+              </org.opencontainers.image.source>
+              <org.opencontainers.image.description>
+                Sweden Connect Test my eID
+              </org.opencontainers.image.description>
+              <org.opencontainers.image.licenses>Apache-2.0</org.opencontainers.image.licenses>
+            </labels>
+          </container>
+        </configuration>
       </plugin>      
 
     </plugins>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 Sweden Connect
+ * Copyright 2018-2024 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,7 +163,7 @@ public class SamlController extends BaseController {
     log.debug("Request for generating an AuthnRequest to '{}' [client-ip-address='{}', country='{}']",
         selectedIdp, request.getRemoteAddr(), country);
 
-    // Special handling for LoA 4 and Holder-of-key
+    // Special handling for Holder-of-key
     //
     HokRequirement hokRequirement = HokRequirement.DONT_USE;
     if (useHok == null && this.hokActive && (country == null || ping)) {
