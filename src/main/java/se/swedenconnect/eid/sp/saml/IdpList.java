@@ -140,6 +140,10 @@ public class IdpList {
         }
         final EntityDescriptor idp =
             this.metadataProvider.getEntityDescriptor(idpEntry.getEntityId(), IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
+        if (idp == null) {
+          log.warn("No metadata for statically configured IdP {} found", idpEntry.getEntityId());
+          continue;
+        }
 
         idpList.add(new IdpDiscoveryInformation(idp, idpEntry, pos++));
       }
