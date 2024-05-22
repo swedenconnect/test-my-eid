@@ -17,6 +17,7 @@ package se.swedenconnect.eid.sp.saml;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.opensaml.saml.saml2.core.AuthnContextComparisonTypeEnumeration;
 import org.opensaml.xmlsec.encryption.support.EncryptionException;
@@ -24,11 +25,14 @@ import org.opensaml.xmlsec.encryption.support.EncryptionException;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import se.swedenconnect.opensaml.saml2.core.build.RequestedAuthnContextBuilder;
 import se.swedenconnect.opensaml.sweid.saml2.attribute.AttributeConstants;
 import se.swedenconnect.opensaml.sweid.saml2.authn.psc.MatchValue;
 import se.swedenconnect.opensaml.sweid.saml2.authn.psc.build.MatchValueBuilder;
 import se.swedenconnect.opensaml.sweid.saml2.authn.psc.build.PrincipalSelectionBuilder;
+import se.swedenconnect.opensaml.sweid.saml2.authn.umsg.build.MessageBuilder;
+import se.swedenconnect.opensaml.sweid.saml2.authn.umsg.build.UserMessageBuilder;
 import se.swedenconnect.opensaml.sweid.saml2.request.SwedishEidAuthnRequestGeneratorContext;
 import se.swedenconnect.opensaml.sweid.saml2.signservice.build.SignMessageBuilder;
 import se.swedenconnect.opensaml.sweid.saml2.signservice.dss.SignMessage;
@@ -63,6 +67,10 @@ public class TestMyEidAuthnRequestGeneratorContext implements SwedishEidAuthnReq
   @Setter
   @Getter
   private String signMessage;
+
+  @Setter
+  @Getter
+  private Map<String, String> userMessages;
 
   @Setter
   private String personalIdentityNumberHint;
@@ -133,6 +141,25 @@ public class TestMyEidAuthnRequestGeneratorContext implements SwedishEidAuthnReq
       else {
         return null;
       }
+    };
+  }
+
+  @Override
+  public UserMessageBuilderFunction getUserMessageBuilderFunction() {
+    return (e) -> {
+      if (this.userMessages == null) {
+        return null;
+      }
+      UserMessageBuilder builder = UserMessageBuilder.builder()
+          .mimeType("text/markdown");
+
+      for (final Map.Entry<String, String> entry : this.userMessages.entrySet()) {
+        builder.message(MessageBuilder.builder()
+            .language(entry.getKey())
+            .content(entry.getValue())
+            .build());
+      }
+      return builder.build();
     };
   }
 

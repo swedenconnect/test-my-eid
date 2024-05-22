@@ -16,13 +16,20 @@
 package se.swedenconnect.eid.sp.config;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import io.micrometer.core.instrument.util.IOUtils;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.util.XMLObjectSupport;
@@ -55,6 +62,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.util.ResourceUtils;
 import org.springframework.util.StringUtils;
 import org.w3c.dom.Document;
 
@@ -225,6 +233,18 @@ public class SpConfiguration implements InitializingBean {
     return new FromRequestAttributeClientCertificateGetter(this.properties.getMtls().getAttributeName());
   }
 
+  @Bean("userMessages")
+  Map<String, String> userMessages() throws IOException {
+    final Map<String, String> userMessages = new HashMap<>();
+    for (final Map.Entry<String, Resource> entry : this.properties.getUi().getUserMessageTemplate().entrySet()) {
+
+      try (final InputStream stream = entry.getValue().getInputStream()) {
+        userMessages.put(entry.getKey(), new String(stream.readAllBytes(), StandardCharsets.UTF_8));
+      }
+    }
+    return userMessages;
+  }
+
   @Bean
   IdpList idpList(final MetadataProvider metadataProvider,
       @Qualifier("staticIdps") final List<StaticIdpDiscoEntry> staticIdps,
@@ -235,10 +255,10 @@ public class SpConfiguration implements InitializingBean {
     //
     final List<StaticIdpDiscoEntry> idps = new ArrayList<>(
         Optional.ofNullable(this.properties.getDiscovery().getIdp())
-        .orElseGet(() -> Collections.emptyList()));
+        .orElseGet(Collections::emptyList));
     staticIdps.stream()
       .filter(i -> idps.stream().noneMatch(i2 -> i2.getEntityId().equals(i.getEntityId())))
-      .forEach(i -> idps.add(i));
+      .forEach(idps::add);
 
     final IdpList idpList = new IdpList(metadataProvider, spMetadata, idps,
         this.properties.getDiscovery().getBlackList(),
@@ -253,7 +273,7 @@ public class SpConfiguration implements InitializingBean {
 
   @Bean(initMethod = "initialize")
   ResponseProcessor responseProcessor(final MetadataProvider metadataProvider,
-      @Qualifier("encryptCredential") final X509Credential encryptCredential) throws Exception {
+      @Qualifier("encryptCredential") final X509Credential encryptCredential) {
 
     final SwedishEidResponseProcessorImpl responseProcessor = new SwedishEidResponseProcessorImpl();
     responseProcessor.setMetadataResolver(metadataProvider.getMetadataResolver());
@@ -285,10 +305,10 @@ public class SpConfiguration implements InitializingBean {
       }
       else {
         log.warn("No validation certificate assigned for metadata source {} "
-            + "- downloaded metadata can not be trusted", location.getURL().toString());
+            + "- downloaded metadata can not be trusted", location.getURL());
       }
     }
-    else if (FileSystemResource.class.isInstance(location)) {
+    else if (location instanceof FileSystemResource) {
       provider = new FilesystemMetadataProvider(location.getFile());
       if (cert != null) {
         provider.setSignatureVerificationCertificate(cert);
@@ -445,7 +465,7 @@ public class SpConfiguration implements InitializingBean {
     final List<String> entityCategories = new ArrayList<>();
     entityCategories.add(EntityCategoryConstants.SERVICE_TYPE_CATEGORY_SIGSERVICE.getUri());
     entityCategories.addAll(Optional.ofNullable(this.properties.getMetadata().getEntityCategories())
-        .orElseGet(() -> Collections.emptyList()));
+        .orElse(Collections.emptyList()));
 
     return EntityDescriptorBuilder.builder()
         .entityID(this.signSpEntityID().getEntityID())

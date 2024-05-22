@@ -302,6 +302,13 @@ public class SpConfigurationProperties implements InitializingBean {
     private List<UiLanguage> lang;
 
     /**
+     * Templates to user messages for different languages.
+     */
+    @Getter
+    @Setter
+    private Map<String, Resource> userMessageTemplate;
+
+    /**
      * Attribute info (for viewing info about received SAML attributes).
      */
     @Getter
@@ -316,6 +323,7 @@ public class SpConfigurationProperties implements InitializingBean {
         Assert.hasText(uil.getLanguageTag(), "sp.ui[].language-tag must be set");
         Assert.hasText(uil.getText(), "sp.ui[].text must be set");
       }
+      Assert.notEmpty(this.userMessageTemplate, "sp.ui[].user-message-template must be set");
       Assert.notEmpty(this.attributes, "sp.ui.attributes must be assigned");
       for (final AttributeConfig a : this.attributes) {
         a.afterPropertiesSet();

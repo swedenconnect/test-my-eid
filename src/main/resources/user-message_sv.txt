@@ -1,0 +1,5 @@
+# Testa mitt eID
+
+**Notera:** Detta är en testlegitimering som syftar till att verifiera att ditt eID fungerar.
+
+Du loggar alltså inte in till en "riktig" e-tjänst.

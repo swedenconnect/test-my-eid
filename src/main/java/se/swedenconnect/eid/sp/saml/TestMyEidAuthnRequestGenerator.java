@@ -15,8 +15,6 @@
  */
 package se.swedenconnect.eid.sp.saml;
 
-import java.util.Optional;
-
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.metadata.resolver.MetadataResolver;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
@@ -24,14 +22,14 @@ import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.x509.X509Credential;
 import org.springframework.util.StringUtils;
-
 import se.swedenconnect.opensaml.saml2.core.build.AuthnRequestBuilder;
 import se.swedenconnect.opensaml.saml2.core.build.ScopingBuilder;
 import se.swedenconnect.opensaml.saml2.metadata.HolderOfKeyMetadataSupport;
 import se.swedenconnect.opensaml.saml2.request.AuthnRequestGenerator;
 import se.swedenconnect.opensaml.saml2.request.AuthnRequestGeneratorContext;
-import se.swedenconnect.opensaml.saml2.request.RequestGenerationException;
 import se.swedenconnect.opensaml.sweid.saml2.request.SwedishEidAuthnRequestGenerator;
+
+import java.util.Optional;
 
 /**
  * Customized {@link AuthnRequestGenerator} for this application.
@@ -43,7 +41,7 @@ public class TestMyEidAuthnRequestGenerator extends SwedishEidAuthnRequestGenera
   /**
    * Constructor.
    *
-   * @param spEntityID the SP entityID
+   * @param spMetadata the SP metadata
    * @param signCredential the signing credential
    * @param metadataResolver the metadata resolver
    */
@@ -57,7 +55,7 @@ public class TestMyEidAuthnRequestGenerator extends SwedishEidAuthnRequestGenera
    */
   @Override
   protected void addScoping(final AuthnRequestBuilder builder, final AuthnRequestGeneratorContext context,
-      final EntityDescriptor idpMetadata) throws RequestGenerationException {
+      final EntityDescriptor idpMetadata) {
 
     final String country = ((TestMyEidAuthnRequestGeneratorContext) context).getCountry();
     if (StringUtils.hasText(country)) {
