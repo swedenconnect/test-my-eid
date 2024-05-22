@@ -19,6 +19,7 @@ import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -132,6 +134,11 @@ public class SamlController extends BaseController {
   private ClientCertificateGetter clientCertificateGetter;
 
   @Setter
+  @Autowired
+  @Qualifier("userMessages")
+  private Map<String, String> userMessages;
+
+  @Setter
   @Value("${server.servlet.context-path}")
   private String contextPath;
 
@@ -189,6 +196,7 @@ public class SamlController extends BaseController {
       input.setCountry(country);
       input.setPing(ping);
       input.setDebug(this.debugFlag);
+      input.setUserMessages(this.userMessages);
 
       final RequestHttpObject<AuthnRequest> authnRequest =
           this.spAuthnRequestGenerator.generateAuthnRequest(selectedIdp, null, input);
@@ -274,7 +282,8 @@ public class SamlController extends BaseController {
       input.setDebug(this.debugFlag);
       input.setPersonalIdentityNumberHint(personalIdentityNumber);
       input.setPridHint(prid);
-      input.setRequestedAuthnContextUris(Arrays.asList(loa));
+      input.setRequestedAuthnContextUris(Collections.singletonList(loa));
+      input.setUserMessages(this.userMessages);
 
       // Load signature message ...
       //

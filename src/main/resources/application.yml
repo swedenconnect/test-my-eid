@@ -163,7 +163,10 @@ sp:
     - language-tag: sv
       text: Svenska
     - language-tag: en
-      text: English  
+      text: English
+    user-message-template:
+      sv: classpath:user-message_sv.txt
+      en: classpath:user-message_en.txt
     attributes:
     - attribute-name: urn:oid:1.2.752.29.4.13      
       message-code: sp.msg.attr.personal-id-number.name
@@ -231,4 +234,5 @@ sp:
       description-message-code: sp.msg.attr.orgid.desc      
     - attribute-name: urn:oid:2.5.4.10
       message-code: sp.msg.attr.organization.name
-      
+
+

@@ -1,0 +1,5 @@
+# Test my eID
+
+**Note:** This is a test authentication that has the purpose of verifying that your eID functions correctly.
+
+You do not log in to a "real" service.
