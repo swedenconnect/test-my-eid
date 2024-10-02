@@ -112,7 +112,7 @@ public class MetadataController {
       header.setContentLength(documentBody.length);
       return new HttpEntity<>(documentBody, header);
     }
-    catch (SignatureException | MarshallingException e) {
+    catch (final SignatureException | MarshallingException e) {
       log.error("Failed to return valid metadata", e);
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }

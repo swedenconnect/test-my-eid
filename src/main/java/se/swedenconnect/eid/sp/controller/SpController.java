@@ -15,9 +15,10 @@
  */
 package se.swedenconnect.eid.sp.controller;
 
-import java.util.Objects;
-import java.util.stream.Collectors;
-
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,15 +28,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.eid.sp.config.EntityID;
-import se.swedenconnect.eid.sp.model.IdpDiscoveryInformation.IdpModel;
-import se.swedenconnect.eid.sp.saml.IdpList;
 import se.swedenconnect.eid.sp.model.LastAuthentication;
+import se.swedenconnect.eid.sp.saml.IdpList;
+
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Main controller.
@@ -63,8 +61,7 @@ public class SpController extends BaseController {
   /**
    * Controller method for the home endpoint.
    *
-   * @param device the type of device
-   *
+   * @param request the HTTP servlet request
    * @return a model and view object
    */
   @GetMapping
@@ -86,7 +83,8 @@ public class SpController extends BaseController {
    */
   @GetMapping("/eidas")
   public ModelAndView eidas() {
-    return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s", this.eidasConnectorEntityId.getEntityID()));
+    return new ModelAndView(
+        String.format("redirect:/saml2/request?selectedIdp=%s", this.eidasConnectorEntityId.getEntityID()));
   }
 
   /**
@@ -130,7 +128,6 @@ public class SpController extends BaseController {
    * @param request the HTTP request
    * @param response the HTTP response
    * @return a model and view object
-   * @throws ApplicationException for
    */
   @GetMapping("/result")
   public ModelAndView displayResult(final HttpServletRequest request, final HttpServletResponse response) {
@@ -144,15 +141,11 @@ public class SpController extends BaseController {
 
     final LastAuthentication lastAuthentication = (LastAuthentication) session.getAttribute("last-authentication");
     if (lastAuthentication != null) {
-      final IdpModel idpModel = this.idpListConfiguration.getIdps()
+      this.idpListConfiguration.getIdps()
           .stream()
           .filter(idp -> Objects.equals(idp.getEntityID(), lastAuthentication.getIdp()))
           .map(idp -> idp.getIdpModel(LocaleContextHolder.getLocale()))
-          .findFirst()
-          .orElse(null);
-      if (idpModel != null) {
-        mav.addObject("signIdp", idpModel);
-      }
+          .findFirst().ifPresent(idpModel -> mav.addObject("signIdp", idpModel));
     }
     mav.addObject("pathSign", this.signPath);
 

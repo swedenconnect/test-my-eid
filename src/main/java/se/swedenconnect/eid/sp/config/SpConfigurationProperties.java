@@ -15,9 +15,11 @@
  */
 package se.swedenconnect.eid.sp.config;
 
-import java.util.List;
-import java.util.Map;
-
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.opensaml.saml.saml2.metadata.ContactPersonTypeEnumeration;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -25,17 +27,14 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.core.io.Resource;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.eid.sp.saml.IdpList.StaticIdpDiscoEntry;
 import se.swedenconnect.opensaml.common.utils.LocalizedString;
 import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.factory.PkiCredentialConfigurationProperties;
 import se.swedenconnect.security.credential.factory.PkiCredentialFactoryBean;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Configuration properties for the SP.
@@ -153,7 +152,7 @@ public class SpConfigurationProperties implements InitializingBean {
 
   /** {@inheritDoc} */
   @Override
-  public void afterPropertiesSet() throws Exception {
+  public void afterPropertiesSet() {
     Assert.hasText(this.baseUri, "sp.base-uri must be assigned");
     Assert.hasText(this.entityId, "sp.entity-id must be assigned");
     //Assert.hasText(this.signEntityId, "sp.sign-entity-id must be assigned");
@@ -182,7 +181,7 @@ public class SpConfigurationProperties implements InitializingBean {
 
     /** {@inheritDoc} */
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
       Assert.hasText(this.entityId, "sp.eidas-connector.entity-id must be assigned");
     }
   }
@@ -215,7 +214,7 @@ public class SpConfigurationProperties implements InitializingBean {
 
     /** {@inheritDoc} */
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
       Assert.notNull(this.sign, "sp.credential.sign must be assigned");
       Assert.notNull(this.decrypt, "sp.credential.decrypt must be assigned");
     }
@@ -261,7 +260,7 @@ public class SpConfigurationProperties implements InitializingBean {
 
     /** {@inheritDoc} */
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
       Assert.notNull(this.metadata, "sp.federation.metadata must be assigned");
       Assert.notNull(this.metadata.getUrl(), "sp.federation.metadata.url must be assigned");
       if (this.metadata.getValidationCertificate() == null) {
@@ -317,7 +316,7 @@ public class SpConfigurationProperties implements InitializingBean {
 
     /** {@inheritDoc} */
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
       Assert.notEmpty(this.lang, "sp.ui must contain at least one language");
       for (final UiLanguage uil : this.lang) {
         Assert.hasText(uil.getLanguageTag(), "sp.ui[].language-tag must be set");
@@ -391,7 +390,7 @@ public class SpConfigurationProperties implements InitializingBean {
 
       /** {@inheritDoc} */
       @Override
-      public void afterPropertiesSet() throws Exception {
+      public void afterPropertiesSet() {
         Assert.hasText(this.attributeName, "Invalid attribute - missing attribute-name");
         Assert.hasText(this.messageCode, "Invalid attribute - missing message-code");
       }
@@ -422,7 +421,7 @@ public class SpConfigurationProperties implements InitializingBean {
 
     /** {@inheritDoc} */
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
       if (!StringUtils.hasText(this.headerName)) {
         this.headerName = "SSL_CLIENT_CERT";
       }
@@ -493,7 +492,6 @@ public class SpConfigurationProperties implements InitializingBean {
       }
     }
 
-
   }
 
   /**
@@ -545,7 +543,7 @@ public class SpConfigurationProperties implements InitializingBean {
 
     /** {@inheritDoc} */
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
       Assert.notNull(this.uiinfo, "sp.metadata.uiinfo must be set");
       this.uiinfo.afterPropertiesSet();
     }
@@ -573,7 +571,7 @@ public class SpConfigurationProperties implements InitializingBean {
 
       /** {@inheritDoc} */
       @Override
-      public void afterPropertiesSet() throws Exception {
+      public void afterPropertiesSet() {
         Assert.notEmpty(this.displayNames, "sp.metadata.uiinfo.display-names must be set");
         Assert.isTrue(this.displayNames.stream().anyMatch(d -> "sv".equals(d.getLanguage())),
             "sp.metadata.uiinfo.display-names does not contain a Swedish display name");
@@ -606,7 +604,7 @@ public class SpConfigurationProperties implements InitializingBean {
 
         /** {@inheritDoc} */
         @Override
-        public void afterPropertiesSet() throws Exception {
+        public void afterPropertiesSet() {
           Assert.hasText(this.path, "sp.metadata.uiinfo.logos[].path must be set");
         }
 

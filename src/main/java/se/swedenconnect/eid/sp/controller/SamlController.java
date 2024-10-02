@@ -15,17 +15,11 @@
  */
 package se.swedenconnect.eid.sp.controller;
 
-import java.security.cert.X509Certificate;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.opensaml.saml.common.assertion.ValidationContext;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.Attribute;
@@ -36,19 +30,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.eid.sp.config.EntityID;
 import se.swedenconnect.eid.sp.model.AttributeInfo;
 import se.swedenconnect.eid.sp.model.AttributeInfoRegistry;
@@ -69,6 +56,16 @@ import se.swedenconnect.opensaml.saml2.response.ResponseProcessingResult;
 import se.swedenconnect.opensaml.saml2.response.ResponseProcessor;
 import se.swedenconnect.opensaml.saml2.response.ResponseStatusErrorException;
 import se.swedenconnect.opensaml.sweid.saml2.authn.LevelOfAssuranceUris;
+
+import java.security.cert.X509Certificate;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Controller for creating SAML {@code AuthnRequest} messages and for processing SAML responses.
@@ -175,13 +172,13 @@ public class SamlController extends BaseController {
     HokRequirement hokRequirement = HokRequirement.DONT_USE;
     if (useHok == null && this.hokActive && (country == null || ping)) {
       final HokSupport hokSupport = this.spAuthnRequestGenerator.getIdpHokSupport(selectedIdp);
-      if (HokSupport.BOTH.equals(hokSupport)) {
+      if (HokSupport.BOTH == hokSupport) {
         // Ask whether to use HoK or not ...
         final ModelAndView mav = new ModelAndView("ask-hok");
         mav.addObject("selectedIdp", selectedIdp);
         return mav;
       }
-      else if (HokSupport.ONLY_HOK.equals(hokSupport)) {
+      else if (HokSupport.ONLY_HOK == hokSupport) {
         hokRequirement = HokRequirement.REQUIRED;
       }
     }
@@ -289,7 +286,7 @@ public class SamlController extends BaseController {
       //
       final String signMessage = givenName != null
           ? this.messageSource.getMessage("sp.msg.sign-message", new Object[] { givenName },
-              LocaleContextHolder.getLocale())
+          LocaleContextHolder.getLocale())
           : this.messageSource.getMessage("sp.msg.sigm-message-noname", null, LocaleContextHolder.getLocale());
 
       input.setSignMessage(signMessage);
@@ -342,7 +339,7 @@ public class SamlController extends BaseController {
       @RequestParam("SAMLResponse") final String samlResponse,
       @RequestParam(value = "RelayState", required = false) final String relayState) throws ApplicationException {
 
-    if (!hokActive) {
+    if (!this.hokActive) {
       throw new ApplicationException("sp.msg.error.no-hok");
     }
     return this.processResponse(request, response, false, true, samlResponse, relayState);
@@ -371,7 +368,7 @@ public class SamlController extends BaseController {
       @RequestParam("SAMLResponse") final String samlResponse,
       @RequestParam(value = "RelayState", required = false) final String relayState) throws ApplicationException {
 
-    if (!hokActive) {
+    if (!this.hokActive) {
       throw new ApplicationException("sp.msg.error.no-hok");
     }
 
@@ -486,14 +483,13 @@ public class SamlController extends BaseController {
 
   private String buildRedirectUrl(final String path, final boolean debug) {
     return String.format("%s%s%s",
-        (debug ? this.debugBaseUri : this.baseUri), contextPath.equals("/") ? "" : this.contextPath, path);
+        (debug ? this.debugBaseUri : this.baseUri), this.contextPath.equals("/") ? "" : this.contextPath, path);
   }
 
   private ValidationContext buildValidationContext(final boolean signSp) {
-    Map<String, Object> pars = new HashMap<>();
+    final Map<String, Object> pars = new HashMap<>();
     pars.put(CoreValidatorParameters.SP_METADATA, signSp ? this.signSpMetadata : this.spMetadata);
-    final ValidationContext ctx = new ValidationContext(pars);
-    return ctx;
+    return new ValidationContext(pars);
   }
 
   /**

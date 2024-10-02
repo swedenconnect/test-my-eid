@@ -45,7 +45,7 @@ public class TomcatAjpCustomizer implements WebServerFactoryCustomizer<TomcatSer
   public void customize(final TomcatServletWebServerFactory factory) {
 
     if (this.ajp.isEnabled()) {
-      Connector ajpConnector = new Connector("AJP/1.3");
+      final Connector ajpConnector = new Connector("AJP/1.3");
       ajpConnector.setPort(this.ajp.getPort());
       ajpConnector.setAllowTrace(false);
       ajpConnector.setScheme("http");

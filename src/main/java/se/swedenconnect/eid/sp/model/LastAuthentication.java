@@ -15,17 +15,16 @@
  */
 package se.swedenconnect.eid.sp.model;
 
-import java.util.List;
-import java.util.Optional;
-
-import org.opensaml.saml.saml2.core.Attribute;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.opensaml.saml.saml2.core.Attribute;
 import se.swedenconnect.opensaml.saml2.attribute.AttributeUtils;
 import se.swedenconnect.opensaml.saml2.response.ResponseProcessingResult;
 import se.swedenconnect.opensaml.sweid.saml2.attribute.AttributeConstants;
+
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Model object holding information from the last authentication operation. Used by "authentication for signature".
@@ -79,29 +78,29 @@ public class LastAuthentication {
   public LastAuthentication(final ResponseProcessingResult authnResult) {
     this.idp = authnResult.getIssuer();
     this.personalIdentityNumber = Optional.ofNullable(
-        AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER,
-            authnResult.getAttributes()))
+            AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER,
+                authnResult.getAttributes()))
         .map(AttributeUtils::getAttributeStringValue)
         .orElse(null);
     this.givenName = Optional.ofNullable(
-        AttributeUtils.getAttribute(
-            AttributeConstants.ATTRIBUTE_NAME_GIVEN_NAME, authnResult.getAttributes()))
+            AttributeUtils.getAttribute(
+                AttributeConstants.ATTRIBUTE_NAME_GIVEN_NAME, authnResult.getAttributes()))
         .map(AttributeUtils::getAttributeStringValue)
         .orElse(null);
     this.surName = Optional.ofNullable(
-        AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_SN, authnResult.getAttributes()))
+            AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_SN, authnResult.getAttributes()))
         .map(AttributeUtils::getAttributeStringValue)
         .orElse(null);
     this.displayName = Optional.ofNullable(
-        AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_DISPLAY_NAME, authnResult.getAttributes()))
+            AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_DISPLAY_NAME, authnResult.getAttributes()))
         .map(AttributeUtils::getAttributeStringValue)
         .orElse(null);
     this.prid = Optional.ofNullable(
-        AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_PRID, authnResult.getAttributes()))
+            AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_PRID, authnResult.getAttributes()))
         .map(AttributeUtils::getAttributeStringValue)
         .orElse(null);
     this.country = Optional.ofNullable(
-        AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_C, authnResult.getAttributes()))
+            AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_C, authnResult.getAttributes()))
         .map(AttributeUtils::getAttributeStringValue)
         .orElse(null);
     this.authnContextUri = authnResult.getAuthnContextClassUri();

@@ -15,6 +15,19 @@
  */
 package se.swedenconnect.eid.sp.saml;
 
+import lombok.Data;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
+import net.shibboleth.shared.resolver.ResolverException;
+import org.opensaml.saml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.util.Assert;
+import se.swedenconnect.eid.sp.model.IdpDiscoveryInformation;
+import se.swedenconnect.opensaml.saml2.metadata.EntityDescriptorUtils;
+import se.swedenconnect.opensaml.saml2.metadata.provider.MetadataProvider;
+import se.swedenconnect.opensaml.sweid.saml2.discovery.SwedishEidDiscoveryMatchingRules;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -22,20 +35,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import org.opensaml.saml.saml2.metadata.EntityDescriptor;
-import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.util.Assert;
-
-import lombok.Data;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
-import net.shibboleth.shared.resolver.ResolverException;
-import se.swedenconnect.eid.sp.model.IdpDiscoveryInformation;
-import se.swedenconnect.opensaml.saml2.metadata.EntityDescriptorUtils;
-import se.swedenconnect.opensaml.saml2.metadata.provider.MetadataProvider;
-import se.swedenconnect.opensaml.sweid.saml2.discovery.SwedishEidDiscoveryMatchingRules;
 
 /**
  * Interface for the list of IdP:s that should be displayed for the user.
@@ -99,8 +98,8 @@ public class IdpList {
       final boolean hokActive) {
     this.metadataProvider = Objects.requireNonNull(metadataProvider, "metadataProvider must be assigned");
     this.spMetadata = Objects.requireNonNull(spMetadata, "spMetadata must be assigned");
-    this.staticIdps = Optional.ofNullable(staticIdps).orElseGet(() -> Collections.emptyList());
-    this.blackList = Optional.ofNullable(blackList).orElseGet(() -> Collections.emptyList());
+    this.staticIdps = Optional.ofNullable(staticIdps).orElse(Collections.emptyList());
+    this.blackList = Optional.ofNullable(blackList).orElse(Collections.emptyList());
     this.includeOnlyStatic = includeOnlyStatic;
     this.hokActive = hokActive;
 
@@ -135,7 +134,8 @@ public class IdpList {
           continue;
         }
         if (this.blackList.contains(idpEntry.getEntityId())) {
-          log.debug("IdP '{}' is black-listed in configuration and will be excluded from IdP list", idpEntry.getEntityId());
+          log.debug("IdP '{}' is black-listed in configuration and will be excluded from IdP list",
+              idpEntry.getEntityId());
           continue;
         }
         final EntityDescriptor idp =
@@ -177,7 +177,7 @@ public class IdpList {
 
     // Sort the IdP list
     //
-    Collections.sort(idpList, Comparator.comparing(IdpDiscoveryInformation::getSortOrder));
+    idpList.sort(Comparator.comparing(IdpDiscoveryInformation::getSortOrder));
 
     this.cache = Collections.unmodifiableList(idpList);
     this.lastUpdate = System.currentTimeMillis();
@@ -202,10 +202,7 @@ public class IdpList {
         return false;
       }
     }
-    if (!SwedishEidDiscoveryMatchingRules.isServicePropertyMatch(this.spEntityCategories, idpEntityCategories)) {
-      return false;
-    }
-    return true;
+    return SwedishEidDiscoveryMatchingRules.isServicePropertyMatch(this.spEntityCategories, idpEntityCategories);
   }
 
   /**
@@ -293,9 +290,8 @@ public class IdpList {
      */
     private Integer logoHeight;
 
-
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
       Assert.hasText(this.entityId, "entity-id for static IdP entry not assigned");
     }
 

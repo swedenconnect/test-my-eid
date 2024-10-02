@@ -65,7 +65,7 @@ public class AlgorithmConfiguration {
 
     /**
      * Should AES GCM algorithms be used? If {@code false}, AES-CBC will be used as default. If {@code null}, the
-     * default will used.
+     * default will be used.
      */
     @Getter
     @Setter

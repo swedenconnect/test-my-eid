@@ -48,7 +48,7 @@ public class ErrorStatusInfo {
   }
 
   public boolean isCancel() {
-    return this.subErrorCode != null && CANCEL_CODE.equals(this.subErrorCode);
+    return CANCEL_CODE.equals(this.subErrorCode);
   }
 
 }

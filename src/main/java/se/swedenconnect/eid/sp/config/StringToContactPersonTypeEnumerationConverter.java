@@ -15,6 +15,7 @@
  */
 package se.swedenconnect.eid.sp.config;
 
+import jakarta.annotation.Nonnull;
 import org.opensaml.saml.saml2.metadata.ContactPersonTypeEnumeration;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.core.convert.converter.Converter;
@@ -31,7 +32,7 @@ public class StringToContactPersonTypeEnumerationConverter implements Converter<
 
   /** {@inheritDoc} */
   @Override
-  public ContactPersonTypeEnumeration convert(String source) {
+  public ContactPersonTypeEnumeration convert(@Nonnull final String source) {
     if (ContactPersonTypeEnumeration.SUPPORT.toString().equalsIgnoreCase(source)) {
       return ContactPersonTypeEnumeration.SUPPORT;
     }

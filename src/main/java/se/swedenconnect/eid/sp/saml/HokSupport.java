@@ -44,7 +44,7 @@ public enum HokSupport {
     throw new IllegalArgumentException(name + " is not a valid string");
   }
 
-  private HokSupport(final String name) {
+  HokSupport(final String name) {
     this.name = name;
   }
 

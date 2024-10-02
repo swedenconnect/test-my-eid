@@ -85,8 +85,8 @@ public class DebugTomcatWebServerConfiguration implements WebServerFactoryCustom
       }
 
       if (this.additionalConnectorSettings.getSsl().getClientAuth() != null
-          && !ClientAuth.NONE.equals(this.additionalConnectorSettings.getSsl().getClientAuth())) {
-        if (ClientAuth.NEED.equals(this.additionalConnectorSettings.getSsl().getClientAuth())) {
+          && ClientAuth.NONE != this.additionalConnectorSettings.getSsl().getClientAuth()) {
+        if (ClientAuth.NEED == this.additionalConnectorSettings.getSsl().getClientAuth()) {
           sslHostConfig.setCertificateVerification("required");
         }
         else {

@@ -15,19 +15,17 @@
  */
 package se.swedenconnect.eid.sp.config;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
-
-import lombok.Getter;
-import lombok.Setter;
 import se.swedenconnect.eid.sp.saml.IdpList.StaticIdpDiscoEntry;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Configuration class for reading statically configured IdP:s from the {@code sp.discovery.static-idp-configuration}
@@ -36,7 +34,6 @@ import se.swedenconnect.eid.sp.saml.IdpList.StaticIdpDiscoEntry;
  * @author Martin Lindström
  */
 @Configuration
-@ConfigurationProperties
 @PropertySource(ignoreResourceNotFound = true, value = "${sp.discovery.static-idp-configuration}", factory = CustomPropertySourceFactory.class)
 public class StaticIdpConfiguration implements InitializingBean {
 
@@ -49,7 +46,7 @@ public class StaticIdpConfiguration implements InitializingBean {
 
   @Bean("staticIdps")
   List<StaticIdpDiscoEntry> staticIdps() {
-    return Optional.ofNullable(this.idp).orElseGet(() -> Collections.emptyList());
+    return Optional.ofNullable(this.idp).orElse(Collections.emptyList());
   }
 
   /** {@inheritDoc} */

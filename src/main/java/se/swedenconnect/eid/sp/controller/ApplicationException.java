@@ -17,6 +17,8 @@ package se.swedenconnect.eid.sp.controller;
 
 import org.springframework.util.Assert;
 
+import java.io.Serial;
+
 /**
  * Exception class for errors during processing. Holds a message code for the error UI.
  *
@@ -25,6 +27,7 @@ import org.springframework.util.Assert;
 public class ApplicationException extends Exception {
 
   /** For serializing. */
+  @Serial
   private static final long serialVersionUID = 1564108817874835701L;
 
   /** The message code. */
