@@ -1,4 +1,4 @@
-FROM openjdk:18.0.2.1-slim
+FROM openjdk:21-jdk-slim
 
 LABEL org.opencontainers.image.source=https://github.com/swedenconnect/test-my-eid
 LABEL org.opencontainers.image.description="Sweden Connect Test my eID"

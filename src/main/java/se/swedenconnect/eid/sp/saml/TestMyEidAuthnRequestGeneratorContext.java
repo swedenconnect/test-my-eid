@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 Sweden Connect
+ * Copyright 2018-2024 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,11 @@
  */
 package se.swedenconnect.eid.sp.saml;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import org.opensaml.saml.saml2.core.AuthnContextComparisonTypeEnumeration;
-import org.opensaml.xmlsec.encryption.support.EncryptionException;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.opensaml.saml.saml2.core.AuthnContextComparisonTypeEnumeration;
+import org.opensaml.xmlsec.encryption.support.EncryptionException;
 import se.swedenconnect.opensaml.saml2.core.build.RequestedAuthnContextBuilder;
 import se.swedenconnect.opensaml.sweid.saml2.attribute.AttributeConstants;
 import se.swedenconnect.opensaml.sweid.saml2.authn.psc.MatchValue;
@@ -37,6 +31,10 @@ import se.swedenconnect.opensaml.sweid.saml2.request.SwedishEidAuthnRequestGener
 import se.swedenconnect.opensaml.sweid.saml2.signservice.build.SignMessageBuilder;
 import se.swedenconnect.opensaml.sweid.saml2.signservice.dss.SignMessage;
 import se.swedenconnect.opensaml.sweid.saml2.signservice.dss.SignMessageMimeTypeEnum;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Customized context for generating authentication requests.
@@ -150,7 +148,7 @@ public class TestMyEidAuthnRequestGeneratorContext implements SwedishEidAuthnReq
       if (this.userMessages == null) {
         return null;
       }
-      UserMessageBuilder builder = UserMessageBuilder.builder()
+      final UserMessageBuilder builder = UserMessageBuilder.builder()
           .mimeType("text/markdown");
 
       for (final Map.Entry<String, String> entry : this.userMessages.entrySet()) {
