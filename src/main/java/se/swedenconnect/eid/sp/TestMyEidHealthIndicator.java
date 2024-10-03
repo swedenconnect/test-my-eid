@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 Sweden Connect
+ * Copyright 2018-2024 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,13 +47,13 @@ public class TestMyEidHealthIndicator implements HealthIndicator {
     //
     try {
       if (this.metadataProvider.getIdentityProviders().isEmpty()) {
-        String msg = "No IdP:s available in metadata";
+        final String msg = "No IdP:s available in metadata";
         log.error("Health check: {}", msg);
         return Health.outOfService().withDetail("error-message", msg).build();
       }
     }
-    catch (ResolverException e) {
-      String msg = "Exception while asking for IdP:s from metadata provider";
+    catch (final ResolverException e) {
+      final String msg = "Exception while asking for IdP:s from metadata provider";
       log.error("Health check: {}", msg, e);
       return Health.outOfService().withDetail("error-message", msg).withException(e).build();
     }

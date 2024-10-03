@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Sweden Connect
+ * Copyright 2018-2024 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Properties;
 
+import jakarta.annotation.Nonnull;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.core.env.PropertySource;
@@ -34,6 +35,7 @@ import org.springframework.core.io.support.PropertySourceFactory;
  */
 public class CustomPropertySourceFactory extends DefaultPropertySourceFactory {
 
+  @Nonnull
   @Override
   public PropertySource<?> createPropertySource(final String name, final EncodedResource resource) throws IOException {
 
@@ -50,7 +52,7 @@ public class CustomPropertySourceFactory extends DefaultPropertySourceFactory {
     }
   }
 
-  private static final boolean isYamlFile(final Resource resource) {
+  private static boolean isYamlFile(final Resource resource) {
     if (!resource.isFile()) {
       return false;
     }

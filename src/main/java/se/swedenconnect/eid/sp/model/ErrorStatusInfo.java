@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 Sweden Connect
+ * Copyright 2018-2024 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class ErrorStatusInfo {
   }
 
   public boolean isCancel() {
-    return this.subErrorCode != null && CANCEL_CODE.equals(this.subErrorCode);
+    return CANCEL_CODE.equals(this.subErrorCode);
   }
 
 }

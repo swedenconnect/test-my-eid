@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 Sweden Connect
+ * Copyright 2018-2024 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public class MetadataController {
       header.setContentLength(documentBody.length);
       return new HttpEntity<>(documentBody, header);
     }
-    catch (SignatureException | MarshallingException e) {
+    catch (final SignatureException | MarshallingException e) {
       log.error("Failed to return valid metadata", e);
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }

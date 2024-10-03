@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 Sweden Connect
+ * Copyright 2018-2024 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class FromRequestAttributeClientCertificateGetter implements ClientCertif
   @Override
   public X509Certificate getClientCertificate(final HttpServletRequest request) {
     // "javax.servlet.request.X509Certificate"
-    final X509Certificate[] certs = (X509Certificate[]) request.getAttribute(attributeName);
+    final X509Certificate[] certs = (X509Certificate[]) request.getAttribute(this.attributeName);
     if (certs == null || certs.length == 0) {
       return null;
     }

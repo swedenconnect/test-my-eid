@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 Sweden Connect
+ * Copyright 2018-2024 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class FromHeaderClientCertificateGetter implements ClientCertificateGette
     try {
       factory = CertificateFactory.getInstance("X.509");
     }
-    catch (CertificateException e) {
+    catch (final CertificateException e) {
       throw new RuntimeException(e);
     }
   }
@@ -74,19 +74,19 @@ public class FromHeaderClientCertificateGetter implements ClientCertificateGette
 
     try {
       if (!StringUtils.hasText(BEGIN_CERT)) {
-        // OK, its only a base64 encoding but not PEM
-        try (InputStream is = new ByteArrayInputStream(Base64.getDecoder().decode(header))) {
+        // OK, it's only a base64 encoding but not PEM
+        try (final InputStream is = new ByteArrayInputStream(Base64.getDecoder().decode(header))) {
           return (X509Certificate) factory.generateCertificate(is);
         }
       }
       else {
         // PEM
-        try (InputStream is = new ByteArrayInputStream(header.getBytes(StandardCharsets.UTF_8))) {
+        try (final InputStream is = new ByteArrayInputStream(header.getBytes(StandardCharsets.UTF_8))) {
           return (X509Certificate) factory.generateCertificate(is);
         }
       }
     }
-    catch (CertificateException | IOException e) {
+    catch (final CertificateException | IOException e) {
       log.warn("Failed to read client certificate", e);
       return null;
     }

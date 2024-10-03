@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 Sweden Connect
+ * Copyright 2018-2024 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 package se.swedenconnect.eid.sp.controller;
 
-import java.util.Map;
-
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.web.servlet.error.AbstractErrorController;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
@@ -28,9 +29,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Map;
 
 /**
  * Application error controller.
@@ -73,14 +72,14 @@ public class ApplicationErrorController extends AbstractErrorController {
     final Map<String, Object> errorAttributes = this.getErrorAttributes(request, ErrorAttributeOptions.defaults());
 
     if (log.isInfoEnabled()) {
-      final StringBuffer sb = new StringBuffer();
+      final StringBuilder sb = new StringBuilder();
       for (final Map.Entry<String, Object> e : errorAttributes.entrySet()) {
-        if (sb.length() > 0) {
+        if (!sb.isEmpty()) {
           sb.append(",");
         }
         sb.append(e.getKey()).append("=").append(e.getValue());
       }
-      log.info("Error: {}", sb.toString());
+      log.info("Error: {}", sb);
     }
 
     final ModelAndView mav = new ModelAndView("error");
@@ -94,7 +93,7 @@ public class ApplicationErrorController extends AbstractErrorController {
     else {
       final HttpStatus status = this.getStatus(request);
 
-      if (HttpStatus.NOT_FOUND.equals(status)) {
+      if (HttpStatus.NOT_FOUND == status) {
         mav.addObject("messageCode", "sp.msg.error.not-found");
       }
       else {
@@ -106,7 +105,7 @@ public class ApplicationErrorController extends AbstractErrorController {
 
     final String url = String.format("%s%s/result",
         StringUtils.hasText(this.debugBaseUri) ? this.debugBaseUri : this.baseUri,
-        contextPath.equals("/") ? "" : this.contextPath);
+        this.contextPath.equals("/") ? "" : this.contextPath);
 
     return new ModelAndView("redirect:" + url);
   }

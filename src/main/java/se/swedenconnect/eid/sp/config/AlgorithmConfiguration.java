@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 Sweden Connect
+ * Copyright 2018-2024 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public class AlgorithmConfiguration {
 
     /**
      * Should AES GCM algorithms be used? If {@code false}, AES-CBC will be used as default. If {@code null}, the
-     * default will used.
+     * default will be used.
      */
     @Getter
     @Setter

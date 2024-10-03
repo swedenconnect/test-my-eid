@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 Sweden Connect
+ * Copyright 2018-2024 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,8 +85,8 @@ public class DebugTomcatWebServerConfiguration implements WebServerFactoryCustom
       }
 
       if (this.additionalConnectorSettings.getSsl().getClientAuth() != null
-          && !ClientAuth.NONE.equals(this.additionalConnectorSettings.getSsl().getClientAuth())) {
-        if (ClientAuth.NEED.equals(this.additionalConnectorSettings.getSsl().getClientAuth())) {
+          && ClientAuth.NONE != this.additionalConnectorSettings.getSsl().getClientAuth()) {
+        if (ClientAuth.NEED == this.additionalConnectorSettings.getSsl().getClientAuth()) {
           sslHostConfig.setCertificateVerification("required");
         }
         else {

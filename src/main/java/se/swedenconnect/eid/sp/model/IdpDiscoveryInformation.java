@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 Sweden Connect
+ * Copyright 2018-2024 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class IdpDiscoveryInformation {
 
   /** Sorting order for the IdP:s place in the list. */
   @Getter
-  private Integer sortOrder = Integer.MAX_VALUE;
+  private Integer sortOrder;
 
   /**
    * Constructor.
@@ -74,7 +74,7 @@ public class IdpDiscoveryInformation {
 
     final UIInfo uiInfo = this.getUIInfo(metadata);
     if (uiInfo != null) {
-      uiInfo.getDisplayNames().stream().forEach(d -> this.displayNames.put(d.getXMLLang(), d.getValue()));
+      uiInfo.getDisplayNames().forEach(d -> this.displayNames.put(d.getXMLLang(), d.getValue()));
 
       // Prefer a square logo, and if not found, the one that is nearest a square.
       Logo selected = null;
@@ -121,7 +121,7 @@ public class IdpDiscoveryInformation {
     Optional.ofNullable(staticEntry.getDisplayNameEn()).ifPresent(d -> this.displayNames.put("en", d));
     Optional.ofNullable(staticEntry.getDescriptionSv()).ifPresent(d -> this.descriptions.put("sv", d));
     Optional.ofNullable(staticEntry.getDescriptionEn()).ifPresent(d -> this.descriptions.put("en", d));
-    Optional.ofNullable(staticEntry.getLogoUrl()).ifPresent(logo -> { this.logotype = logo; });
+    Optional.ofNullable(staticEntry.getLogoUrl()).ifPresent(logo -> this.logotype = logo);
   }
 
   /**

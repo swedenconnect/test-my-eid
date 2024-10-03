@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 Sweden Connect
+ * Copyright 2018-2024 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,9 @@
  */
 package se.swedenconnect.eid.sp.config;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import io.micrometer.core.instrument.util.IOUtils;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import net.shibboleth.shared.component.ComponentInitializationException;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.util.XMLObjectSupport;
@@ -62,13 +50,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
-import org.springframework.util.ResourceUtils;
 import org.springframework.util.StringUtils;
 import org.w3c.dom.Document;
-
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
-import net.shibboleth.shared.component.ComponentInitializationException;
 import se.swedenconnect.eid.sp.model.AttributeInfoRegistry;
 import se.swedenconnect.eid.sp.saml.IdpList;
 import se.swedenconnect.eid.sp.saml.IdpList.StaticIdpDiscoEntry;
@@ -96,6 +79,19 @@ import se.swedenconnect.opensaml.sweid.saml2.validation.SwedishEidResponseProces
 import se.swedenconnect.opensaml.xmlsec.encryption.support.SAMLObjectDecrypter;
 import se.swedenconnect.opensaml.xmlsec.encryption.support.SAMLObjectEncrypter;
 import se.swedenconnect.security.credential.opensaml.OpenSamlCredential;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Configuration for the Test SP.
@@ -255,10 +251,10 @@ public class SpConfiguration implements InitializingBean {
     //
     final List<StaticIdpDiscoEntry> idps = new ArrayList<>(
         Optional.ofNullable(this.properties.getDiscovery().getIdp())
-        .orElseGet(Collections::emptyList));
+            .orElseGet(Collections::emptyList));
     staticIdps.stream()
-      .filter(i -> idps.stream().noneMatch(i2 -> i2.getEntityId().equals(i.getEntityId())))
-      .forEach(idps::add);
+        .filter(i -> idps.stream().noneMatch(i2 -> i2.getEntityId().equals(i.getEntityId())))
+        .forEach(idps::add);
 
     final IdpList idpList = new IdpList(metadataProvider, spMetadata, idps,
         this.properties.getDiscovery().getBlackList(),
@@ -287,12 +283,12 @@ public class SpConfiguration implements InitializingBean {
 
     final X509Certificate cert = this.properties.getFederation().getMetadata().getValidationCertificate() != null
         ? (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(
-            this.properties.getFederation().getMetadata().getValidationCertificate().getInputStream())
+        this.properties.getFederation().getMetadata().getValidationCertificate().getInputStream())
         : null;
 
     final Resource location = this.properties.getFederation().getMetadata().getUrl();
-    AbstractMetadataProvider provider;
-    if (location instanceof UrlResource urlResource && !urlResource.isFile()) {
+    final AbstractMetadataProvider provider;
+    if (location instanceof final UrlResource urlResource && !urlResource.isFile()) {
 
       final File backupFile = new File(this.tempDir.getDir(), "metadata-cache.xml");
 
@@ -560,7 +556,7 @@ public class SpConfiguration implements InitializingBean {
       final X509Credential encryptCredential = new OpenSamlCredential(
           this.properties.getCredential().getDecrypt().createCredential());
 
-      if (AlgorithmDescriptor.AlgorithmType.KeyTransport.equals(algoDesc.getType())
+      if (AlgorithmDescriptor.AlgorithmType.KeyTransport == algoDesc.getType()
           && AlgorithmSupport.credentialSupportsAlgorithmForEncryption(encryptCredential, algoDesc)) {
         final EncryptionMethod method =
             (EncryptionMethod) XMLObjectSupport.buildXMLObject(EncryptionMethod.DEFAULT_ELEMENT_NAME);
