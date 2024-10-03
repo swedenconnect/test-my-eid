@@ -1,65 +1,65 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"> 
+<html xmlns:th="http://www.thymeleaf.org">
 <head th:insert="~{fragments/base :: headerFragment}"></head>
 <body>
 
-  <div th:replace="~{fragments/header :: logotype}"></div>
-  
-  <div class="container main">
+<div th:replace="~{fragments/header :: logotype}"></div>
 
-    <div th:replace="~{fragments/header :: language(languages = ${languages}, path='/')}"></div>
-    
-    <div class="row" id="mainDiv">
-      <div class="col-sm-12 content-container">
+<div class="container main">
 
-        <div class="row">
-          <div class="col-sm-12 content-heading">
-            <h2 th:text="#{sp.msg.heading}">Heading</h2>
-          </div>
-          <div class="col-sm-12">
-            <p class="info" th:text="#{sp.msg.intro.1}">Intro 1</p>
-            <p class="info" th:text="#{sp.msg.intro.2}">Intro 2</p>
-            <p class="info" th:text="#{sp.msg.intro.3}">Intro 3</p>
-          </div>
+  <div th:replace="~{fragments/header :: language(languages = ${languages}, path='/')}"></div>
+
+  <div class="row" id="mainDiv">
+    <div class="col-sm-12 content-container">
+
+      <div class="row">
+        <div class="col-sm-12 content-heading">
+          <h2 th:text="#{sp.msg.heading}">Heading</h2>
         </div>
-        
-        <hr class="full-width">
-        
-        <div class="providers" id="submitDiv">
-          <div class="row">
-            <div class="col-12">
-              <form method="POST" action="#" th:action="@{/saml2/request}">
-                <input type="hidden" name="debug" th:value="${debug}" />
-                <th:block th:if="${idpList.empty}">
-                  <p class="info">No identity providers are available.</p>
-                </th:block>
-                <th:block th:if="${!idpList.empty}">
-                  <th:block th:each="idpData,idpStat:${idpList}">
-                    <button class="provider-button" type="submit" name="selectedIdp" th:value="${idpData.getEntityID()}">
-                    <div class="provider">                    
+        <div class="col-sm-12">
+          <p class="info" th:text="#{sp.msg.intro.1}">Intro 1</p>
+          <p class="info" th:text="#{sp.msg.intro.2}">Intro 2</p>
+          <p class="info" th:text="#{sp.msg.intro.3}">Intro 3</p>
+        </div>
+      </div>
+
+      <hr class="full-width">
+
+      <div class="providers" id="submitDiv">
+        <div class="row">
+          <div class="col-12">
+            <form method="POST" action="#" th:action="@{/saml2/request}">
+              <input type="hidden" name="debug" th:value="${debug}"/>
+              <th:block th:if="${idpList.empty}">
+                <p class="info">No identity providers are available.</p>
+              </th:block>
+              <th:block th:if="${!idpList.empty}">
+                <th:block th:each="idpData,idpStat:${idpList}">
+                  <button class="provider-button" type="submit" name="selectedIdp" th:value="${idpData.getEntityID()}">
+                    <div class="provider">
                       <img th:src="@{${idpData.getLogotype()}}"/>
                       <p th:text='${idpData.getDisplayName()}'>IdP</p>
                       <th:block th:if="${idpData.getDescription() != null}">
                         <p class="idp-description" th:text='${idpData.getDescription()}'>Additional text</p>
-                      </th:block>   
+                      </th:block>
                     </div>
-                    </button>
-                  </th:block>
+                  </button>
                 </th:block>
-              </form>
-            </div>
-          </div>  
-        </div>        
-        
-      </div> <!-- /.col-sm-12 content-container -->
-      
-      <div th:replace="~{fragments/footer :: copyright}"></div>      
-      
-    </div> <!-- /#mainDiv -->
+              </th:block>
+            </form>
+          </div>
+        </div>
+      </div>
 
-  </div> <!-- /.container main -->
+    </div> <!-- /.col-sm-12 content-container -->
 
-  <th:block th:insert="~{fragments/base :: scriptFragment}"></th:block>
-  
+    <div th:replace="~{fragments/footer :: copyright}"></div>
+
+  </div> <!-- /#mainDiv -->
+
+</div> <!-- /.container main -->
+
+<th:block th:insert="~{fragments/base :: scriptFragment}"></th:block>
+
 </body>
 </html>
