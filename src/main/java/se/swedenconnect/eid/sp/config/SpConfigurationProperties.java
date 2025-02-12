@@ -481,7 +481,7 @@ public class SpConfigurationProperties implements InitializingBean {
 
     /** {@inheritDoc} */
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
       if (this.cacheTime == null) {
         this.cacheTime = 600;
       }

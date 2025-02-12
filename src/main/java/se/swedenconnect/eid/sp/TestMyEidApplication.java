@@ -70,7 +70,7 @@ public class TestMyEidApplication {
   @Bean
   LocaleResolver localeResolver(@Value("${server.servlet.context-path}") final String contextPath) {
     final CookieLocaleResolver resolver = new CookieLocaleResolver();
-    resolver.setDefaultLocale(new Locale("en"));
+    resolver.setDefaultLocale(Locale.ENGLISH);
     resolver.setCookiePath(contextPath);
     resolver.setCookieMaxAge(Duration.ofDays(365));
     return resolver;
