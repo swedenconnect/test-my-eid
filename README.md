@@ -16,7 +16,7 @@ It is released as open source so that anyone can see how an authentication reque
 
 * Sweden Connect Sandbox - [https://eid.idsec.se/testmyeid](https://eid.idsec.se/testmyeid)
 
-	* Note: Not all IdP:s in the sandbox federation is functioning correctly. The Test my eID-application is currently configured to support all IdP:s that seem to be "up". Anyone adding a new IdP to the sandbox-federation and wants that to be supported by the test application should send a mail to [info@idsec.se](mailto:info@idsec.se).
+	* Note: Not all IdP:s in the sandbox federation is functioning correctly. The Test my eID-application is currently configured to support all IdP:s that seem to be "up".
 
 * Sweden Connect QA - [https://qa.test.swedenconnect.se](https://qa.test.swedenconnect.se)
 
@@ -59,7 +59,7 @@ Or, you can assign the corresponding environment variables:
 | `tomcat.ajp.secret-required`<br />`TOMCAT_AJP_SECRET_REQUIRED` | Whether AJP secret is required. | `false` |
 | `tomcat.ajp.secret`<br />`TOMCAT_AJP_SECRET` | Tomcat AJP secret. | `-` |
 
-Note that the application also supports the [Spring SSL Bundles](https://spring.io/blog/2023/06/07/securing-spring-boot-applications-with-ssl) feature.
+Note that the application also supports the [Spring SSL Bundles](https://spring.io/blog/2023/06/07/securing-spring-boot-applications-with-ssl) feature. In these cases the `server.ssl.bundle` setting is assigned a registered SSL bundle.
 
 **Application settings**:
 
@@ -128,7 +128,7 @@ The default IdP configuration file for the Sweden Connect QA profile looks like:
 
 ```
 idp:
-  # The eIDAS connect
+  # The eIDAS connector
   - entity-id: https://qa.connector.eidas.swedenconnect.se/eidas
   # Freja eID Plus
   - entity-id: https://idp-sweden-connect-valfr-2017-ct.test.frejaeid.com
@@ -145,12 +145,12 @@ Somewhat overkill for a test application, but **Test my eID** also has a managem
 
 Endpoints for monitoring and administering the service can accessed via the management port (default: 8444). This port should not be publicly exposed and is for internal use only. The following endpoints are available:
 
-#### Health - /manage/health
+#### Health - /actuator/health
 
 Returns a general health indication for the service. For an "UP" status, the endpoint will return a 200 HTTP status along with a JSON response that may look something like:
 
 ```
-curl --insecure https://<server>:8444/testmyeid/manage/health
+curl --insecure https://<server>:8444/actuator/health
 
 {
    "status" : "UP",
@@ -172,12 +172,12 @@ curl --insecure https://<server>:8444/testmyeid/manage/health
 
 If all checks that are performed by the `health`-endpoint returns "UP", the overall status will be "UP" and a 200 HTTP status is returned.
 
-#### Info - /manage/info
+#### Info - /actuator/info
 
 The `/manage/info` endpoint displays information about the service. Spring Boot supplies some information such as build info and version information.
 
 ```
-curl --insecure https://<server>:8444/testmyeid/manage/info
+curl --insecure https://<server>:8444/actuator/info
 
 {
    "app" : {

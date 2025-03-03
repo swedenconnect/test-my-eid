@@ -29,7 +29,6 @@ server:
 #
 management:
   server:
-    base-path: ${server.servlet.context-path}
     port: 8444
   endpoint:
     health:
@@ -47,7 +46,6 @@ management:
       access: read_only
   endpoints:
     web:
-      base-path: /manage
       exposure:
         include: "*"
 

@@ -331,18 +331,52 @@
             <ports>
               <port>8443</port>
               <port>8444</port>
+              <port>8009</port>
             </ports>
             <labels>
               <org.opencontainers.image.source>
                 https://github.com/swedenconnect/test-my-eid
               </org.opencontainers.image.source>
-              <org.opencontainers.image.description>
-                Sweden Connect Test my eID
-              </org.opencontainers.image.description>
+              <org.opencontainers.image.description>Sweden Connect Test my eID</org.opencontainers.image.description>
               <org.opencontainers.image.licenses>Apache-2.0</org.opencontainers.image.licenses>
             </labels>
           </container>
         </configuration>
+        <executions>
+          <execution>
+            <phase>none</phase>
+            <id>local</id>
+            <goals>
+              <goal>dockerBuild</goal>
+            </goals>
+            <configuration>
+              <to>
+                <image>test-my-eid</image>
+              </to>
+            </configuration>
+          </execution>
+          <execution>
+            <id>default-cli</id>
+            <phase>none</phase>
+            <goals>
+              <goal>build</goal>
+            </goals>
+            <configuration>
+              <from>
+                <platforms>
+                  <platform>
+                    <os>linux</os>
+                    <architecture>amd64</architecture>
+                  </platform>
+                  <platform>
+                    <os>linux</os>
+                    <architecture>arm64</architecture>
+                  </platform>
+                </platforms>
+              </from>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
 
       <plugin>
