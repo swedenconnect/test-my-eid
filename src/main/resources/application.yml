@@ -14,7 +14,7 @@ info:
 server:
   port: 8443
   servlet:
-    context-path: /testmyeid
+    context-path: /
     session:
       cookie:
         http-only: true

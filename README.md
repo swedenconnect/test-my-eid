@@ -47,13 +47,13 @@ Or, you can assign the corresponding environment variables:
 | :--- | :--- | :--- |
 | `spring.profiles.active`<br />`SPRING_PROFILES_ACTIVE` | The active Spring profile(s). | - |
 | `server.port`<br/>`SERVER_PORT` | The server port. | 8443 |
-| `server.servlet.context-path`<br />`SERVER_SERVLET_CONTEXT_PATH` | The context path for the application | `/testmyeid` |
+| `server.servlet.context-path`<br />`SERVER_SERVLET_CONTEXT_PATH` | The context path for the application | `/` |
 | `server.ssl.enabled`<br />`SERVER_SSL_ENABLED` | Is TLS enabled for the application? | `true` |
-| `server.ssl.key-store`<br />`SERVER_SSL_KEY_STORE` | The path to the keystore holding the application TLS key and certificate. | `classpath:snakeoil-localhost.p12`<br />Need to be changed to reflect the application host name. Unless running in AJP-mode (see below). |
-| `server.ssl.key-store-type`<br />`SERVER_SSL_KEY_STORE_TYPE` | The type of the TLS keystore (PKCS12/JKS). | `PKCS12` |
-| `server.ssl.key-store-password`<br />`SERVER_SSL_KEY_STORE_PASSWORD` | The password for the above keystore. | `secret` |
-| `server.ssl.key-alias`<br/>`SERVER_SSL_KEY_ALIAS` | The keystore alias holding the TLS key and certificate. | `localhost` |
-| `server.ssl.key-password`<br/>`SERVER_SSL_KEY_PASSWORD` | The password to unlock the TLS key. | `secret` |
+| `server.ssl.key-store`<br />`SERVER_SSL_KEY_STORE` | The path to the keystore holding the application TLS key and certificate. | - |
+| `server.ssl.key-store-type`<br />`SERVER_SSL_KEY_STORE_TYPE` | The type of the TLS keystore (PKCS12/JKS). | - |
+| `server.ssl.key-store-password`<br />`SERVER_SSL_KEY_STORE_PASSWORD` | The password for the above keystore. | - |
+| `server.ssl.key-alias`<br/>`SERVER_SSL_KEY_ALIAS` | The keystore alias holding the TLS key and certificate. | - |
+| `server.ssl.key-password`<br/>`SERVER_SSL_KEY_PASSWORD` | The password to unlock the TLS key. | - |
 | `tomcat.ajp.enabled`<br />`TOMCAT_AJP_ENABLED` | Is the AJP protocol enabled? | `false` |
 | `tomcat.ajp.port`<br />`TOMCAT_AJP_PORT` | The AJP port. | 8009 |
 | `tomcat.ajp.secret-required`<br />`TOMCAT_AJP_SECRET_REQUIRED` | Whether AJP secret is required. | `false` |
