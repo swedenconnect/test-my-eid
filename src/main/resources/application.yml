@@ -61,7 +61,7 @@ sign-sp:
   entity-id: http://test.swedenconnect.se/testmyeid-sign
 
 sp:
-  base-uri: https://localhost:${server.port}
+  # base-uri:
   entity-id: http://test.swedenconnect.se/testmyeid
   discovery:
     cache-time: 600
