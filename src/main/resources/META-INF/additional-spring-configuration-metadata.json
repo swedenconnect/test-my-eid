@@ -1,32 +1,34 @@
-{"properties": [
-  {
-    "name": "sp.base-uri",
-    "type": "java.lang.String",
-    "description": "The base URI for the SP application"
-  },
-  {
-    "name": "sp.debug-base-uri",
-    "type": "java.lang.String",
-    "description": "Base URI when debugging"
-  },
-  {
-    "name": "sp.hok-base-uri",
-    "type": "java.lang.String",
-    "description": "The base URI for holder-of-key endpoints"
-  },
-  {
-    "name": "sp.debug-hok-base-uri",
-    "type": "java.lang.String",
-    "description": "Holder-of-key endpoint in debug mode"
-  }, 
-  {
-    "name": "sp.entity-id",
-    "type": "java.lang.String",
-    "description": "The SAML entityID for the Service Provider"
-  },
-  {
-    "name": "sign-sp.entity-id",
-    "type": "java.lang.String",
-    "description": "The SAML entityID for the Service Provider when running as a Signature Service"
-  }
-]}
+{
+  "properties": [
+    {
+      "name": "sp.base-uri",
+      "type": "java.lang.String",
+      "description": "The base URI for the SP application"
+    },
+    {
+      "name": "sp.debug-base-uri",
+      "type": "java.lang.String",
+      "description": "Base URI when debugging"
+    },
+    {
+      "name": "sp.hok-base-uri",
+      "type": "java.lang.String",
+      "description": "The base URI for holder-of-key endpoints"
+    },
+    {
+      "name": "sp.debug-hok-base-uri",
+      "type": "java.lang.String",
+      "description": "Holder-of-key endpoint in debug mode"
+    },
+    {
+      "name": "sp.entity-id",
+      "type": "java.lang.String",
+      "description": "The SAML entityID for the Service Provider"
+    },
+    {
+      "name": "sign-sp.entity-id",
+      "type": "java.lang.String",
+      "description": "The SAML entityID for the Service Provider when running as a Signature Service"
+    }
+  ]
+}

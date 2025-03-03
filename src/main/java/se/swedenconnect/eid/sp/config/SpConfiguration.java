@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 Sweden Connect
+ * Copyright 2018-2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +78,7 @@ import se.swedenconnect.opensaml.sweid.saml2.signservice.SignMessageEncrypter;
 import se.swedenconnect.opensaml.sweid.saml2.validation.SwedishEidResponseProcessorImpl;
 import se.swedenconnect.opensaml.xmlsec.encryption.support.SAMLObjectDecrypter;
 import se.swedenconnect.opensaml.xmlsec.encryption.support.SAMLObjectEncrypter;
+import se.swedenconnect.security.credential.factory.PkiCredentialFactory;
 import se.swedenconnect.security.credential.opensaml.OpenSamlCredential;
 
 import java.io.File;
@@ -118,13 +119,18 @@ public class SpConfiguration implements InitializingBean {
   /** Configuration properties. */
   private final SpConfigurationProperties properties;
 
+  /** The credential factory. */
+  private final PkiCredentialFactory credentialFactory;
+
   /**
    * Constructor.
    *
    * @param properties the configuration properties
+   * @param credentialFactory the credential factory
    */
-  public SpConfiguration(final SpConfigurationProperties properties) {
+  public SpConfiguration(final SpConfigurationProperties properties, final PkiCredentialFactory credentialFactory) {
     this.properties = properties;
+    this.credentialFactory = credentialFactory;
   }
 
   /**
@@ -182,18 +188,20 @@ public class SpConfiguration implements InitializingBean {
 
   @Bean("signCredential")
   X509Credential signCredential() throws Exception {
-    return new OpenSamlCredential(this.properties.getCredential().getSign().createCredential());
+    return new OpenSamlCredential(this.credentialFactory.createCredential(this.properties.getCredential().getSign()));
   }
 
   @Bean("encryptCredential")
   X509Credential encryptCredential() throws Exception {
-    return new OpenSamlCredential(this.properties.getCredential().getDecrypt().createCredential());
+    return new OpenSamlCredential(
+        this.credentialFactory.createCredential(this.properties.getCredential().getDecrypt()));
   }
 
   @Bean("mdSignCredential")
   X509Credential mdSignCredential() throws Exception {
     if (this.properties.getCredential().getMdSign() != null) {
-      return new OpenSamlCredential(this.properties.getCredential().getMdSign().createCredential());
+      return new OpenSamlCredential(
+          this.credentialFactory.createCredential(this.properties.getCredential().getMdSign()));
     }
     else {
       return this.signCredential();
@@ -554,7 +562,7 @@ public class SpConfiguration implements InitializingBean {
       }
 
       final X509Credential encryptCredential = new OpenSamlCredential(
-          this.properties.getCredential().getDecrypt().createCredential());
+          this.credentialFactory.createCredential(this.properties.getCredential().getDecrypt()));
 
       if (AlgorithmDescriptor.AlgorithmType.KeyTransport == algoDesc.getType()
           && AlgorithmSupport.credentialSupportsAlgorithmForEncryption(encryptCredential, algoDesc)) {

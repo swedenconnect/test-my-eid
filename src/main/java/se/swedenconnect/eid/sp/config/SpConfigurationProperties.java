@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 Sweden Connect
+ * Copyright 2018-2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import se.swedenconnect.eid.sp.saml.IdpList.StaticIdpDiscoEntry;
 import se.swedenconnect.opensaml.common.utils.LocalizedString;
-import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.factory.PkiCredentialConfigurationProperties;
-import se.swedenconnect.security.credential.factory.PkiCredentialFactoryBean;
 
 import java.util.List;
 import java.util.Map;
@@ -224,8 +222,6 @@ public class SpConfigurationProperties implements InitializingBean {
      */
     public static class PkiCredentialConfiguration extends PkiCredentialConfigurationProperties {
 
-      private PkiCredentialFactoryBean factory;
-
       /**
        * See {@link PkiCredentialConfigurationProperties#setResource(Resource)}.
        *
@@ -234,15 +230,6 @@ public class SpConfigurationProperties implements InitializingBean {
       public void setFile(final Resource resource) {
         this.setResource(resource);
       }
-
-      public PkiCredential createCredential() throws Exception {
-        if (this.factory == null) {
-          this.factory = new PkiCredentialFactoryBean(this);
-          this.factory.afterPropertiesSet();
-        }
-        return this.factory.getObject();
-      }
-
     }
   }
 

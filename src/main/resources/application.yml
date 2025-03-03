@@ -22,11 +22,7 @@ server:
         secure: true
   ssl:
     enabled: true
-    key-alias: localhost
-    key-password: secret
-    key-store: classpath:snakeoil-localhost.p12
-    key-store-password: secret
-    key-store-type: PKCS12
+    # Need to supply SSL credential ...
 
 #
 # Management
@@ -35,13 +31,6 @@ management:
   server:
     base-path: ${server.servlet.context-path}
     port: 8444
-    ssl:
-      enabled: ${server.ssl.enabled}
-      key-alias: ${server.ssl.key-alias}
-      key-password: ${server.ssl.key-password}
-      key-store: ${server.ssl.key-store}
-      key-store-password: ${server.ssl.key-store-password}
-      key-store-type: ${server.ssl.key-store-type}
   endpoint:
     health:
       status:
@@ -55,7 +44,7 @@ management:
           WARNING: 500
       show-details: always
     info:
-      enabled: true
+      access: read_only
   endpoints:
     web:
       base-path: /manage
@@ -76,25 +65,6 @@ sign-sp:
 sp:
   base-uri: https://localhost:${server.port}
   entity-id: http://test.swedenconnect.se/testmyeid
-  credential:
-    sign:
-      alias: sign
-      resource: classpath:sp-keys.jks
-      key-password: secret
-      password: secret
-      type: JKS
-    decrypt:
-      alias: encrypt
-      resource: classpath:sp-keys.jks
-      key-password: secret
-      password: secret
-      type: JKS
-    md-sign:
-      alias: mdsign
-      resource: classpath:metadata-sign.jks
-      key-password: secret
-      password: secret
-      type: JKS
   discovery:
     cache-time: 600
     ignore-contracts: true

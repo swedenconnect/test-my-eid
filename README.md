@@ -41,15 +41,11 @@ Or, you can assign the corresponding environment variables:
 >java test-my-eid-<version>.jar
 ```
 
-The **Test my eID** application has four pre-defined Spring profiles (that are mutually exclusive). They are `prod`, for Sweden Connect production, `qa`, for running in the Sweden Connect QA federation, `sandbox`, for the Sweden Connect Sandbox federation and `local` for local deployment.
-
-See the corresponding `application-<profile>.yml` files under [src/main/resources](https://github.com/swedenconnect/test-my-eid/tree/master/src/main/resources) for the default values for each profile.
-
 **General servlet settings**:
 
 | Property<br />Environment variable | Description | Default value |
 | :--- | :--- | :--- |
-| `spring.profiles.active`<br />`SPRING_PROFILES_ACTIVE` | The active Spring profile(s). Built in support for `prod`, `qa` and `sandbox` is available. They contain default settings (see below) for Sweden Connect production, Sweden Connect QA and Sweden Connect Sandbox. | - |
+| `spring.profiles.active`<br />`SPRING_PROFILES_ACTIVE` | The active Spring profile(s). | - |
 | `server.port`<br/>`SERVER_PORT` | The server port. | 8443 |
 | `server.servlet.context-path`<br />`SERVER_SERVLET_CONTEXT_PATH` | The context path for the application | `/testmyeid` |
 | `server.ssl.enabled`<br />`SERVER_SSL_ENABLED` | Is TLS enabled for the application? | `true` |
@@ -62,6 +58,8 @@ See the corresponding `application-<profile>.yml` files under [src/main/resource
 | `tomcat.ajp.port`<br />`TOMCAT_AJP_PORT` | The AJP port. | 8009 |
 | `tomcat.ajp.secret-required`<br />`TOMCAT_AJP_SECRET_REQUIRED` | Whether AJP secret is required. | `false` |
 | `tomcat.ajp.secret`<br />`TOMCAT_AJP_SECRET` | Tomcat AJP secret. | `-` |
+
+Note that the application also supports the [Spring SSL Bundles](https://spring.io/blog/2023/06/07/securing-spring-boot-applications-with-ssl) feature.
 
 **Application settings**:
 
@@ -89,14 +87,7 @@ The table below shows the configuration settings for the three credentials used.
 * `decrypt` - The credential holding the decryption key (to decrypt assertions).
 * `md-sign` - The signature credential used to sign the metadata (published at `/testmyeid/metadata`.
 
-| Property<br />Environment variable | Description | Default value |
-| :--- | :--- | :--- |
-| `sp.credential.<usage>.resource`<br />`SP_CREDENTIAL_<usage>_RESOURCE` | The resource holding the keystore file. To override the default setting give the full path prefixed with `file:` | For sign and decrypt:<br />`classpath:sp-keys.jks`<br />For metadata sign:<br />`classpath:metadata-sign.jks` |
-| ~~`sp.credential.<usage>.file`~~<br />~~`SP_CREDENTIAL_<usage>_FILE`~~ | Deprecated. Use `sp.credential.<usage>.resource`. | See above. |
-| `sp.credential.<usage>.type`<br />`SP_CREDENTIAL_<usage>_type` | The type of keystore - `JKS` or `PKCS12`. | `JKS` |
-| `sp.credential.<usage>.password`<br />`SP_CREDENTIAL_<usage>_PASSWORD` | The password to unlock the keystore. | `secret` |
-| `sp.credential.<usage>.alias`<br />`SP_CREDENTIAL_<usage>_ALIAS` | The alias for the key entry in the store. | For sign: `sign`<br />For decrypt: `encrypt`<br/>For metadata sign: `mdsign` |
-| `sp.credential.<usage>.key-password`<br />`SP_CREDENTIAL_<usage>_KEY_PASSWORD` | The password to unlock the key entry. | `secret` |
+See [Credential Configuration Support](https://docs.swedenconnect.se/credentials-support/#configuration-support) for how configure each credential.
 
 SAML metadata for the SP application is put together using a set of configurable properties and published on `/testmyeid/metadata`. All metadata properties are prefixed with `sp.metadata.` and control entity categories, display name, logotype, organization name and contact details. See further the [application.yml](https://github.com/swedenconnect/test-my-eid/blob/master/src/main/resources/application.yml) file. To override a property simply define your own value for it.
 
@@ -199,5 +190,4 @@ curl --insecure https://<server>:8444/testmyeid/manage/info
 ```
 
 
-Copyright &copy; 2016-2024, [Sweden Connect](https://swedenconnect.se). Licensed under version 2.0 of the [Apache License](http://www.apache.org/licenses/LICENSE-2.0).
-
+Copyright &copy; 2016-2025, [Sweden Connect](https://swedenconnect.se). Licensed under version 2.0 of the [Apache License](http://www.apache.org/licenses/LICENSE-2.0).

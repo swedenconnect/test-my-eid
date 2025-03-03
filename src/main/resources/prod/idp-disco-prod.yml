@@ -1,9 +1,0 @@
-idp:
-  - entity-id: https://connector.eidas.swedenconnect.se/eidas
-  - entity-id: https://idp-sweden-connect-valfr-2017.prod.frejaeid.com
-    logo-url: https://idp-sweden-connect-valfr-2017.prod.frejaeid.com/idp/images/frejaeid_logo.svg
-    logo-height: 75
-    logo-width: 75
-
-
-
