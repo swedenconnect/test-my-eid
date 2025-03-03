@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 Sweden Connect
+ * Copyright 2018-2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class TestMyEidApplication {
   @Bean
   LocaleResolver localeResolver(@Value("${server.servlet.context-path}") final String contextPath) {
     final CookieLocaleResolver resolver = new CookieLocaleResolver();
-    resolver.setDefaultLocale(new Locale("en"));
+    resolver.setDefaultLocale(Locale.ENGLISH);
     resolver.setCookiePath(contextPath);
     resolver.setCookieMaxAge(Duration.ofDays(365));
     return resolver;

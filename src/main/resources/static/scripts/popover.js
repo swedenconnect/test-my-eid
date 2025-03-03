@@ -13,30 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package se.swedenconnect.eid.sp.config;
-
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-
-/**
- * Model class for representing a selectable language in the UI.
- *
- * @author Martin Lindström (martin@idsec.se)
- */
-@Data
-@NoArgsConstructor
-@ToString
-public class UiLanguage {
-
-  /**
-   * The language tag, i.e., "en".
-   */
-  private String languageTag;
-
-  /**
-   * The text to display for the language, i.e., "English".
-   */
-  private String text;
-
-}
+document.addEventListener("DOMContentLoaded", function () {
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl);
+    });
+});

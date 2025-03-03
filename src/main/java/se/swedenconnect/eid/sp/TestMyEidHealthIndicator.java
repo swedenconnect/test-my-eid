@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 Sweden Connect
+ * Copyright 2018-2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,11 @@
  */
 package se.swedenconnect.eid.sp;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
+import net.shibboleth.shared.resolver.ResolverException;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.stereotype.Component;
-
-import lombok.extern.slf4j.Slf4j;
-import net.shibboleth.shared.resolver.ResolverException;
 import se.swedenconnect.opensaml.saml2.metadata.provider.MetadataProvider;
 
 /**
@@ -34,8 +32,16 @@ import se.swedenconnect.opensaml.saml2.metadata.provider.MetadataProvider;
 public class TestMyEidHealthIndicator implements HealthIndicator {
 
   /** The federation metadata provider. */
-  @Autowired
-  private MetadataProvider metadataProvider;
+  private final MetadataProvider metadataProvider;
+
+  /**
+   * Constructor.
+   *
+   * @param metadataProvider the federation metadata provider
+   */
+  public TestMyEidHealthIndicator(final MetadataProvider metadataProvider) {
+    this.metadataProvider = metadataProvider;
+  }
 
   /**
    * The health implementation for the application.

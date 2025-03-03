@@ -16,7 +16,7 @@ It is released as open source so that anyone can see how an authentication reque
 
 * Sweden Connect Sandbox - [https://eid.idsec.se/testmyeid](https://eid.idsec.se/testmyeid)
 
-	* Note: Not all IdP:s in the sandbox federation is functioning correctly. The Test my eID-application is currently configured to support all IdP:s that seem to be "up". Anyone adding a new IdP to the sandbox-federation and wants that to be supported by the test application should send a mail to [info@idsec.se](mailto:info@idsec.se).
+	* Note: Not all IdP:s in the sandbox federation is functioning correctly. The Test my eID-application is currently configured to support all IdP:s that seem to be "up".
 
 * Sweden Connect QA - [https://qa.test.swedenconnect.se](https://qa.test.swedenconnect.se)
 
@@ -41,27 +41,25 @@ Or, you can assign the corresponding environment variables:
 >java test-my-eid-<version>.jar
 ```
 
-The **Test my eID** application has four pre-defined Spring profiles (that are mutually exclusive). They are `prod`, for Sweden Connect production, `qa`, for running in the Sweden Connect QA federation, `sandbox`, for the Sweden Connect Sandbox federation and `local` for local deployment.
-
-See the corresponding `application-<profile>.yml` files under [src/main/resources](https://github.com/swedenconnect/test-my-eid/tree/master/src/main/resources) for the default values for each profile.
-
 **General servlet settings**:
 
 | Property<br />Environment variable | Description | Default value |
 | :--- | :--- | :--- |
-| `spring.profiles.active`<br />`SPRING_PROFILES_ACTIVE` | The active Spring profile(s). Built in support for `prod`, `qa` and `sandbox` is available. They contain default settings (see below) for Sweden Connect production, Sweden Connect QA and Sweden Connect Sandbox. | - |
+| `spring.profiles.active`<br />`SPRING_PROFILES_ACTIVE` | The active Spring profile(s). | - |
 | `server.port`<br/>`SERVER_PORT` | The server port. | 8443 |
-| `server.servlet.context-path`<br />`SERVER_SERVLET_CONTEXT_PATH` | The context path for the application | `/testmyeid` |
+| `server.servlet.context-path`<br />`SERVER_SERVLET_CONTEXT_PATH` | The context path for the application | `/` |
 | `server.ssl.enabled`<br />`SERVER_SSL_ENABLED` | Is TLS enabled for the application? | `true` |
-| `server.ssl.key-store`<br />`SERVER_SSL_KEY_STORE` | The path to the keystore holding the application TLS key and certificate. | `classpath:snakeoil-localhost.p12`<br />Need to be changed to reflect the application host name. Unless running in AJP-mode (see below). |
-| `server.ssl.key-store-type`<br />`SERVER_SSL_KEY_STORE_TYPE` | The type of the TLS keystore (PKCS12/JKS). | `PKCS12` |
-| `server.ssl.key-store-password`<br />`SERVER_SSL_KEY_STORE_PASSWORD` | The password for the above keystore. | `secret` |
-| `server.ssl.key-alias`<br/>`SERVER_SSL_KEY_ALIAS` | The keystore alias holding the TLS key and certificate. | `localhost` |
-| `server.ssl.key-password`<br/>`SERVER_SSL_KEY_PASSWORD` | The password to unlock the TLS key. | `secret` |
+| `server.ssl.key-store`<br />`SERVER_SSL_KEY_STORE` | The path to the keystore holding the application TLS key and certificate. | - |
+| `server.ssl.key-store-type`<br />`SERVER_SSL_KEY_STORE_TYPE` | The type of the TLS keystore (PKCS12/JKS). | - |
+| `server.ssl.key-store-password`<br />`SERVER_SSL_KEY_STORE_PASSWORD` | The password for the above keystore. | - |
+| `server.ssl.key-alias`<br/>`SERVER_SSL_KEY_ALIAS` | The keystore alias holding the TLS key and certificate. | - |
+| `server.ssl.key-password`<br/>`SERVER_SSL_KEY_PASSWORD` | The password to unlock the TLS key. | - |
 | `tomcat.ajp.enabled`<br />`TOMCAT_AJP_ENABLED` | Is the AJP protocol enabled? | `false` |
 | `tomcat.ajp.port`<br />`TOMCAT_AJP_PORT` | The AJP port. | 8009 |
 | `tomcat.ajp.secret-required`<br />`TOMCAT_AJP_SECRET_REQUIRED` | Whether AJP secret is required. | `false` |
 | `tomcat.ajp.secret`<br />`TOMCAT_AJP_SECRET` | Tomcat AJP secret. | `-` |
+
+Note that the application also supports the [Spring SSL Bundles](https://spring.io/blog/2023/06/07/securing-spring-boot-applications-with-ssl) feature. In these cases the `server.ssl.bundle` setting is assigned a registered SSL bundle.
 
 **Application settings**:
 
@@ -89,14 +87,7 @@ The table below shows the configuration settings for the three credentials used.
 * `decrypt` - The credential holding the decryption key (to decrypt assertions).
 * `md-sign` - The signature credential used to sign the metadata (published at `/testmyeid/metadata`.
 
-| Property<br />Environment variable | Description | Default value |
-| :--- | :--- | :--- |
-| `sp.credential.<usage>.resource`<br />`SP_CREDENTIAL_<usage>_RESOURCE` | The resource holding the keystore file. To override the default setting give the full path prefixed with `file:` | For sign and decrypt:<br />`classpath:sp-keys.jks`<br />For metadata sign:<br />`classpath:metadata-sign.jks` |
-| ~~`sp.credential.<usage>.file`~~<br />~~`SP_CREDENTIAL_<usage>_FILE`~~ | Deprecated. Use `sp.credential.<usage>.resource`. | See above. |
-| `sp.credential.<usage>.type`<br />`SP_CREDENTIAL_<usage>_type` | The type of keystore - `JKS` or `PKCS12`. | `JKS` |
-| `sp.credential.<usage>.password`<br />`SP_CREDENTIAL_<usage>_PASSWORD` | The password to unlock the keystore. | `secret` |
-| `sp.credential.<usage>.alias`<br />`SP_CREDENTIAL_<usage>_ALIAS` | The alias for the key entry in the store. | For sign: `sign`<br />For decrypt: `encrypt`<br/>For metadata sign: `mdsign` |
-| `sp.credential.<usage>.key-password`<br />`SP_CREDENTIAL_<usage>_KEY_PASSWORD` | The password to unlock the key entry. | `secret` |
+See [Credential Configuration Support](https://docs.swedenconnect.se/credentials-support/#configuration-support) for how configure each credential.
 
 SAML metadata for the SP application is put together using a set of configurable properties and published on `/testmyeid/metadata`. All metadata properties are prefixed with `sp.metadata.` and control entity categories, display name, logotype, organization name and contact details. See further the [application.yml](https://github.com/swedenconnect/test-my-eid/blob/master/src/main/resources/application.yml) file. To override a property simply define your own value for it.
 
@@ -137,7 +128,7 @@ The default IdP configuration file for the Sweden Connect QA profile looks like:
 
 ```
 idp:
-  # The eIDAS connect
+  # The eIDAS connector
   - entity-id: https://qa.connector.eidas.swedenconnect.se/eidas
   # Freja eID Plus
   - entity-id: https://idp-sweden-connect-valfr-2017-ct.test.frejaeid.com
@@ -154,12 +145,12 @@ Somewhat overkill for a test application, but **Test my eID** also has a managem
 
 Endpoints for monitoring and administering the service can accessed via the management port (default: 8444). This port should not be publicly exposed and is for internal use only. The following endpoints are available:
 
-#### Health - /manage/health
+#### Health - /actuator/health
 
 Returns a general health indication for the service. For an "UP" status, the endpoint will return a 200 HTTP status along with a JSON response that may look something like:
 
 ```
-curl --insecure https://<server>:8444/testmyeid/manage/health
+curl --insecure https://<server>:8444/actuator/health
 
 {
    "status" : "UP",
@@ -181,12 +172,12 @@ curl --insecure https://<server>:8444/testmyeid/manage/health
 
 If all checks that are performed by the `health`-endpoint returns "UP", the overall status will be "UP" and a 200 HTTP status is returned.
 
-#### Info - /manage/info
+#### Info - /actuator/info
 
 The `/manage/info` endpoint displays information about the service. Spring Boot supplies some information such as build info and version information.
 
 ```
-curl --insecure https://<server>:8444/testmyeid/manage/info
+curl --insecure https://<server>:8444/actuator/info
 
 {
    "app" : {
@@ -199,5 +190,4 @@ curl --insecure https://<server>:8444/testmyeid/manage/info
 ```
 
 
-Copyright &copy; 2016-2024, [Sweden Connect](https://swedenconnect.se). Licensed under version 2.0 of the [Apache License](http://www.apache.org/licenses/LICENSE-2.0).
-
+Copyright &copy; 2016-2025, [Sweden Connect](https://swedenconnect.se). Licensed under version 2.0 of the [Apache License](http://www.apache.org/licenses/LICENSE-2.0).
