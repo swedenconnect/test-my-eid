@@ -20,6 +20,7 @@ server:
         http-only: true
         same-site: none
         secure: true
+      tracking-modes: cookie
   ssl:
     enabled: true
     # Need to supply SSL credential ...
