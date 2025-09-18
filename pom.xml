@@ -48,7 +48,7 @@
     <java.version>21</java.version>
     <opensaml.version>5.1.4</opensaml.version>
     <spring.version>6.2.7</spring.version>
-    <credentials-support.version>2.0.6</credentials-support.version>
+    <credentials-support.version>2.0.7</credentials-support.version>
     <bc.version>1.80</bc.version>
   </properties>
 
