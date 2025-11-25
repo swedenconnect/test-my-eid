@@ -618,6 +618,11 @@ public class SpConfigurationProperties implements InitializingBean {
        * The organization URL:s.
        */
       private List<LocalizedString> urls;
+
+      /**
+       * The (Swedish) organization number (no hyphens).
+       */
+      private String number;
     }
 
     /**

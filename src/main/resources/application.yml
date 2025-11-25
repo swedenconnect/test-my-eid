@@ -121,6 +121,7 @@ sp:
       urls:
         - sv-https://swedenconnect.se
         - en-https://swedenconnect.se
+      number: 2021006883
   mtls:
     header-name: SSL_CLIENT_CERT
   security:

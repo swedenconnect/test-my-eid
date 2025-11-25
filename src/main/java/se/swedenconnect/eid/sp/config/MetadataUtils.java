@@ -15,20 +15,15 @@
  */
 package se.swedenconnect.eid.sp.config;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
+import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.saml.ext.saml2mdui.Logo;
 import org.opensaml.saml.ext.saml2mdui.UIInfo;
 import org.opensaml.saml.saml2.metadata.AttributeConsumingService;
 import org.opensaml.saml.saml2.metadata.ContactPerson;
 import org.opensaml.saml.saml2.metadata.ContactPersonTypeEnumeration;
+import org.opensaml.saml.saml2.metadata.Extensions;
 import org.opensaml.saml.saml2.metadata.Organization;
 import org.springframework.util.StringUtils;
-
 import se.swedenconnect.eid.sp.config.SpConfigurationProperties.MetadataConfiguration.ContactPersonConfig;
 import se.swedenconnect.eid.sp.config.SpConfigurationProperties.MetadataConfiguration.OrganizationConfig;
 import se.swedenconnect.eid.sp.config.SpConfigurationProperties.MetadataConfiguration.RequestedAttributeConfig;
@@ -41,6 +36,13 @@ import se.swedenconnect.opensaml.saml2.metadata.build.LogoBuilder;
 import se.swedenconnect.opensaml.saml2.metadata.build.OrganizationBuilder;
 import se.swedenconnect.opensaml.saml2.metadata.build.RequestedAttributeBuilder;
 import se.swedenconnect.opensaml.saml2.metadata.build.UIInfoBuilder;
+import se.swedenconnect.opensaml.sweid.saml2.metadata.ext.OrganizationNumber;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Utility methods for working with SAML metadata.
@@ -76,11 +78,23 @@ public class MetadataUtils {
     if (organization == null) {
       return null;
     }
-    return OrganizationBuilder.builder()
+    final OrganizationBuilder builder = OrganizationBuilder.builder()
         .organizationNames(organization.getNames())
         .organizationDisplayNames(organization.getDisplayNames())
-        .organizationURLs(organization.getUrls())
-        .build();
+        .organizationURLs(organization.getUrls());
+
+    if (StringUtils.hasText(organization.getNumber())) {
+      final OrganizationNumber number =
+          (OrganizationNumber) XMLObjectSupport.buildXMLObject(OrganizationNumber.DEFAULT_ELEMENT_NAME);
+      number.setValue(organization.getNumber());
+
+      final Extensions extensions = (Extensions) XMLObjectSupport.buildXMLObject(Extensions.DEFAULT_ELEMENT_NAME);
+      extensions.getUnknownXMLObjects().add(number);
+
+      builder.object().setExtensions(extensions);
+    }
+
+    return builder.build();
   }
 
   public static List<ContactPerson> getContactPersonElements(
