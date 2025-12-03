@@ -127,8 +127,7 @@ public class MetadataUtils {
       return null;
     }
     final AttributeConsumingServiceBuilder builder = AttributeConsumingServiceBuilder.builder();
-
-    builder.serviceNames(serviceNames);
+    builder.index(0).serviceNames(serviceNames);
 
     if (requestedAttributes != null) {
       builder.requestedAttributes(requestedAttributes.stream()
