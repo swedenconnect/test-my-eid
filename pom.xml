@@ -98,7 +98,7 @@
       <dependency>
         <groupId>se.swedenconnect.opensaml</groupId>
         <artifactId>opensaml-security-ext</artifactId>
-        <version>4.1.8</version>
+        <version>4.2.0</version>
       </dependency>
 
       <dependency>
