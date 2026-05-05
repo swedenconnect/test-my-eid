@@ -203,3 +203,8 @@ sp:
         description-message-code: sp.msg.attr.orgid.desc
       - attribute-name: urn:oid:2.5.4.10
         message-code: sp.msg.attr.organization.name
+      - attribute-name: "http://e-justice.europa.eu/attributes/naturalperson/eJusticeNaturalPersonRole"
+        message-code: sp.msg.attr.ejusticerole.name
+        description-message-code: sp.msg.attr.ejusticerole.desc
+        description-message-code-eidas: sp.msg.attr.ejusticerole.eidas.desc
+        advanced: true
