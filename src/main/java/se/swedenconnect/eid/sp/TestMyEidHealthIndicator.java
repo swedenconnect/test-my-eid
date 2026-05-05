@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2025 Sweden Connect
+ * Copyright 2018-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package se.swedenconnect.eid.sp;
 
 import lombok.extern.slf4j.Slf4j;
 import net.shibboleth.shared.resolver.ResolverException;
-import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.health.contributor.Health;
+import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.stereotype.Component;
 import se.swedenconnect.opensaml.saml2.metadata.provider.MetadataProvider;
 
