@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2025 Sweden Connect
+ * Copyright 2018-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import org.apache.tomcat.util.net.SSLHostConfigCertificate;
 import org.apache.tomcat.util.net.SSLHostConfigCertificate.Type;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.Ssl;
 import org.springframework.boot.web.server.Ssl.ClientAuth;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
@@ -48,7 +48,7 @@ public class DebugTomcatWebServerConfiguration implements WebServerFactoryCustom
   public void customize(final TomcatServletWebServerFactory factory) {
     if (this.additionalConnectorSettings != null && this.additionalConnectorSettings.getPort() != null) {
       try {
-        factory.addAdditionalTomcatConnectors(this.createSslConnector());
+        factory.addAdditionalConnectors(this.createSslConnector());
       }
       catch (final Exception e) {
         log.error("Failed to configure mTLS connector", e);
