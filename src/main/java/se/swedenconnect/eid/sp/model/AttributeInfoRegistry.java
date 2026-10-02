@@ -18,6 +18,8 @@ package se.swedenconnect.eid.sp.model;
 import java.util.List;
 import java.util.Objects;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.opensaml.saml.saml2.core.Attribute;
 
 import se.swedenconnect.eid.sp.config.SpConfigurationProperties.UiConfiguration.AttributeConfig;
@@ -42,7 +44,7 @@ public class AttributeInfoRegistry {
    *
    * @param attributes the attribute configuration
    */
-  public AttributeInfoRegistry(final List<AttributeConfig> attributes) {
+  public AttributeInfoRegistry(final @NonNull List<AttributeConfig> attributes) {
     this.attributes = Objects.requireNonNull(attributes, "attributes must not be null");
   }
 
@@ -53,14 +55,23 @@ public class AttributeInfoRegistry {
    * @param eidasFlag a flag telling whether we process an eIDAS assertion
    * @return the attribute model
    */
-  public AttributeInfo resolve(final Attribute attribute, final boolean eidasFlag) {
+  public @Nullable AttributeInfo resolve(final @NonNull Attribute attribute, final boolean eidasFlag) {
     return this.resolve(attribute.getName(), AttributeUtils.getAttributeStringValue(attribute), eidasFlag);
   }
 
-  public AttributeInfo resolve(final String attributeName, final String attributeValue, final boolean eidasFlag) {
+  /**
+   * Resolves the supplied attribute name and value into an attribute info model object.
+   *
+   * @param attributeName the attribute name
+   * @param attributeValue the attribute value
+   * @param eidasFlag a flag telling whether we process an eIDAS assertion
+   * @return the attribute model, or {@code null} if the attribute is not configured
+   */
+  public @Nullable AttributeInfo resolve(
+      final @NonNull String attributeName, final @Nullable String attributeValue, final boolean eidasFlag) {
     for (int i = 0; i < this.attributes.size(); i++) {
       final AttributeConfig ai = this.attributes.get(i);
-      if (ai.getAttributeName().equals(attributeName)) {
+      if (attributeName.equals(ai.getAttributeName())) {
         final AttributeInfo attributeInfo = new AttributeInfo();
         attributeInfo.setAttributeNameCode(ai.getMessageCode(eidasFlag));
         attributeInfo.setAttributeValue(attributeValue);
@@ -68,6 +79,31 @@ public class AttributeInfoRegistry {
         attributeInfo.setAdvanced(ai.isAdvanced());
         attributeInfo.setSortOrder(i);
 
+        return attributeInfo;
+      }
+    }
+    return null;
+  }
+
+
+  /**
+   * Resolves an OpenID Connect claim into an {@link AttributeInfo} using the label of the attribute that is configured
+   * with the claim name.
+   *
+   * @param claimName the claim name
+   * @param claimValue the claim value (as a string)
+   * @return an {@link AttributeInfo}, or {@code null} if no label is configured for the claim
+   */
+  public @Nullable AttributeInfo resolveClaim(final @NonNull String claimName, final @Nullable String claimValue) {
+    for (int i = 0; i < this.attributes.size(); i++) {
+      final AttributeConfig ai = this.attributes.get(i);
+      if (claimName.equals(ai.getClaimName())) {
+        final AttributeInfo attributeInfo = new AttributeInfo();
+        attributeInfo.setAttributeNameCode(ai.getMessageCode(false));
+        attributeInfo.setAttributeValue(claimValue);
+        attributeInfo.setInfoCode(ai.getDescriptionMessageCode(false));
+        attributeInfo.setAdvanced(ai.isAdvanced());
+        attributeInfo.setSortOrder(i);
         return attributeInfo;
       }
     }

@@ -15,10 +15,14 @@
  */
 package se.swedenconnect.eid.sp.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 
 import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.xmlsec.signature.support.SignatureException;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
@@ -34,7 +38,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.w3c.dom.Element;
 
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.extern.slf4j.Slf4j;
 import net.shibboleth.shared.xml.SerializeSupport;
 import se.swedenconnect.opensaml.saml2.metadata.EntityDescriptorContainer;
 
@@ -45,11 +48,13 @@ import se.swedenconnect.opensaml.saml2.metadata.EntityDescriptorContainer;
  */
 @Controller
 @RequestMapping("/metadata")
-@Slf4j
 public class MetadataController {
 
+  /** The logger. */
+  private static final Logger log = LoggerFactory.getLogger(MetadataController.class);
+
   /** Media type for SAML metadata in XML format. */
-  public static final String APPLICATION_SAML_METADATA = "application/samlmetadata+xml";
+  public static final @NonNull String APPLICATION_SAML_METADATA = "application/samlmetadata+xml";
 
   @Autowired
   @Qualifier("spEntityDescriptorContainer")
@@ -59,17 +64,31 @@ public class MetadataController {
   @Qualifier("signSpEntityDescriptorContainer")
   private EntityDescriptorContainer signSpMetadataContainer;
 
+  /**
+   * Returns the signed SP metadata.
+   *
+   * @param request the HTTP request
+   * @param acceptHeader the HTTP Accept header (optional)
+   * @return an HTTP entity holding the metadata
+   */
   @GetMapping
   @ResponseBody
-  public HttpEntity<byte[]> getMetadata(final HttpServletRequest request,
-      @RequestHeader(name = "Accept", required = false) final String acceptHeader) {
+  public @NonNull HttpEntity<byte[]> getMetadata(final @NonNull HttpServletRequest request,
+      @RequestHeader(name = "Accept", required = false) final @Nullable String acceptHeader) {
     return this.getMetadata(this.metadataContainer, request, acceptHeader);
   }
 
+  /**
+   * Returns the signed metadata for the signature service SP.
+   *
+   * @param request the HTTP request
+   * @param acceptHeader the HTTP Accept header (optional)
+   * @return an HTTP entity holding the metadata
+   */
   @GetMapping("/sign")
   @ResponseBody
-  public HttpEntity<byte[]> getSignSpMetadata(final HttpServletRequest request,
-      @RequestHeader(name = "Accept", required = false) final String acceptHeader) {
+  public @NonNull HttpEntity<byte[]> getSignSpMetadata(final @NonNull HttpServletRequest request,
+      @RequestHeader(name = "Accept", required = false) final @Nullable String acceptHeader) {
     return this.getMetadata(this.signSpMetadataContainer, request, acceptHeader);
   }
 

@@ -15,8 +15,7 @@
  */
 package se.swedenconnect.eid.sp.config;
 
-import lombok.Getter;
-import lombok.Setter;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -43,12 +42,22 @@ public class StaticIdpConfiguration {
 
   private final StaticIdpConfigurationProperties props;
 
-  public StaticIdpConfiguration(final StaticIdpConfigurationProperties props) {
+  /**
+   * Constructor.
+   *
+   * @param props the static IdP configuration properties
+   */
+  public StaticIdpConfiguration(final @NonNull StaticIdpConfigurationProperties props) {
     this.props = props;
   }
 
+  /**
+   * Returns the statically configured IdP:s.
+   *
+   * @return a list of IdP entries (may be empty)
+   */
   @Bean("staticIdps")
-  List<StaticIdpDiscoEntry> staticIdps() {
+  @NonNull List<StaticIdpDiscoEntry> staticIdps() {
     final List<StaticIdpDiscoEntry> idps = Optional.ofNullable(this.props.getIdp()).orElse(Collections.emptyList());
     for (final StaticIdpDiscoEntry entry : idps) {
       entry.afterPropertiesSet();

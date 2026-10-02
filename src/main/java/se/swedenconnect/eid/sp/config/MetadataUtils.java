@@ -15,6 +15,8 @@
  */
 package se.swedenconnect.eid.sp.config;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.saml.ext.saml2mdui.Logo;
 import org.opensaml.saml.ext.saml2mdui.UIInfo;
@@ -51,7 +53,16 @@ import java.util.stream.Collectors;
  */
 public class MetadataUtils {
 
-  public static UIInfo getUIInfoElement(final UIInfoConfig uiinfo, final String baseUri, final String contextPath) {
+  /**
+   * Builds a {@code UIInfo} element.
+   *
+   * @param uiinfo the UIInfo configuration
+   * @param baseUri the application base URI
+   * @param contextPath the servlet context path
+   * @return a {@link UIInfo} element, or {@code null} if no configuration is given
+   */
+  public static @Nullable UIInfo getUIInfoElement(final @Nullable UIInfoConfig uiinfo, final @NonNull String baseUri,
+      final @NonNull String contextPath) {
     if (uiinfo == null) {
       return null;
     }
@@ -74,7 +85,13 @@ public class MetadataUtils {
         .collect(Collectors.toList());
   }
 
-  public static Organization getOrganizationElement(final OrganizationConfig organization) {
+  /**
+   * Builds an {@code Organization} element.
+   *
+   * @param organization the organization configuration
+   * @return an {@link Organization} element, or {@code null} if no configuration is given
+   */
+  public static @Nullable Organization getOrganizationElement(final @Nullable OrganizationConfig organization) {
     if (organization == null) {
       return null;
     }
@@ -97,8 +114,14 @@ public class MetadataUtils {
     return builder.build();
   }
 
-  public static List<ContactPerson> getContactPersonElements(
-      final Map<ContactPersonTypeEnumeration, ContactPersonConfig> contactPersons) {
+  /**
+   * Builds {@code ContactPerson} elements.
+   *
+   * @param contactPersons the contact person configuration
+   * @return a list of {@link ContactPerson} elements (may be empty)
+   */
+  public static @NonNull List<ContactPerson> getContactPersonElements(
+      final @Nullable Map<ContactPersonTypeEnumeration, ContactPersonConfig> contactPersons) {
     if (contactPersons == null || contactPersons.isEmpty()) {
       return Collections.emptyList();
     }
@@ -120,8 +143,17 @@ public class MetadataUtils {
     return persons;
   }
 
-  public static AttributeConsumingService getAttributeConsumingService(
-      final List<LocalizedString> serviceNames, final List<RequestedAttributeConfig> requestedAttributes) {
+  /**
+   * Builds an {@code AttributeConsumingService} element.
+   *
+   * @param serviceNames the service names
+   * @param requestedAttributes the requested attributes
+   * @return an {@link AttributeConsumingService} element, or {@code null} if neither service names nor requested
+   *     attributes are given
+   */
+  public static @Nullable AttributeConsumingService getAttributeConsumingService(
+      final @Nullable List<LocalizedString> serviceNames,
+      final @Nullable List<RequestedAttributeConfig> requestedAttributes) {
     if ((serviceNames == null || serviceNames.isEmpty())
         && (requestedAttributes == null || requestedAttributes.isEmpty())) {
       return null;

@@ -15,29 +15,32 @@
  */
 package se.swedenconnect.eid.sp.model;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.opensaml.saml.saml2.core.Status;
 
-import lombok.Data;
-import lombok.ToString;
 
 /**
  * Model class for representing a SAML error.
  *
  * @author Martin Lindström (martin@idsec.se)
  */
-@Data
-@ToString
 public class ErrorStatusInfo {
 
-  public static final String CANCEL_CODE = "http://id.elegnamnden.se/status/1.0/cancel";
+  public static final @NonNull String CANCEL_CODE = "http://id.elegnamnden.se/status/1.0/cancel";
 
-  private String mainErrorCode;
+  private @Nullable String mainErrorCode;
 
-  private String subErrorCode;
+  private @Nullable String subErrorCode;
 
-  private String errorMessage;
+  private @Nullable String errorMessage;
 
-  public ErrorStatusInfo(final Status status) {
+  /**
+   * Constructor.
+   *
+   * @param status the SAML status
+   */
+  public ErrorStatusInfo(final @NonNull Status status) {
     this.mainErrorCode = status.getStatusCode().getValue();
     if (status.getStatusCode().getStatusCode() != null) {
       this.subErrorCode = status.getStatusCode().getStatusCode().getValue();
@@ -47,8 +50,76 @@ public class ErrorStatusInfo {
     }
   }
 
+  /**
+   * Tells whether the status represents a user cancel.
+   *
+   * @return {@code true} if the user cancelled the operation
+   */
   public boolean isCancel() {
     return CANCEL_CODE.equals(this.subErrorCode);
+  }
+
+  /**
+   * Gets the main error code.
+   *
+   * @return the main error code
+   */
+  public @Nullable String getMainErrorCode() {
+    return this.mainErrorCode;
+  }
+
+  /**
+   * Assigns the main error code.
+   *
+   * @param mainErrorCode the main error code
+   */
+  public void setMainErrorCode(final @Nullable String mainErrorCode) {
+    this.mainErrorCode = mainErrorCode;
+  }
+
+  /**
+   * Gets the sub error code.
+   *
+   * @return the sub error code
+   */
+  public @Nullable String getSubErrorCode() {
+    return this.subErrorCode;
+  }
+
+  /**
+   * Assigns the sub error code.
+   *
+   * @param subErrorCode the sub error code
+   */
+  public void setSubErrorCode(final @Nullable String subErrorCode) {
+    this.subErrorCode = subErrorCode;
+  }
+
+  /**
+   * Gets the error message.
+   *
+   * @return the error message
+   */
+  public @Nullable String getErrorMessage() {
+    return this.errorMessage;
+  }
+
+  /**
+   * Assigns the error message.
+   *
+   * @param errorMessage the error message
+   */
+  public void setErrorMessage(final @Nullable String errorMessage) {
+    this.errorMessage = errorMessage;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toString() {
+    return "ErrorStatusInfo(mainErrorCode=" + this.mainErrorCode
+        + ", subErrorCode=" + this.subErrorCode
+        + ", errorMessage=" + this.errorMessage
+        + ")";
   }
 
 }

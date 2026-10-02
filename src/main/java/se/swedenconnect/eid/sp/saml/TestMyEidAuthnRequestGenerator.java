@@ -15,6 +15,7 @@
  */
 package se.swedenconnect.eid.sp.saml;
 
+import org.jspecify.annotations.NonNull;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.metadata.resolver.MetadataResolver;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
@@ -45,8 +46,8 @@ public class TestMyEidAuthnRequestGenerator extends SwedishEidAuthnRequestGenera
    * @param signCredential the signing credential
    * @param metadataResolver the metadata resolver
    */
-  public TestMyEidAuthnRequestGenerator(final EntityDescriptor spMetadata, final X509Credential signCredential,
-      final MetadataResolver metadataResolver) {
+  public TestMyEidAuthnRequestGenerator(final @NonNull EntityDescriptor spMetadata,
+      final @NonNull X509Credential signCredential, final @NonNull MetadataResolver metadataResolver) {
     super(spMetadata, signCredential, metadataResolver);
   }
 
@@ -54,8 +55,8 @@ public class TestMyEidAuthnRequestGenerator extends SwedishEidAuthnRequestGenera
    * {@inheritDoc}
    */
   @Override
-  protected void addScoping(final AuthnRequestBuilder builder, final AuthnRequestGeneratorContext context,
-      final EntityDescriptor idpMetadata) {
+  protected void addScoping(final @NonNull AuthnRequestBuilder builder,
+      final @NonNull AuthnRequestGeneratorContext context, final @NonNull EntityDescriptor idpMetadata) {
 
     final String country = ((TestMyEidAuthnRequestGeneratorContext) context).getCountry();
     if (StringUtils.hasText(country)) {
@@ -66,7 +67,13 @@ public class TestMyEidAuthnRequestGenerator extends SwedishEidAuthnRequestGenera
     }
   }
 
-  public HokSupport getIdpHokSupport(final String idpEntityID) {
+  /**
+   * Tells how the given IdP supports Holder-of-key.
+   *
+   * @param idpEntityID the IdP entityID
+   * @return the HoK support ({@link HokSupport#NONE} if the IdP is not found)
+   */
+  public @NonNull HokSupport getIdpHokSupport(final @NonNull String idpEntityID) {
     final IDPSSODescriptor descriptor = Optional.ofNullable(this.getIdpMetadata(idpEntityID))
         .map(m -> m.getIDPSSODescriptor(SAMLConstants.SAML20P_NS))
         .orElse(null);

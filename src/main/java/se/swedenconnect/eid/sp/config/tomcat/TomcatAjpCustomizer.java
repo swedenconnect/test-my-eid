@@ -16,6 +16,7 @@
 package se.swedenconnect.eid.sp.config.tomcat;
 
 import org.apache.catalina.connector.Connector;
+import org.jspecify.annotations.NonNull;
 import org.apache.coyote.ajp.AbstractAjpProtocol;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -23,8 +24,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.stereotype.Component;
-
-import lombok.Setter;
 
 /**
  * Configuration settings for Tomcat AJP.
@@ -36,13 +35,22 @@ import lombok.Setter;
 @EnableConfigurationProperties(TomcatAjpConfigurationProperties.class)
 public class TomcatAjpCustomizer implements WebServerFactoryCustomizer<TomcatServletWebServerFactory> {
 
+  /** The AJP configuration. */
   @Autowired
-  @Setter
-  private TomcatAjpConfigurationProperties ajp;
+  private @NonNull TomcatAjpConfigurationProperties ajp;
+
+  /**
+   * Assigns the AJP configuration.
+   *
+   * @param ajp the AJP configuration
+   */
+  public void setAjp(final @NonNull TomcatAjpConfigurationProperties ajp) {
+    this.ajp = ajp;
+  }
 
   /** {@inheritDoc} */
   @Override
-  public void customize(final TomcatServletWebServerFactory factory) {
+  public void customize(final @NonNull TomcatServletWebServerFactory factory) {
 
     if (this.ajp.isEnabled()) {
       final Connector ajpConnector = new Connector("AJP/1.3");

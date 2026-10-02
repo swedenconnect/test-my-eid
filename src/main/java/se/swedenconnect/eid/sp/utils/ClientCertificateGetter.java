@@ -18,6 +18,8 @@ package se.swedenconnect.eid.sp.utils;
 import java.security.cert.X509Certificate;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Functional interface for getting the client TLS certificate (for HoK).
@@ -33,6 +35,6 @@ public interface ClientCertificateGetter {
    * @param request the HTTP servlet request
    * @return the certificate, or null if none is found
    */
-  X509Certificate getClientCertificate(final HttpServletRequest request);
+  @Nullable X509Certificate getClientCertificate(final @NonNull HttpServletRequest request);
 
 }

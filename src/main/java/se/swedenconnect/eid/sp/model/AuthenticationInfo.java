@@ -18,63 +18,180 @@ package se.swedenconnect.eid.sp.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Model class for the information to display about an authentication.
  *
  * @author Martin Lindström (martin@idsec.se)
  */
-@ToString
 public class AuthenticationInfo {
 
   /** The SAML attributes. */
-  @Setter
-  private List<AttributeInfo> attributes;
+  private @Nullable List<AttributeInfo> attributes;
 
   /** The SAML attributes (advanced, i.e., not displayed unless asked for). */
-  @Setter
-  private List<AttributeInfo> advancedAttributes;
+  private @Nullable List<AttributeInfo> advancedAttributes;
 
   /** The LoA URI. */
-  @Setter
-  @Getter
-  private String loaUri;
+  private @Nullable String loaUri;
 
   /** The message code for level of assurance. */
-  @Setter
-  @Getter
-  private String loaLevelMessageCode;
+  private @Nullable String loaLevelMessageCode;
 
   /** The message code for a descriptive string for LoA. */
-  @Setter
-  @Getter
-  private String loaLevelDescriptionCode;
+  private @Nullable String loaLevelDescriptionCode;
 
   /** Message code for notified/non-notified text (eIDAS only). */
-  @Setter
-  @Getter
-  private String notifiedInfoMessageCode;
+  private @Nullable String notifiedInfoMessageCode;
 
   /** Flag telling whether the info holds information about an eIDAS assertion or not. */
-  @Setter
-  @Getter
   private boolean eidasAssertion = false;
 
-  public List<AttributeInfo> getAttributes() {
+  /**
+   * Gets the SAML attributes.
+   *
+   * @return the attributes (never null)
+   */
+  public @NonNull List<AttributeInfo> getAttributes() {
     if (this.attributes == null) {
       this.attributes = new ArrayList<>();
     }
     return this.attributes;
   }
 
-  public List<AttributeInfo> getAdvancedAttributes() {
+  /**
+   * Gets the advanced SAML attributes.
+   *
+   * @return the advanced attributes (never null)
+   */
+  public @NonNull List<AttributeInfo> getAdvancedAttributes() {
     if (this.advancedAttributes == null) {
       this.advancedAttributes = new ArrayList<>();
     }
     return this.advancedAttributes;
+  }
+
+  /**
+   * Assigns the SAML attributes.
+   *
+   * @param attributes the SAML attributes
+   */
+  public void setAttributes(final @Nullable List<AttributeInfo> attributes) {
+    this.attributes = attributes;
+  }
+
+  /**
+   * Assigns the SAML attributes (advanced, i.e., not displayed unless asked for).
+   *
+   * @param advancedAttributes the SAML attributes (advanced, i.e., not displayed unless asked for)
+   */
+  public void setAdvancedAttributes(final @Nullable List<AttributeInfo> advancedAttributes) {
+    this.advancedAttributes = advancedAttributes;
+  }
+
+  /**
+   * Gets the LoA URI.
+   *
+   * @return the LoA URI
+   */
+  public @Nullable String getLoaUri() {
+    return this.loaUri;
+  }
+
+  /**
+   * Assigns the LoA URI.
+   *
+   * @param loaUri the LoA URI
+   */
+  public void setLoaUri(final @Nullable String loaUri) {
+    this.loaUri = loaUri;
+  }
+
+  /**
+   * Gets the message code for level of assurance.
+   *
+   * @return the message code for level of assurance
+   */
+  public @Nullable String getLoaLevelMessageCode() {
+    return this.loaLevelMessageCode;
+  }
+
+  /**
+   * Assigns the message code for level of assurance.
+   *
+   * @param loaLevelMessageCode the message code for level of assurance
+   */
+  public void setLoaLevelMessageCode(final @Nullable String loaLevelMessageCode) {
+    this.loaLevelMessageCode = loaLevelMessageCode;
+  }
+
+  /**
+   * Gets the message code for a descriptive string for LoA.
+   *
+   * @return the message code for a descriptive string for LoA
+   */
+  public @Nullable String getLoaLevelDescriptionCode() {
+    return this.loaLevelDescriptionCode;
+  }
+
+  /**
+   * Assigns the message code for a descriptive string for LoA.
+   *
+   * @param loaLevelDescriptionCode the message code for a descriptive string for LoA
+   */
+  public void setLoaLevelDescriptionCode(final @Nullable String loaLevelDescriptionCode) {
+    this.loaLevelDescriptionCode = loaLevelDescriptionCode;
+  }
+
+  /**
+   * Gets the notified info message code.
+   *
+   * @return the notified info message code
+   */
+  public @Nullable String getNotifiedInfoMessageCode() {
+    return this.notifiedInfoMessageCode;
+  }
+
+  /**
+   * Assigns the notified info message code.
+   *
+   * @param notifiedInfoMessageCode the notified info message code
+   */
+  public void setNotifiedInfoMessageCode(final @Nullable String notifiedInfoMessageCode) {
+    this.notifiedInfoMessageCode = notifiedInfoMessageCode;
+  }
+
+  /**
+   * Tells whether the info holds information about an eIDAS assertion.
+   *
+   * @return {@code true} for an eIDAS assertion
+   */
+  public boolean isEidasAssertion() {
+    return this.eidasAssertion;
+  }
+
+  /**
+   * Assigns whether the info holds information about an eIDAS assertion.
+   *
+   * @param eidasAssertion whether this is an eIDAS assertion
+   */
+  public void setEidasAssertion(final boolean eidasAssertion) {
+    this.eidasAssertion = eidasAssertion;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toString() {
+    return "AuthenticationInfo(attributes=" + this.attributes
+        + ", advancedAttributes=" + this.advancedAttributes
+        + ", loaUri=" + this.loaUri
+        + ", loaLevelMessageCode=" + this.loaLevelMessageCode
+        + ", loaLevelDescriptionCode=" + this.loaLevelDescriptionCode
+        + ", notifiedInfoMessageCode=" + this.notifiedInfoMessageCode
+        + ", eidasAssertion=" + this.eidasAssertion
+        + ")";
   }
 
 }

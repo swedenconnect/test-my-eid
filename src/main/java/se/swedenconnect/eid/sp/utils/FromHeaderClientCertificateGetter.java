@@ -15,6 +15,8 @@
  */
 package se.swedenconnect.eid.sp.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,18 +26,21 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.StringUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Implementation that gets the client certificate from a header.
  *
  * @author Martin Lindström (martin@idsec.se)
  */
-@Slf4j
 public class FromHeaderClientCertificateGetter implements ClientCertificateGetter {
+
+  /** The logger. */
+  private static final Logger log = LoggerFactory.getLogger(FromHeaderClientCertificateGetter.class);
 
   /** Indicates that the certificate is in PEM-format. */
   private static final String BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
@@ -60,13 +65,13 @@ public class FromHeaderClientCertificateGetter implements ClientCertificateGette
    *
    * @param headerName the header name
    */
-  public FromHeaderClientCertificateGetter(final String headerName) {
+  public FromHeaderClientCertificateGetter(final @NonNull String headerName) {
     this.headerName = headerName;
   }
 
   /** {@inheritDoc} */
   @Override
-  public X509Certificate getClientCertificate(final HttpServletRequest request) {
+  public @Nullable X509Certificate getClientCertificate(final @NonNull HttpServletRequest request) {
     final String header = request.getHeader(this.headerName);
     if (!StringUtils.hasText(header)) {
       return null;

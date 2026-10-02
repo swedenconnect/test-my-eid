@@ -15,10 +15,12 @@
  */
 package se.swedenconnect.eid.sp.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,9 +43,11 @@ import java.util.stream.Collectors;
  * @author Martin Lindström (martin@idsec.se)
  */
 @Controller
-@Slf4j
 @RequestMapping("/")
 public class SpController extends BaseController {
+
+  /** The logger. */
+  private static final Logger log = LoggerFactory.getLogger(SpController.class);
 
   /** Holds the IdPs to display for the user. */
   @Autowired
@@ -56,7 +60,7 @@ public class SpController extends BaseController {
 
   /** Needed so that we can configure paths. For overloading this app. */
   @Value("${sp.sign-path:/saml2/request/next}")
-  protected String signPath;
+  protected @NonNull String signPath;
 
   /**
    * Controller method for the home endpoint.
@@ -65,7 +69,7 @@ public class SpController extends BaseController {
    * @return a model and view object
    */
   @GetMapping
-  public ModelAndView home(final HttpServletRequest request) {
+  public @NonNull ModelAndView home(final @NonNull HttpServletRequest request) {
     final ModelAndView mav = new ModelAndView("home");
     mav.addObject("idpList", this.idpListConfiguration.getIdps()
         .stream()
@@ -82,7 +86,7 @@ public class SpController extends BaseController {
    * @return a redirect string to the SAML request endpoint
    */
   @GetMapping("/eidas")
-  public ModelAndView eidas() {
+  public @NonNull ModelAndView eidas() {
     return new ModelAndView(
         String.format("redirect:/saml2/request?selectedIdp=%s", this.eidasConnectorEntityId.getEntityID()));
   }
@@ -94,8 +98,8 @@ public class SpController extends BaseController {
    * @return a redirect string to the SAML request endpoint
    */
   @GetMapping("/eidas/{country}")
-  public ModelAndView eidasCountry(
-      @PathVariable(value = "country", required = true) final String country) {
+  public @NonNull ModelAndView eidasCountry(
+      @PathVariable(value = "country", required = true) final @NonNull String country) {
 
     if ("ping".equalsIgnoreCase(country)) {
       return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&ping=true",
@@ -115,8 +119,8 @@ public class SpController extends BaseController {
    * @return a redirect string to the SAML request endpoint
    */
   @GetMapping("/eidas/ping/{country}")
-  public ModelAndView eidasPingCountry(
-      @PathVariable(value = "country", required = true) final String country) {
+  public @NonNull ModelAndView eidasPingCountry(
+      @PathVariable(value = "country", required = true) final @NonNull String country) {
 
     return new ModelAndView(String.format("redirect:/saml2/request?selectedIdp=%s&ping=true&country=%s",
         this.eidasConnectorEntityId.getEntityID(), country));
@@ -130,13 +134,19 @@ public class SpController extends BaseController {
    * @return a model and view object
    */
   @GetMapping("/result")
-  public ModelAndView displayResult(final HttpServletRequest request, final HttpServletResponse response) {
+  public @NonNull ModelAndView displayResult(final @NonNull HttpServletRequest request,
+      final @NonNull HttpServletResponse response) {
 
     final HttpSession session = request.getSession();
     final ModelAndView mav = (ModelAndView) session.getAttribute("sp-result");
     if (mav == null) {
       log.warn("No session for user, directing to start page [client-ip-address='{}']", request.getRemoteAddr());
       return new ModelAndView("redirect:/");
+    }
+
+    if (mav.getModel().containsKey("oidcResult")) {
+      // An OpenID Connect result - the signature step (if any) was decided when the response was processed
+      return mav;
     }
 
     final LastAuthentication lastAuthentication = (LastAuthentication) session.getAttribute("last-authentication");

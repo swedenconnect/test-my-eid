@@ -117,6 +117,12 @@
           </div>
         </div> <!-- /#assuranceLevel -->
 
+        <div th:if="${loaTrustMarkWarning != null && loaTrustMarkWarning}" class="row" id="loaTrustMarkWarning">
+          <div class="col-sm-12">
+            <p class="loa-warning" th:text="#{sp.msg.loa-trust-mark-warning}">Warning</p>
+          </div>
+        </div>
+
       </div> <!-- /.authn-listing -->
 
       <th:block th:if="${signIdp != null}">

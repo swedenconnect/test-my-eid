@@ -5,7 +5,7 @@
 
   <groupId>se.swedenconnect.eid</groupId>
   <artifactId>test-my-eid</artifactId>
-  <version>3.2.0</version>
+  <version>4.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>test-my-eid</name>
@@ -15,7 +15,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.0.6</version>
+    <version>4.1.1</version>
     <relativePath/>
   </parent>
 
@@ -46,10 +46,13 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <java.version>21</java.version>
-    <opensaml.version>5.2.1</opensaml.version>
-    <spring.version>7.0.7</spring.version>
+    <opensaml.version>5.2.3</opensaml.version>
+    <spring.version>7.0.9</spring.version>
     <credentials-support.version>2.2.1</credentials-support.version>
-    <bc.version>1.84</bc.version>
+    <bc.version>1.86</bc.version>
+    <nimbus-jose-jwt.version>10.10</nimbus-jose-jwt.version>
+    <oauth2-oidc-sdk.version>11.38.2</oauth2-oidc-sdk.version>
+    <oidc-sweden-nimbus.version>0.9.3</oidc-sweden-nimbus.version>
   </properties>
 
 
@@ -139,9 +142,21 @@
       </dependency>
 
       <dependency>
+        <groupId>com.nimbusds</groupId>
+        <artifactId>nimbus-jose-jwt</artifactId>
+        <version>${nimbus-jose-jwt.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.nimbusds</groupId>
+        <artifactId>oauth2-oidc-sdk</artifactId>
+        <version>${oauth2-oidc-sdk.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>com.google.errorprone</groupId>
         <artifactId>error_prone_annotations</artifactId>
-        <version>2.49.0</version>
+        <version>2.50.0</version>
       </dependency>
 
     </dependencies>
@@ -184,11 +199,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>se.swedenconnect.security</groupId>
       <artifactId>credentials-support-opensaml</artifactId>
       <version>${credentials-support.version}</version>
@@ -207,6 +217,28 @@
     <dependency>
       <groupId>se.swedenconnect.opensaml</groupId>
       <artifactId>opensaml-swedish-eid</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>se.swedenconnect.security</groupId>
+      <artifactId>credentials-support-nimbus</artifactId>
+      <version>${credentials-support.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.nimbusds</groupId>
+      <artifactId>nimbus-jose-jwt</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.nimbusds</groupId>
+      <artifactId>oauth2-oidc-sdk</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>se.oidc.nimbus</groupId>
+      <artifactId>oidc-sweden-nimbus</artifactId>
+      <version>${oidc-sweden-nimbus.version}</version>
     </dependency>
 
     <dependency>
@@ -251,10 +283,6 @@
         <configuration>
           <release>${java.version}</release>
           <annotationProcessorPaths>
-            <path>
-              <groupId>org.projectlombok</groupId>
-              <artifactId>lombok</artifactId>
-            </path>
             <path>
               <groupId>org.springframework.boot</groupId>
               <artifactId>spring-boot-configuration-processor</artifactId>
@@ -317,7 +345,7 @@
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>3.5.1</version>
+        <version>3.5.2</version>
         <configuration>
           <from>
             <image>eclipse-temurin:21-jre-alpine</image>
@@ -428,7 +456,7 @@
           <plugin>
             <groupId>org.sonatype.central</groupId>
             <artifactId>central-publishing-maven-plugin</artifactId>
-            <version>0.9.0</version>
+            <version>0.11.0</version>
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>central</publishingServerId>

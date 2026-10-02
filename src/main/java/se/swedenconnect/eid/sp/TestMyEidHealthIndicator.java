@@ -15,8 +15,10 @@
  */
 package se.swedenconnect.eid.sp;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import net.shibboleth.shared.resolver.ResolverException;
+import org.jspecify.annotations.NonNull;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.stereotype.Component;
@@ -28,8 +30,10 @@ import se.swedenconnect.opensaml.saml2.metadata.provider.MetadataProvider;
  * @author Martin Lindström (martin@idsec.se)
  */
 @Component
-@Slf4j
 public class TestMyEidHealthIndicator implements HealthIndicator {
+
+  /** The logger. */
+  private static final Logger log = LoggerFactory.getLogger(TestMyEidHealthIndicator.class);
 
   /** The federation metadata provider. */
   private final MetadataProvider metadataProvider;
@@ -39,7 +43,7 @@ public class TestMyEidHealthIndicator implements HealthIndicator {
    *
    * @param metadataProvider the federation metadata provider
    */
-  public TestMyEidHealthIndicator(final MetadataProvider metadataProvider) {
+  public TestMyEidHealthIndicator(final @NonNull MetadataProvider metadataProvider) {
     this.metadataProvider = metadataProvider;
   }
 
@@ -47,7 +51,7 @@ public class TestMyEidHealthIndicator implements HealthIndicator {
    * The health implementation for the application.
    */
   @Override
-  public Health health() {
+  public @NonNull Health health() {
 
     // Assert that we have at least one IdP ...
     //

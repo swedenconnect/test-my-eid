@@ -19,7 +19,8 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Properties;
 
-import jakarta.annotation.Nonnull;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.core.env.PropertySource;
@@ -35,9 +36,10 @@ import org.springframework.core.io.support.PropertySourceFactory;
  */
 public class CustomPropertySourceFactory extends DefaultPropertySourceFactory {
 
-  @Nonnull
+  /** {@inheritDoc} */
   @Override
-  public PropertySource<?> createPropertySource(final String name, final EncodedResource resource) throws IOException {
+  public @NonNull PropertySource<?> createPropertySource(final @Nullable String name,
+      final @NonNull EncodedResource resource) throws IOException {
 
     if (isYamlFile(resource.getResource())) {
       final YamlPropertiesFactoryBean factory = new YamlPropertiesFactoryBean();

@@ -15,9 +15,10 @@
  */
 package se.swedenconnect.eid.sp.saml;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.opensaml.saml.saml2.core.AuthnContextComparisonTypeEnumeration;
 import org.opensaml.xmlsec.encryption.support.EncryptionException;
 import se.swedenconnect.opensaml.saml2.core.build.RequestedAuthnContextBuilder;
@@ -41,52 +42,50 @@ import java.util.Map;
  *
  * @author Martin Lindström (martin@idsec.se)
  */
-@Slf4j
 public class TestMyEidAuthnRequestGeneratorContext implements SwedishEidAuthnRequestGeneratorContext {
 
+  /** The logger. */
+  private static final Logger log = LoggerFactory.getLogger(TestMyEidAuthnRequestGeneratorContext.class);
+
   /** The special purpose AuthnContextClassRef URI for eIDAS test authentications. */
-  public static final String EIDAS_PING_LOA = "http://eidas.europa.eu/LoA/test";
+  public static final @NonNull String EIDAS_PING_LOA = "http://eidas.europa.eu/LoA/test";
 
   private final HokRequirement hokRequirement;
 
-  @Setter
   private boolean debug;
 
-  @Setter
-  @Getter
-  private String country;
+  private @Nullable String country;
 
-  @Setter
   private boolean ping;
 
-  @Setter
-  private List<String> requestedAuthnContextUris;
+  private @Nullable List<String> requestedAuthnContextUris;
 
-  @Setter
-  @Getter
-  private String signMessage;
+  private @Nullable String signMessage;
 
-  @Setter
-  @Getter
-  private Map<String, String> userMessages;
+  private @Nullable Map<String, String> userMessages;
 
-  @Setter
-  private String personalIdentityNumberHint;
+  private @Nullable String personalIdentityNumberHint;
 
-  @Setter
-  private String pridHint;
+  private @Nullable String pridHint;
 
-  public TestMyEidAuthnRequestGeneratorContext(final HokRequirement hokRequirement) {
+  /**
+   * Constructor.
+   *
+   * @param hokRequirement the Holder-of-key requirement
+   */
+  public TestMyEidAuthnRequestGeneratorContext(final @NonNull HokRequirement hokRequirement) {
     this.hokRequirement = hokRequirement;
   }
 
+  /** {@inheritDoc} */
   @Override
-  public HokRequirement getHokRequirement() {
+  public @NonNull HokRequirement getHokRequirement() {
     return this.hokRequirement;
   }
 
+  /** {@inheritDoc} */
   @Override
-  public RequestedAuthnContextBuilderFunction getRequestedAuthnContextBuilderFunction() {
+  public @NonNull RequestedAuthnContextBuilderFunction getRequestedAuthnContextBuilderFunction() {
 
     if (this.ping) {
       return (list, h) -> RequestedAuthnContextBuilder.builder()
@@ -108,15 +107,17 @@ public class TestMyEidAuthnRequestGeneratorContext implements SwedishEidAuthnReq
     }
   }
 
+  /** {@inheritDoc} */
   @Override
-  public AssertionConsumerServiceResolver getAssertionConsumerServiceResolver() {
+  public @NonNull AssertionConsumerServiceResolver getAssertionConsumerServiceResolver() {
     return (list) -> list.size() == 1 || !this.debug
         ? list.get(0).getLocation()
         : list.get(1).getLocation();
   }
 
+  /** {@inheritDoc} */
   @Override
-  public SignMessageBuilderFunction getSignMessageBuilderFunction() {
+  public @NonNull SignMessageBuilderFunction getSignMessageBuilderFunction() {
     return (metadata, encrypter) -> {
       if (this.signMessage != null) {
         final SignMessage signMessage = SignMessageBuilder.builder()
@@ -142,8 +143,9 @@ public class TestMyEidAuthnRequestGeneratorContext implements SwedishEidAuthnReq
     };
   }
 
+  /** {@inheritDoc} */
   @Override
-  public UserMessageBuilderFunction getUserMessageBuilderFunction() {
+  public @NonNull UserMessageBuilderFunction getUserMessageBuilderFunction() {
     return (e) -> {
       if (this.userMessages == null) {
         return null;
@@ -161,8 +163,9 @@ public class TestMyEidAuthnRequestGeneratorContext implements SwedishEidAuthnReq
     };
   }
 
+  /** {@inheritDoc} */
   @Override
-  public PrincipalSelectionBuilderFunction getPrincipalSelectionBuilderFunction() {
+  public @NonNull PrincipalSelectionBuilderFunction getPrincipalSelectionBuilderFunction() {
     return () -> {
       if (this.personalIdentityNumberHint != null || this.pridHint != null) {
         final List<MatchValue> matchValues = new ArrayList<>();
@@ -186,6 +189,105 @@ public class TestMyEidAuthnRequestGeneratorContext implements SwedishEidAuthnReq
         return null;
       }
     };
+  }
+
+  /**
+   * Assigns whether debug mode is active.
+   *
+   * @param debug whether debug mode is active
+   */
+  public void setDebug(final boolean debug) {
+    this.debug = debug;
+  }
+
+  /**
+   * Gets the country.
+   *
+   * @return the country
+   */
+  public @Nullable String getCountry() {
+    return this.country;
+  }
+
+  /**
+   * Assigns the country.
+   *
+   * @param country the country
+   */
+  public void setCountry(final @Nullable String country) {
+    this.country = country;
+  }
+
+  /**
+   * Assigns whether this is an eIDAS ping request.
+   *
+   * @param ping whether this is a ping request
+   */
+  public void setPing(final boolean ping) {
+    this.ping = ping;
+  }
+
+  /**
+   * Assigns the requested authn context uris.
+   *
+   * @param requestedAuthnContextUris the requested authn context uris
+   */
+  public void setRequestedAuthnContextUris(final @Nullable List<String> requestedAuthnContextUris) {
+    this.requestedAuthnContextUris = requestedAuthnContextUris;
+  }
+
+  /**
+   * Gets the sign message.
+   *
+   * @return the sign message
+   */
+  public @Nullable String getSignMessage() {
+    return this.signMessage;
+  }
+
+  /**
+   * Assigns the sign message.
+   *
+   * @param signMessage the sign message
+   */
+  public void setSignMessage(final @Nullable String signMessage) {
+    this.signMessage = signMessage;
+  }
+
+  /**
+   * Gets the user messages.
+   *
+   * @return the user messages
+   */
+  public @Nullable Map<String, String> getUserMessages() {
+    return this.userMessages;
+  }
+
+  /**
+   * Assigns the user messages.
+   *
+   * @param userMessages the user messages
+   */
+  public void setUserMessages(final @Nullable Map<String, String> userMessages) {
+    this.userMessages = userMessages;
+  }
+
+  /**
+   * Assigns the personal identity number hint.
+   *
+   * @param personalIdentityNumberHint the personal identity number hint
+   */
+  public void setPersonalIdentityNumberHint(final @Nullable String personalIdentityNumberHint) {
+    this.personalIdentityNumberHint = personalIdentityNumberHint;
+  }
+
+  /**
+   * Assigns the prid hint.
+   *
+   * @param pridHint the prid hint
+   */
+  public void setPridHint(final @Nullable String pridHint) {
+    this.pridHint = pridHint;
   }
 
 }

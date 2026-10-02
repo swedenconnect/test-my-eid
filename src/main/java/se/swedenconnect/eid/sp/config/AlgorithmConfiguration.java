@@ -15,13 +15,12 @@
  */
 package se.swedenconnect.eid.sp.config;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
-
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  * Configuration class for security support.
@@ -35,9 +34,25 @@ public class AlgorithmConfiguration {
   /**
    * Custom algorithm configuration.
    */
-  @Setter
-  @Getter
-  private CustomAlgorithms algorithmConfig;
+  private @Nullable CustomAlgorithms algorithmConfig;
+
+  /**
+   * Gets the custom algorithm configuration.
+   *
+   * @return the custom algorithm configuration
+   */
+  public @Nullable CustomAlgorithms getAlgorithmConfig() {
+    return this.algorithmConfig;
+  }
+
+  /**
+   * Assigns the custom algorithm configuration.
+   *
+   * @param algorithmConfig the custom algorithm configuration
+   */
+  public void setAlgorithmConfig(final @Nullable CustomAlgorithms algorithmConfig) {
+    this.algorithmConfig = algorithmConfig;
+  }
 
   /**
    * Gets the algorithm configuration bean.
@@ -45,7 +60,7 @@ public class AlgorithmConfiguration {
    * @return an {@link CustomAlgorithms} bean
    */
   @Bean
-  CustomAlgorithms customAlgorithms() {
+  @NonNull CustomAlgorithms customAlgorithms() {
     return this.algorithmConfig != null ? this.algorithmConfig : new CustomAlgorithms();
   }
 
@@ -59,24 +74,72 @@ public class AlgorithmConfiguration {
     /**
      * Which digest method to use for RSA-OAEP. If {@code null}, the default will be used.
      */
-    @Getter
-    @Setter
-    private String rsaOaepDigest;
+    private @Nullable String rsaOaepDigest;
 
     /**
      * Should AES GCM algorithms be used? If {@code false}, AES-CBC will be used as default. If {@code null}, the
      * default will be used.
      */
-    @Getter
-    @Setter
-    private Boolean useAesGcm;
+    private @Nullable Boolean useAesGcm;
 
     /**
      * Should RSA 1.5 be blacklisted?
      */
-    @Getter
-    @Setter
-    private Boolean blacklistRsa15;
+    private @Nullable Boolean blacklistRsa15;
+
+    /**
+     * Gets which digest method to use for RSA-OAEP.
+     *
+     * @return the digest method, or {@code null} for the default
+     */
+    public @Nullable String getRsaOaepDigest() {
+      return this.rsaOaepDigest;
+    }
+
+    /**
+     * Assigns which digest method to use for RSA-OAEP.
+     *
+     * @param rsaOaepDigest the digest method, or {@code null} for the default
+     */
+    public void setRsaOaepDigest(final @Nullable String rsaOaepDigest) {
+      this.rsaOaepDigest = rsaOaepDigest;
+    }
+
+    /**
+     * Gets whether AES GCM algorithms should be used.
+     *
+     * @return whether AES GCM should be used, or {@code null} for the default
+     */
+    public @Nullable Boolean getUseAesGcm() {
+      return this.useAesGcm;
+    }
+
+    /**
+     * Assigns whether AES GCM algorithms should be used.
+     *
+     * @param useAesGcm whether AES GCM should be used, or {@code null} for the default
+     */
+    public void setUseAesGcm(final @Nullable Boolean useAesGcm) {
+      this.useAesGcm = useAesGcm;
+    }
+
+    /**
+     * Gets whether RSA 1.5 should be blacklisted.
+     *
+     * @return whether RSA 1.5 should be blacklisted, or {@code null} for the default
+     */
+    public @Nullable Boolean getBlacklistRsa15() {
+      return this.blacklistRsa15;
+    }
+
+    /**
+     * Assigns whether RSA 1.5 should be blacklisted.
+     *
+     * @param blacklistRsa15 whether RSA 1.5 should be blacklisted, or {@code null} for the default
+     */
+    public void setBlacklistRsa15(final @Nullable Boolean blacklistRsa15) {
+      this.blacklistRsa15 = blacklistRsa15;
+    }
 
     /**
      * Predicate that tells whether any configuration has been set or not.

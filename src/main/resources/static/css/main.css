@@ -298,6 +298,15 @@ a {
     text-align: left;
 }
 
+.providers .provider p.provider-protocol {
+    margin-left: 65px;
+    font-size: 12px;
+    line-height: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c6c6c;
+}
+
 .providers .provider p.idp-description {
     margin-left: 65px;
     font-style: italic;
@@ -487,4 +496,9 @@ a {
 
 .hide {
     display: none;
+}
+
+.loa-warning {
+    color: #b00020;
+    font-weight: bold;
 }

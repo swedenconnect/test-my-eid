@@ -15,9 +15,12 @@
  */
 package se.swedenconnect.eid.sp.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.webmvc.autoconfigure.error.AbstractErrorController;
@@ -38,20 +41,19 @@ import java.util.Map;
  */
 @Controller
 @ControllerAdvice
-@Slf4j
 public class ApplicationErrorController extends AbstractErrorController {
 
-  @Setter
+  /** The logger. */
+  private static final Logger log = LoggerFactory.getLogger(ApplicationErrorController.class);
+
   @Value("${server.servlet.context-path}")
-  private String contextPath;
+  private @NonNull String contextPath;
 
-  @Setter
   @Value("${sp.base-uri}")
-  private String baseUri;
+  private @NonNull String baseUri;
 
-  @Setter
   @Value("${sp.debug-base-uri:}")
-  private String debugBaseUri;
+  private @Nullable String debugBaseUri;
 
   /**
    * Constructor.
@@ -67,7 +69,7 @@ public class ApplicationErrorController extends AbstractErrorController {
    * @return a model and view object
    */
   @RequestMapping("/error")
-  public ModelAndView handleError(final HttpServletRequest request) {
+  public @NonNull ModelAndView handleError(final @NonNull HttpServletRequest request) {
 
     final Map<String, Object> errorAttributes = this.getErrorAttributes(request, ErrorAttributeOptions.defaults());
 
@@ -117,15 +119,43 @@ public class ApplicationErrorController extends AbstractErrorController {
    * @param exceptionClass the exception class we are looking for
    * @return the exception or {@code null}
    */
-  protected <T extends Exception> T getException(final HttpServletRequest request, final Class<T> exceptionClass) {
-    Exception e = (Exception) request.getAttribute("javax.servlet.error.exception");
+  protected <T extends Exception> @Nullable T getException(final @NonNull HttpServletRequest request,
+      final @NonNull Class<T> exceptionClass) {
+    Throwable e = (Throwable) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
     while (e != null) {
       if (exceptionClass.isInstance(e)) {
         return exceptionClass.cast(e);
       }
-      e = (Exception) e.getCause();
+      e = e.getCause();
     }
     return null;
+  }
+
+  /**
+   * Assigns the context path.
+   *
+   * @param contextPath the context path
+   */
+  public void setContextPath(final @NonNull String contextPath) {
+    this.contextPath = contextPath;
+  }
+
+  /**
+   * Assigns the base uri.
+   *
+   * @param baseUri the base uri
+   */
+  public void setBaseUri(final @NonNull String baseUri) {
+    this.baseUri = baseUri;
+  }
+
+  /**
+   * Assigns the debug base uri.
+   *
+   * @param debugBaseUri the debug base uri
+   */
+  public void setDebugBaseUri(final @Nullable String debugBaseUri) {
+    this.debugBaseUri = debugBaseUri;
   }
 
 }
