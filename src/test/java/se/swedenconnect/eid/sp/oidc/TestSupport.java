@@ -166,6 +166,20 @@ public final class TestSupport {
   }
 
   /**
+   * Decodes a Base64-encoded message (user message or sign message) into its UTF-8 string. Fails if the value is not
+   * a string holding valid Base64.
+   *
+   * @param value the encoded value
+   * @return the decoded message
+   */
+  public static String decode(final Object value) {
+    if (!(value instanceof final String s)) {
+      throw new AssertionError("Expected a string but got " + value);
+    }
+    return new String(java.util.Base64.getDecoder().decode(s), java.nio.charset.StandardCharsets.UTF_8);
+  }
+
+  /**
    * A clock that can be moved.
    */
   public static class MutableClock extends Clock {

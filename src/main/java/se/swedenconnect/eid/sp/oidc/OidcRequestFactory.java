@@ -38,10 +38,12 @@ import se.oidc.nimbus.claims.ScopeConstants;
 import se.oidc.nimbus.usermessage.UserMessage;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -135,8 +137,8 @@ public class OidcRequestFactory {
     // The signature approval use case has a sign_message but no tbs_data. The SignRequest class of
     // oidc-sweden-nimbus requires tbs_data, so the parameter is built here.
     final JSONObject signRequest = new JSONObject();
-    signRequest.put("sign_message",
-        new UserMessage(List.of(new UserMessage.Message(signMessage)), UserMessage.TEXT_MIME_TYPE).toJSONObject());
+    signRequest.put("sign_message", encode(
+        new UserMessage(List.of(new UserMessage.Message(signMessage)), UserMessage.TEXT_MIME_TYPE)));
     claims.claim(ParameterConstants.SIGN_REQUEST_PARAM_NAME, signRequest);
 
     // Bind the request to the authenticated user
@@ -224,7 +226,7 @@ public class OidcRequestFactory {
 
     final UserMessage userMessage = this.userMessage(op);
     if (userMessage != null) {
-      claims.claim(ParameterConstants.USER_MESSAGE_PARAM_NAME, userMessage.toJSONObject());
+      claims.claim(ParameterConstants.USER_MESSAGE_PARAM_NAME, encode(userMessage));
     }
 
     final SignedJWT requestObject = this.sign(claims.build());
@@ -266,6 +268,27 @@ public class OidcRequestFactory {
     final List<UserMessage.Message> messages = new ArrayList<>();
     templates.forEach((lang, text) -> messages.add(new UserMessage.Message(text, lang)));
     return new UserMessage(messages, markdown ? UserMessage.MARKDOWN_MIME_TYPE : UserMessage.TEXT_MIME_TYPE);
+  }
+
+  /**
+   * Gets the JSON representation of a user message (also used for {@code sign_message}) with every {@code message}
+   * and {@code message#<lang>} value given as the Base64 encoding of its UTF-8 string, as Section 2.1 of
+   * Authentication Request Parameter Extensions for the Swedish OpenID Connect Profile 1.1 requires. The
+   * {@code UserMessage} class of oidc-sweden-nimbus puts the plain text in these fields.
+   *
+   * @param userMessage the user message
+   * @return the JSON object to send
+   */
+  static @NonNull JSONObject encode(final @NonNull UserMessage userMessage) {
+    final JSONObject json = userMessage.toJSONObject();
+    for (final Map.Entry<String, Object> e : json.entrySet()) {
+      if ((UserMessage.MESSAGE_PARAMETER_NAME.equals(e.getKey())
+          || e.getKey().startsWith(UserMessage.MESSAGE_PARAMETER_NAME + "#"))
+          && e.getValue() instanceof final String message) {
+        e.setValue(Base64.getEncoder().encodeToString(message.getBytes(StandardCharsets.UTF_8)));
+      }
+    }
+    return json;
   }
 
   /**

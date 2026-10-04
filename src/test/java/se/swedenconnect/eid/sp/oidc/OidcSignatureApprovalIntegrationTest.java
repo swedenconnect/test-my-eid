@@ -103,7 +103,8 @@ class OidcSignatureApprovalIntegrationTest extends OidcFlowTestBase {
     @SuppressWarnings("unchecked")
     final Map<String, Object> signMessage = (Map<String, Object>) signRequest.get("sign_message");
     assertThat(signMessage.get("mime_type")).isEqualTo("text/plain");
-    assertThat(signMessage.get("message")).isEqualTo("Hello Frida! This is a test signature.");
+    assertThat(TestSupport.decode(signMessage.get("message"))).isEqualTo("Hello Frida! This is a test signature.");
+    assertThat(signMessage).containsOnlyKeys("message", "mime_type");
 
     final Map<String, Object> claimsParameter = claims.getJSONObjectClaim("claims");
     @SuppressWarnings("unchecked")

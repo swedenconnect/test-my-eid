@@ -103,8 +103,8 @@ class OidcAuthenticationIntegrationTest extends OidcFlowTestBase {
 
     final Map<String, Object> userMessage = claims.getJSONObjectClaim("https://id.oidc.se/param/userMessage");
     assertThat(userMessage.get("mime_type")).isEqualTo("text/plain");
-    assertThat((String) userMessage.get("message#sv")).startsWith("Testa mitt eID");
-    assertThat((String) userMessage.get("message#en")).startsWith("Test my eID").doesNotContain("**");
+    assertThat(TestSupport.decode(userMessage.get("message#sv"))).startsWith("Testa mitt eID").contains("är");
+    assertThat(TestSupport.decode(userMessage.get("message#en"))).startsWith("Test my eID").doesNotContain("**");
 
     final ModelAndView mav = this.mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
         .post("/oidc/request").session(this.session).param("selectedOp", OP.getIssuer())).andReturn()
@@ -127,7 +127,8 @@ class OidcAuthenticationIntegrationTest extends OidcFlowTestBase {
     final Map<String, Object> userMessage =
         this.requestObject(params).getJWTClaimsSet().getJSONObjectClaim("https://id.oidc.se/param/userMessage");
     assertThat(userMessage.get("mime_type")).isEqualTo("text/markdown");
-    assertThat((String) userMessage.get("message#sv")).startsWith("# Testa mitt eID");
+    assertThat(TestSupport.decode(userMessage.get("message#sv"))).startsWith("# Testa mitt eID").contains("**Notera:**");
+    assertThat(TestSupport.decode(userMessage.get("message#en"))).startsWith("# Test my eID");
   }
 
   @Test
