@@ -52,7 +52,7 @@
     <bc.version>1.86</bc.version>
     <nimbus-jose-jwt.version>10.10</nimbus-jose-jwt.version>
     <oauth2-oidc-sdk.version>11.38.2</oauth2-oidc-sdk.version>
-    <oidc-sweden-nimbus.version>0.9.3</oidc-sweden-nimbus.version>
+    <oidc-sweden-nimbus.version>1.0.0</oidc-sweden-nimbus.version>
     <!-- The architecture of the local image (jib:dockerBuild@local), see the local-arm64 profile -->
     <jib.local.architecture>amd64</jib.local.architecture>
   </properties>

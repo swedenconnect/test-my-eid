@@ -206,15 +206,19 @@ public class TestFederation implements AutoCloseable {
           .claim("jwks", new JWKSet(subjectKey.toPublicJWK()).toJSONObject()).build(),
           this.trustAnchorKey, "entity-statement+jwt").serialize();
 
-      final JWTClaimsSet claims = new JWTClaimsSet.Builder()
+      // Like the resolver of the local federation, the response has no jwks, authority_hints or crit
+      // from the subject, and no trust_marks claim when no trust mark is included
+      final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder()
           .issuer(this.getTrustAnchorId())
           .subject(sub)
           .issueTime(Date.from(now))
           .expirationTime(Date.from(now.plus(this.resolveLifetime)))
           .claim("metadata", md.get())
-          .claim("trust_marks", marks)
-          .claim("trust_chain", List.of(leaf, subordinate))
-          .build();
+          .claim("trust_chain", List.of(leaf, subordinate));
+      if (!marks.isEmpty()) {
+        builder.claim("trust_marks", marks);
+      }
+      final JWTClaimsSet claims = builder.build();
       return new TestOpServer.Response(200, "application/resolve-response+jwt",
           this.sign(claims, this.rogueResolveSignature ? this.rogueKey : this.trustAnchorKey,
               "resolve-response+jwt").serialize());

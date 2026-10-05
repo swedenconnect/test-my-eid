@@ -17,24 +17,26 @@ package se.swedenconnect.eid.sp.oidc;
 
 import net.minidev.json.JSONObject;
 import org.junit.jupiter.api.Test;
+import se.oidc.nimbus.signrequest.SignRequest;
 import se.oidc.nimbus.usermessage.UserMessage;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests the Base64 encoding of user messages and sign messages.
+ * Tests that user messages and sign messages are Base64-encoded exactly once on the wire.
  */
 class UserMessageEncodingTest {
 
   @Test
   void specificationExample() {
     // Example from Signature Extension for OpenID Connect 1.1, Section 3.1
-    final JSONObject json = OidcRequestFactory.encode(new UserMessage(List.of(
+    final JSONObject json = new UserMessage(List.of(
         new UserMessage.Message("I hereby agree to the contract displayed", "en"),
         new UserMessage.Message("Jag samtycker härmed till kontraktet som visats", "sv")),
-        UserMessage.TEXT_MIME_TYPE));
+        UserMessage.TEXT_MIME_TYPE).toJSONObject();
     assertThat(json.get("message#en")).isEqualTo("SSBoZXJlYnkgYWdyZWUgdG8gdGhlIGNvbnRyYWN0IGRpc3BsYXllZA==");
     assertThat(json.get("message#sv")).isEqualTo("SmFnIHNhbXR5Y2tlciBow6RybWVkIHRpbGwga29udHJha3RldCBzb20gdmlzYXRz");
     assertThat(json.get("mime_type")).isEqualTo("text/plain");
@@ -43,8 +45,8 @@ class UserMessageEncodingTest {
 
   @Test
   void untaggedMessage() {
-    final JSONObject json = OidcRequestFactory.encode(new UserMessage(
-        List.of(new UserMessage.Message("Hej!")), UserMessage.TEXT_MIME_TYPE));
+    final JSONObject json = new UserMessage(
+        List.of(new UserMessage.Message("Hej!")), UserMessage.TEXT_MIME_TYPE).toJSONObject();
     assertThat(json).containsOnlyKeys("message", "mime_type");
     assertThat(TestSupport.decode(json.get("message"))).isEqualTo("Hej!");
   }
@@ -52,8 +54,8 @@ class UserMessageEncodingTest {
   @Test
   void markdownWithNonAsciiAndLineBreaksIsKept() {
     final String markdown = "# Testa mitt eID\n\n**Notera:** Detta är en testlegitimering – åäö ÅÄÖ € 😀\n";
-    final JSONObject json = OidcRequestFactory.encode(new UserMessage(
-        List.of(new UserMessage.Message(markdown, "sv")), UserMessage.MARKDOWN_MIME_TYPE));
+    final JSONObject json = new UserMessage(
+        List.of(new UserMessage.Message(markdown, "sv")), UserMessage.MARKDOWN_MIME_TYPE).toJSONObject();
     final String encoded = (String) json.get("message#sv");
     // Standard Base64 alphabet, no line breaks
     assertThat(encoded).matches("[A-Za-z0-9+/]+=*");
@@ -62,10 +64,37 @@ class UserMessageEncodingTest {
   }
 
   @Test
+  void messageThatLooksLikeBase64IsEncodedOnce() {
+    // A text that is itself valid Base64 must come back as the same text after one decoding
+    final String text = "SGVqIQ==";
+    final JSONObject json = new UserMessage(
+        List.of(new UserMessage.Message(text, "en")), UserMessage.TEXT_MIME_TYPE).toJSONObject();
+    assertThat(TestSupport.decode(json.get("message#en"))).isEqualTo(text);
+  }
+
+  @Test
   void emptyMessage() {
-    final JSONObject json = OidcRequestFactory.encode(new UserMessage(
-        List.of(new UserMessage.Message("", "en")), UserMessage.TEXT_MIME_TYPE));
+    final JSONObject json = new UserMessage(
+        List.of(new UserMessage.Message("", "en")), UserMessage.TEXT_MIME_TYPE).toJSONObject();
     assertThat(json.get("message#en")).isEqualTo("");
+  }
+
+  @Test
+  void signRequestHasSignMessageAndNoTbsData() throws Exception {
+    final String text = "Hello Åsa! This is a test signature – 😀";
+    final JSONObject json = OidcRequestFactory.signRequest(text).toJSONObject();
+    assertThat(json).containsOnlyKeys("sign_message");
+
+    @SuppressWarnings("unchecked")
+    final Map<String, Object> signMessage = (Map<String, Object>) json.get("sign_message");
+    assertThat(signMessage).containsOnlyKeys("message", "mime_type");
+    assertThat(signMessage.get("mime_type")).isEqualTo("text/plain");
+    assertThat(TestSupport.decode(signMessage.get("message"))).isEqualTo(text);
+
+    // Parsing what is sent gives back the plain text
+    final SignRequest parsed = SignRequest.parse(json);
+    assertThat(parsed.getTbsData()).isNull();
+    assertThat(parsed.getSignMessage().getDefaultMessage()).isEqualTo(text);
   }
 
 }

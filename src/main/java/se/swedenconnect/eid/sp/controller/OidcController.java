@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
+import se.oidc.nimbus.claims.ScopeConstants;
 import se.swedenconnect.eid.sp.config.RpConfigurationProperties;
 import se.swedenconnect.eid.sp.config.SpConfigurationProperties;
 import se.swedenconnect.eid.sp.model.AttributeInfo;
@@ -168,7 +169,7 @@ public class OidcController extends BaseController {
       throw new ApplicationException("sp.msg.error.no-session");
     }
     final OpenIdProvider op = this.getProvider(authentication.issuer());
-    if (!op.supportsScope(OidcRequestFactory.SIGN_APPROVAL_SCOPE)) {
+    if (!op.supportsScope(ScopeConstants.SIGN_APPROVAL.getValue())) {
       throw new ApplicationException("sp.msg.error.failed-request",
           "OP '%s' does not support signature approval".formatted(op.getIssuer()));
     }
@@ -269,7 +270,7 @@ public class OidcController extends BaseController {
     else {
       mav.setViewName("success");
       session.setAttribute(OidcAuthentication.SESSION_ATTRIBUTE, OidcAuthentication.from(result));
-      if (op.supportsScope(OidcRequestFactory.SIGN_APPROVAL_SCOPE)) {
+      if (op.supportsScope(ScopeConstants.SIGN_APPROVAL.getValue())) {
         mav.addObject("signIdp", new IdpDiscoveryInformation(op, LocaleContextHolder.getLocale().getLanguage())
             .getIdpModel(LocaleContextHolder.getLocale()));
         mav.addObject("pathSign", SIGN_PATH);

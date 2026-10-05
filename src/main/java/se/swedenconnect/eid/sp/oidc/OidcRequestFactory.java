@@ -35,15 +35,14 @@ import org.slf4j.LoggerFactory;
 import se.oidc.nimbus.claims.ClaimConstants;
 import se.oidc.nimbus.claims.ParameterConstants;
 import se.oidc.nimbus.claims.ScopeConstants;
+import se.oidc.nimbus.signrequest.SignRequest;
 import se.oidc.nimbus.usermessage.UserMessage;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -61,12 +60,6 @@ public class OidcRequestFactory {
 
   /** The logger. */
   private static final Logger log = LoggerFactory.getLogger(OidcRequestFactory.class);
-
-  /**
-   * The scope for the signature approval use case (Signature Extension for OpenID Connect 1.1). Not defined by
-   * oidc-sweden-nimbus, whose {@code ScopeConstants.SIGN} is the {@code sign} scope of version 1.0.
-   */
-  public static final @NonNull String SIGN_APPROVAL_SCOPE = "https://id.oidc.se/scope/signApproval";
 
   /** The lifetime of a Request Object. */
   private static final Duration REQUEST_OBJECT_LIFETIME = Duration.ofMinutes(5);
@@ -128,18 +121,13 @@ public class OidcRequestFactory {
   public @NonNull OidcRequest createSignatureApprovalRequest(final @NonNull OpenIdProvider op,
       final @NonNull OidcAuthentication authentication, final @NonNull String signMessage) {
     final Scope scope = new Scope(OIDCScopeValue.OPENID);
-    scope.add(SIGN_APPROVAL_SCOPE);
+    scope.add(ScopeConstants.SIGN_APPROVAL);
     this.identityScopes(op).stream().filter(s -> !scope.contains(s)).forEach(scope::add);
 
     final JWTClaimsSet.Builder claims = this.commonClaims(op, scope);
     claims.claim("prompt", "login consent");
 
-    // The signature approval use case has a sign_message but no tbs_data. The SignRequest class of
-    // oidc-sweden-nimbus requires tbs_data, so the parameter is built here.
-    final JSONObject signRequest = new JSONObject();
-    signRequest.put("sign_message", encode(
-        new UserMessage(List.of(new UserMessage.Message(signMessage)), UserMessage.TEXT_MIME_TYPE)));
-    claims.claim(ParameterConstants.SIGN_REQUEST_PARAM_NAME, signRequest);
+    claims.claim(ParameterConstants.SIGN_REQUEST_PARAM_NAME, signRequest(signMessage).toJSONObject());
 
     // Bind the request to the authenticated user
     final JSONObject idToken = new JSONObject();
@@ -226,7 +214,7 @@ public class OidcRequestFactory {
 
     final UserMessage userMessage = this.userMessage(op);
     if (userMessage != null) {
-      claims.claim(ParameterConstants.USER_MESSAGE_PARAM_NAME, encode(userMessage));
+      claims.claim(ParameterConstants.USER_MESSAGE_PARAM_NAME, userMessage.toJSONObject());
     }
 
     final SignedJWT requestObject = this.sign(claims.build());
@@ -271,24 +259,15 @@ public class OidcRequestFactory {
   }
 
   /**
-   * Gets the JSON representation of a user message (also used for {@code sign_message}) with every {@code message}
-   * and {@code message#<lang>} value given as the Base64 encoding of its UTF-8 string, as Section 2.1 of
-   * Authentication Request Parameter Extensions for the Swedish OpenID Connect Profile 1.1 requires. The
-   * {@code UserMessage} class of oidc-sweden-nimbus puts the plain text in these fields.
+   * Creates the sign request for signature approval. It holds the sign message as {@code text/plain} and no
+   * {@code tbs_data}, as the signature approval use case of Signature Extension for OpenID Connect 1.1 requires.
    *
-   * @param userMessage the user message
-   * @return the JSON object to send
+   * @param signMessage the sign message (plain text)
+   * @return the sign request
    */
-  static @NonNull JSONObject encode(final @NonNull UserMessage userMessage) {
-    final JSONObject json = userMessage.toJSONObject();
-    for (final Map.Entry<String, Object> e : json.entrySet()) {
-      if ((UserMessage.MESSAGE_PARAMETER_NAME.equals(e.getKey())
-          || e.getKey().startsWith(UserMessage.MESSAGE_PARAMETER_NAME + "#"))
-          && e.getValue() instanceof final String message) {
-        e.setValue(Base64.getEncoder().encodeToString(message.getBytes(StandardCharsets.UTF_8)));
-      }
-    }
-    return json;
+  static @NonNull SignRequest signRequest(final @NonNull String signMessage) {
+    return new SignRequest(
+        new UserMessage(List.of(new UserMessage.Message(signMessage)), UserMessage.TEXT_MIME_TYPE));
   }
 
   /**
