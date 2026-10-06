@@ -10,7 +10,7 @@
 
 **Date:** _Not yet released_
 
--
+- SVG logotypes drawn in white, made for dark backgrounds, are now displayed on a dark background so that they are visible.
 
 -----
 

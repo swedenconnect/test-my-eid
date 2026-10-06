@@ -126,7 +126,8 @@
                 <input type="hidden" name="debug" th:value="${debug}"/>
                 <button class="provider-button" type="submit" name="idp" th:value="${signIdp.getEntityID()}">
                   <div class="provider">
-                    <img th:if="${signIdp.getLogotype() != null}" th:src="@{${signIdp.getLogotype()}}"/>
+                    <img th:if="${signIdp.getLogotype() != null}" th:src="@{${signIdp.getLogotype()}}"
+                         th:classappend="${signIdp.isDarkLogotypeBackground()} ? 'dark-logo-bg'"/>
                     <p><span th:text="#{sp.msg.sign-using}">Test signature using</span> <span
                         th:text='${signIdp.getDisplayName()}'>IdP Name</span></p>
                   </div>

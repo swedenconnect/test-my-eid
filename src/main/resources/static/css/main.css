@@ -291,6 +291,14 @@ a {
     width: 53px;
 }
 
+/* Logotypes drawn in white, made for a dark background */
+.providers .provider img.dark-logo-bg {
+    box-sizing: border-box;
+    padding: 3px;
+    background-color: #333333;
+    border-radius: 3px;
+}
+
 .providers .provider p {
     margin: 0 0 0 8px;
     width: calc(100% - 66px);

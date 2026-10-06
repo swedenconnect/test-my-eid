@@ -24,7 +24,6 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -73,7 +72,7 @@ public class SpController extends BaseController {
     final ModelAndView mav = new ModelAndView("home");
     mav.addObject("idpList", this.idpListConfiguration.getIdps()
         .stream()
-        .map(i -> i.getIdpModel(LocaleContextHolder.getLocale()))
+        .map(this::toIdpModel)
         .collect(Collectors.toList()));
 
     log.trace("Adding IdPs {}", this.idpListConfiguration.getIdps());
@@ -154,7 +153,7 @@ public class SpController extends BaseController {
       this.idpListConfiguration.getIdps()
           .stream()
           .filter(idp -> Objects.equals(idp.getEntityID(), lastAuthentication.getIdp()))
-          .map(idp -> idp.getIdpModel(LocaleContextHolder.getLocale()))
+          .map(this::toIdpModel)
           .findFirst().ifPresent(idpModel -> mav.addObject("signIdp", idpModel));
     }
     mav.addObject("pathSign", this.signPath);
