@@ -22,6 +22,30 @@ It is released as open source so that anyone can see how an authentication reque
 
 * Sweden Connect Production - [https://test.swedenconnect.se](https://test.swedenconnect.se)
 
+### Building
+
+Build the application with Maven:
+
+```bash
+mvn clean install
+```
+
+This gives `target/test-my-eid-<version>-exec.jar`, the executable jar.
+
+To build a Docker image to your local Docker, use the `local` execution of Jib:
+
+```bash
+mvn clean package jib:dockerBuild@local
+```
+
+The image is named `local/test-my-eid:<version>` and is built for the architecture of your machine (`linux/amd64` or `linux/arm64`), so it runs without emulation.
+
+### Releases
+
+Released versions are published to Maven Central as `se.swedenconnect.eid:test-my-eid`, and the Docker image is published to `ghcr.io/swedenconnect/test-my-eid`, for `linux/amd64` and `linux/arm64`, tagged with the version and with `latest`. What each version contains is described in the [release notes](release-notes.md).
+
+Releases are made by GitHub workflows when a version tag is pushed. How to make a release is described in [internal/release.md](internal/release.md).
+
 ### Configuration settings
 
 This section describes the configuration settings of the application.

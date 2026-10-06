@@ -72,17 +72,6 @@
     </repository>
   </repositories>
 
-  <distributionManagement>
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
-    <repository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-  </distributionManagement>
-
   <dependencyManagement>
 
     <dependencies>
@@ -348,7 +337,9 @@
         The container image. Neither execution runs in the normal build:
           mvn jib:dockerBuild@local - builds local/test-my-eid:<version> to the local Docker, for the architecture
                                       of the build machine (amd64 or arm64)
-          mvn jib:build             - builds for linux/amd64 and linux/arm64 and pushes to ${DOCKER_REPO}
+          mvn jib:build             - builds for linux/amd64 and linux/arm64 and pushes to
+                                      ghcr.io/swedenconnect/test-my-eid:<version>. Run by the Docker release
+                                      workflow when a version tag is pushed, see internal/release.md
         -->
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
@@ -359,7 +350,7 @@
             <image>amazoncorretto:25.0.1</image>
           </from>
           <to>
-            <image>${DOCKER_REPO}/swedenconnect/${project.artifactId}:${project.version}</image>
+            <image>ghcr.io/swedenconnect/${project.artifactId}:${project.version}</image>
           </to>
           <container>
             <creationTime>USE_CURRENT_TIMESTAMP</creationTime>
