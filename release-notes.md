@@ -8,7 +8,7 @@
 
 ### Version 4.0.0
 
-**Date:** _Not yet released_
+**Date:** 2026-10-06
 
 - Test my eID is now also an OpenID Connect Relying Party. OpenID Providers are shown next to the SAML Identity Providers on the start page, and both authentication and signature approval are supported, following the Swedish OpenID Connect profiles.
 - Support for OpenID Federation. The Relying Party publishes an entity configuration with trust marks, and OpenID Providers can be found and trusted through the federation's trust anchor.
