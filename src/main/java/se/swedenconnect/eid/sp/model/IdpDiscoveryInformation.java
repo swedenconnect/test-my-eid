@@ -250,6 +250,9 @@ public class IdpDiscoveryInformation {
     /** The protocol. */
     private @Nullable Protocol protocol;
 
+    /** Whether the logotype should be displayed on a dark background. */
+    private boolean darkLogotypeBackground;
+
     /**
      * Tells whether this is an OpenID Provider.
      *
@@ -349,6 +352,24 @@ public class IdpDiscoveryInformation {
       this.protocol = protocol;
     }
 
+    /**
+     * Tells whether the logotype should be displayed on a dark background.
+     *
+     * @return {@code true} if the logotype should be displayed on a dark background
+     */
+    public boolean isDarkLogotypeBackground() {
+      return this.darkLogotypeBackground;
+    }
+
+    /**
+     * Assigns whether the logotype should be displayed on a dark background.
+     *
+     * @param darkLogotypeBackground whether the logotype should be displayed on a dark background
+     */
+    public void setDarkLogotypeBackground(final boolean darkLogotypeBackground) {
+      this.darkLogotypeBackground = darkLogotypeBackground;
+    }
+
     /** {@inheritDoc} */
     @Override
     public String toString() {
@@ -357,6 +378,7 @@ public class IdpDiscoveryInformation {
           + ", description=" + this.description
           + ", logotype=" + this.logotype
           + ", protocol=" + this.protocol
+          + ", darkLogotypeBackground=" + this.darkLogotypeBackground
           + ")";
     }
   }

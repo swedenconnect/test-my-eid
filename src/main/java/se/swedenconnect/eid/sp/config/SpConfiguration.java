@@ -62,6 +62,7 @@ import se.swedenconnect.eid.sp.saml.TestMyEidAuthnRequestGenerator;
 import se.swedenconnect.eid.sp.utils.ClientCertificateGetter;
 import se.swedenconnect.eid.sp.utils.FromHeaderClientCertificateGetter;
 import se.swedenconnect.eid.sp.utils.FromRequestAttributeClientCertificateGetter;
+import se.swedenconnect.eid.sp.utils.LogotypeInspector;
 import se.swedenconnect.opensaml.saml2.metadata.EntityDescriptorContainer;
 import se.swedenconnect.opensaml.saml2.metadata.build.AssertionConsumerServiceBuilder;
 import se.swedenconnect.opensaml.saml2.metadata.build.EntityAttributesBuilder;
@@ -354,6 +355,16 @@ public class SpConfiguration implements InitializingBean {
     idpList.setIgnoreContracts(this.properties.getDiscovery().isIgnoreContracts());
 
     return idpList;
+  }
+
+  /**
+   * Returns the bean that checks whether logotypes need a dark background.
+   *
+   * @return a {@link LogotypeInspector}
+   */
+  @Bean
+  @NonNull LogotypeInspector logotypeInspector() {
+    return new LogotypeInspector(this.properties.getDiscovery().getCacheTime());
   }
 
   /**

@@ -271,8 +271,8 @@ public class OidcController extends BaseController {
       mav.setViewName("success");
       session.setAttribute(OidcAuthentication.SESSION_ATTRIBUTE, OidcAuthentication.from(result));
       if (op.supportsScope(ScopeConstants.SIGN_APPROVAL.getValue())) {
-        mav.addObject("signIdp", new IdpDiscoveryInformation(op, LocaleContextHolder.getLocale().getLanguage())
-            .getIdpModel(LocaleContextHolder.getLocale()));
+        mav.addObject("signIdp",
+            this.toIdpModel(new IdpDiscoveryInformation(op, LocaleContextHolder.getLocale().getLanguage())));
         mav.addObject("pathSign", SIGN_PATH);
       }
     }

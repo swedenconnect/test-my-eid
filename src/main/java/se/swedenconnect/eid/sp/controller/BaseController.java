@@ -26,6 +26,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
 import se.swedenconnect.eid.sp.config.UiLanguage;
+import se.swedenconnect.eid.sp.model.IdpDiscoveryInformation;
+import se.swedenconnect.eid.sp.model.IdpDiscoveryInformation.IdpModel;
+import se.swedenconnect.eid.sp.utils.LogotypeInspector;
 
 /**
  * Base controller.
@@ -37,6 +40,10 @@ public class BaseController {
   /** Possible languages for the UI. */
   @Autowired
   protected @NonNull List<UiLanguage> languages;
+
+  /** Checks whether logotypes need a dark background. */
+  @Autowired
+  protected @NonNull LogotypeInspector logotypeInspector;
 
   /**
    * Updates the MVC model with common attributes such as possible languages.
@@ -50,6 +57,18 @@ public class BaseController {
     model.addAttribute("languages", this.languages.stream()
         .filter(lang -> !lang.getLanguageTag().equals(locale.getLanguage()))
         .collect(Collectors.toList()));
+  }
+
+  /**
+   * Creates the UI model for an IdP or OP.
+   *
+   * @param idp the IdP or OP information
+   * @return the UI model
+   */
+  protected @NonNull IdpModel toIdpModel(final @NonNull IdpDiscoveryInformation idp) {
+    final IdpModel model = idp.getIdpModel(LocaleContextHolder.getLocale());
+    model.setDarkLogotypeBackground(this.logotypeInspector.isLightLogotype(model.getLogotype()));
+    return model;
   }
 
 }
