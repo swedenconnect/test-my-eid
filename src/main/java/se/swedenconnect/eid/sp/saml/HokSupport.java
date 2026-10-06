@@ -15,6 +15,8 @@
  */
 package se.swedenconnect.eid.sp.saml;
 
+import org.jspecify.annotations.NonNull;
+
 /**
  * Enum for selecting HoK or not.
  *
@@ -31,11 +33,23 @@ public enum HokSupport {
   /** The IdP supports both Holder-of-key and plain WebSSO. */
   BOTH("both");
 
-  public String getName() {
+  /**
+   * Gets the name of the value.
+   *
+   * @return the name
+   */
+  public @NonNull String getName() {
     return this.name;
   }
 
-  public static HokSupport parse(final String name) {
+  /**
+   * Parses a string into a {@link HokSupport} value.
+   *
+   * @param name the name (case insensitive)
+   * @return the matching value
+   * @throws IllegalArgumentException if no value matches
+   */
+  public static @NonNull HokSupport parse(final @NonNull String name) {
     for (final HokSupport hs : HokSupport.values()) {
       if (hs.getName().equalsIgnoreCase(name)) {
         return hs;
@@ -44,7 +58,7 @@ public enum HokSupport {
     throw new IllegalArgumentException(name + " is not a valid string");
   }
 
-  HokSupport(final String name) {
+  HokSupport(final @NonNull String name) {
     this.name = name;
   }
 

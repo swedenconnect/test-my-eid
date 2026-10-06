@@ -16,6 +16,7 @@
 package se.swedenconnect.eid.sp.config;
 
 import org.springframework.beans.factory.InitializingBean;
+import org.jspecify.annotations.NonNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import se.swedenconnect.eid.sp.saml.IdpList;
 
@@ -34,7 +35,12 @@ public class StaticIdpConfigurationProperties extends ArrayList<IdpList.StaticId
   @Serial
   private static final long serialVersionUID = -4620694286344712583L;
 
-  public List<IdpList.StaticIdpDiscoEntry> getIdp() {
+  /**
+   * Returns the statically configured IdP:s.
+   *
+   * @return a list of IdP entries
+   */
+  public @NonNull List<IdpList.StaticIdpDiscoEntry> getIdp() {
     return this;
   }
 

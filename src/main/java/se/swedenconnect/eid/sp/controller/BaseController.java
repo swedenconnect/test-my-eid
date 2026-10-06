@@ -20,6 +20,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -35,7 +36,7 @@ public class BaseController {
 
   /** Possible languages for the UI. */
   @Autowired
-  protected List<UiLanguage> languages;
+  protected @NonNull List<UiLanguage> languages;
 
   /**
    * Updates the MVC model with common attributes such as possible languages.
@@ -43,7 +44,7 @@ public class BaseController {
    * @param model the model
    */
   @ModelAttribute
-  public void updateModel(final Model model) {
+  public void updateModel(final @NonNull Model model) {
     final Locale locale = LocaleContextHolder.getLocale();
 
     model.addAttribute("languages", this.languages.stream()

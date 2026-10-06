@@ -50,10 +50,23 @@
               </th:block>
               <th:block th:if="${!idpList.empty}">
                 <th:block th:each="idpData,idpStat:${idpList}">
-                  <button class="provider-button" type="submit" name="selectedIdp" th:value="${idpData.getEntityID()}">
+                  <button th:if="${!idpData.isOidc()}" class="provider-button" type="submit" name="selectedIdp"
+                          th:value="${idpData.getEntityID()}">
                     <div class="provider">
                       <img th:src="@{${idpData.getLogotype()}}"/>
                       <p th:text='${idpData.getDisplayName()}'>IdP</p>
+                      <p class="provider-protocol" th:text="#{sp.msg.protocol.saml}">SAML</p>
+                      <th:block th:if="${idpData.getDescription() != null}">
+                        <p class="idp-description" th:text='${idpData.getDescription()}'>Additional text</p>
+                      </th:block>
+                    </div>
+                  </button>
+                  <button th:if="${idpData.isOidc()}" class="provider-button" type="submit" name="selectedOp"
+                          th:value="${idpData.getEntityID()}" th:formaction="@{/oidc/request}">
+                    <div class="provider">
+                      <img th:if="${idpData.getLogotype() != null}" th:src="@{${idpData.getLogotype()}}"/>
+                      <p th:text='${idpData.getDisplayName()}'>OP</p>
+                      <p class="provider-protocol" th:text="#{sp.msg.protocol.oidc}">OpenID Connect</p>
                       <th:block th:if="${idpData.getDescription() != null}">
                         <p class="idp-description" th:text='${idpData.getDescription()}'>Additional text</p>
                       </th:block>

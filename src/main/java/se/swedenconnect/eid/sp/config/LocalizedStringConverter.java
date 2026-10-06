@@ -15,7 +15,7 @@
  */
 package se.swedenconnect.eid.sp.config;
 
-import jakarta.annotation.Nonnull;
+import org.jspecify.annotations.NonNull;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
@@ -41,7 +41,7 @@ public class LocalizedStringConverter implements Converter<String, LocalizedStri
    * </pre>
    */
   @Override
-  public LocalizedString convert(@Nonnull final String source) {
+  public @NonNull LocalizedString convert(final @NonNull String source) {
     return new LocalizedString(source);
   }
 

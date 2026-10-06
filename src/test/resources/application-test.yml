@@ -1,0 +1,42 @@
+#
+# Settings used by the tests
+#
+server:
+  port: 8443
+  ssl:
+    enabled: false
+
+management:
+  server:
+    port: -1
+
+sp:
+  base-uri: https://localhost:8443
+  entity-id: http://test.swedenconnect.se/testmyeid
+  sign-entity-id: http://test.swedenconnect.se/testmyeid-sign
+  eidas-connector:
+    entity-id: https://connector.example.com/eidas
+  credential:
+    sign:
+      jks:
+        store:
+          location: classpath:sp-keys.jks
+          password: secret
+          type: JKS
+        key:
+          alias: sign
+          key-password: secret
+    decrypt:
+      jks:
+        store:
+          location: classpath:sp-keys.jks
+          password: secret
+          type: JKS
+        key:
+          alias: encrypt
+          key-password: secret
+  federation:
+    metadata:
+      url: classpath:test-metadata.xml
+  discovery:
+    static-idp-configuration: classpath:test-no-such-file.yml

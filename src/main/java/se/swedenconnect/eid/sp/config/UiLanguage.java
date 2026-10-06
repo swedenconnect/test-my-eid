@@ -15,28 +15,66 @@
  */
 package se.swedenconnect.eid.sp.config;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Model class for representing a selectable language in the UI.
  *
  * @author Martin Lindström (martin@idsec.se)
  */
-@Data
-@NoArgsConstructor
-@ToString
 public class UiLanguage {
 
   /**
    * The language tag, i.e., "en".
    */
-  private String languageTag;
+  private @Nullable String languageTag;
 
   /**
    * The text to display for the language, i.e., "English".
    */
-  private String text;
+  private @Nullable String text;
+
+  /**
+   * Gets the language tag, i.e., "en".
+   *
+   * @return the language tag
+   */
+  public @Nullable String getLanguageTag() {
+    return this.languageTag;
+  }
+
+  /**
+   * Assigns the language tag, i.e., "en".
+   *
+   * @param languageTag the language tag
+   */
+  public void setLanguageTag(final @Nullable String languageTag) {
+    this.languageTag = languageTag;
+  }
+
+  /**
+   * Gets the text to display for the language, i.e., "English".
+   *
+   * @return the text
+   */
+  public @Nullable String getText() {
+    return this.text;
+  }
+
+  /**
+   * Assigns the text to display for the language, i.e., "English".
+   *
+   * @param text the text
+   */
+  public void setText(final @Nullable String text) {
+    this.text = text;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public @NonNull String toString() {
+    return "UiLanguage(languageTag=" + this.languageTag + ", text=" + this.text + ")";
+  }
 
 }

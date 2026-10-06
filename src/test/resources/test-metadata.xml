@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<md:EntitiesDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+                       xmlns:mdattr="urn:oasis:names:tc:SAML:metadata:attribute"
+                       xmlns:mdui="urn:oasis:names:tc:SAML:metadata:ui"
+                       xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+                       Name="test">
+  <md:EntityDescriptor entityID="https://idp.example.com/idp">
+    <md:Extensions>
+      <mdattr:EntityAttributes>
+        <saml:Attribute Name="http://macedir.org/entity-category"
+                        NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+          <saml:AttributeValue>http://id.elegnamnden.se/ec/1.0/loa3-pnr</saml:AttributeValue>
+        </saml:Attribute>
+      </mdattr:EntityAttributes>
+    </md:Extensions>
+    <md:IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+      <md:Extensions>
+        <mdui:UIInfo>
+          <mdui:DisplayName xml:lang="sv">Test-IdP</mdui:DisplayName>
+          <mdui:DisplayName xml:lang="en">Test IdP</mdui:DisplayName>
+          <mdui:Logo height="64" width="64">https://idp.example.com/logo.svg</mdui:Logo>
+        </mdui:UIInfo>
+      </md:Extensions>
+      <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</md:NameIDFormat>
+      <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+                              Location="https://idp.example.com/sso"/>
+    </md:IDPSSODescriptor>
+  </md:EntityDescriptor>
+</md:EntitiesDescriptor>

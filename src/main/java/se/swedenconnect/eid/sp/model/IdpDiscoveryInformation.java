@@ -20,15 +20,15 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.ext.saml2mdui.Logo;
 import org.opensaml.saml.ext.saml2mdui.UIInfo;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml.saml2.metadata.SSODescriptor;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.ToString;
+import se.swedenconnect.eid.sp.oidc.OpenIdProvider;
 import se.swedenconnect.eid.sp.saml.IdpList.StaticIdpDiscoEntry;
 import se.swedenconnect.opensaml.saml2.metadata.EntityDescriptorUtils;
 
@@ -37,15 +37,13 @@ import se.swedenconnect.opensaml.saml2.metadata.EntityDescriptorUtils;
  *
  * @author Martin Lindström (martin@idsec.se)
  */
-@ToString
 public class IdpDiscoveryInformation {
 
   /** The default languange to use if no match is found. */
-  public static final String DEFAULT_LANGUAGE = "sv";
+  public static final @NonNull String DEFAULT_LANGUAGE = "sv";
 
   /** The entityID for the IdP. */
-  @Getter
-  private final String entityID;
+  private final @NonNull String entityID;
 
   /** A map holding display names for different languages, where the language tag is the key. */
   private final Map<String, String> displayNames;
@@ -57,17 +55,23 @@ public class IdpDiscoveryInformation {
   private String logotype;
 
   /** Sorting order for the IdP:s place in the list. */
-  @Getter
-  private Integer sortOrder;
+  private @NonNull Integer sortOrder;
+
+  /** The protocol (SAML for an IdP, OIDC for an OP). */
+  private final @NonNull Protocol protocol;
+
+  /** Whether the entry is statically configured. */
+  private boolean staticEntry;
 
   /**
    * Constructor.
    *
    * @param metadata the IdP metadata
    */
-  public IdpDiscoveryInformation(final EntityDescriptor metadata) {
+  public IdpDiscoveryInformation(final @NonNull EntityDescriptor metadata) {
     this.entityID = metadata.getEntityID();
     this.sortOrder = Integer.MAX_VALUE;
+    this.protocol = Protocol.SAML;
 
     this.displayNames = new HashMap<>();
     this.descriptions = new HashMap<>();
@@ -110,12 +114,55 @@ public class IdpDiscoveryInformation {
    * @param sortOrder the sort order
    */
   public IdpDiscoveryInformation(
-      final EntityDescriptor metadata,
-      final StaticIdpDiscoEntry staticEntry,
+      final @NonNull EntityDescriptor metadata,
+      final @NonNull StaticIdpDiscoEntry staticEntry,
       final int sortOrder) {
 
     this(metadata);
+    this.applyStaticEntry(staticEntry, sortOrder);
+  }
+
+  /**
+   * Constructor for an OpenID Provider. The name, description and logotype are taken from the OP metadata, and the
+   * issuer is used as the name when the metadata holds no name.
+   *
+   * @param op the OpenID Provider
+   * @param language the default language for the logotype
+   */
+  public IdpDiscoveryInformation(final @NonNull OpenIdProvider op, final @NonNull String language) {
+    this.entityID = op.getIssuer();
+    this.sortOrder = Integer.MAX_VALUE;
+    this.protocol = Protocol.OIDC;
+    this.displayNames = new HashMap<>(op.getDisplayNames());
+    if (this.displayNames.isEmpty()) {
+      this.displayNames.put("", op.getIssuer());
+    }
+    this.descriptions = new HashMap<>(op.getDescriptions());
+    this.logotype = op.getLogo(language);
+  }
+
+  /**
+   * Constructor for a statically configured OpenID Provider.
+   *
+   * @param op the OpenID Provider
+   * @param staticEntry the static entry
+   * @param sortOrder the sort order
+   */
+  public IdpDiscoveryInformation(final @NonNull OpenIdProvider op, final @NonNull StaticIdpDiscoEntry staticEntry,
+      final int sortOrder) {
+    this(op, DEFAULT_LANGUAGE);
+    this.applyStaticEntry(staticEntry, sortOrder);
+  }
+
+  /**
+   * Applies the settings of a static entry.
+   *
+   * @param staticEntry the static entry
+   * @param sortOrder the sort order
+   */
+  private void applyStaticEntry(final @NonNull StaticIdpDiscoEntry staticEntry, final int sortOrder) {
     this.sortOrder = sortOrder;
+    this.staticEntry = true;
 
     Optional.ofNullable(staticEntry.getDisplayNameSv()).ifPresent(d -> this.displayNames.put("sv", d));
     Optional.ofNullable(staticEntry.getDisplayNameEn()).ifPresent(d -> this.displayNames.put("en", d));
@@ -144,7 +191,7 @@ public class IdpDiscoveryInformation {
    * @param locale the locale (language)
    * @return the IdP list
    */
-  public IdpModel getIdpModel(final Locale locale) {
+  public @NonNull IdpModel getIdpModel(final @NonNull Locale locale) {
     final IdpModel idp = new IdpModel();
     idp.setEntityID(this.entityID);
     idp.setLogotype(this.logotype);
@@ -152,11 +199,19 @@ public class IdpDiscoveryInformation {
     if (dn == null) {
       dn = this.displayNames.get(DEFAULT_LANGUAGE);
     }
+    if (dn == null) {
+      dn = this.displayNames.get("");
+    }
     if (dn == null && !this.displayNames.isEmpty()) {
-      dn = this.displayNames.entrySet().iterator().next().getValue();
+      dn = this.displayNames.values().iterator().next();
     }
     idp.setDisplayName(dn);
-    idp.setDescription(this.descriptions.get(locale.getLanguage()));
+    String description = this.descriptions.get(locale.getLanguage());
+    if (description == null && this.protocol == Protocol.OIDC) {
+      description = this.descriptions.get("");
+    }
+    idp.setDescription(description);
+    idp.setProtocol(this.protocol);
     return idp;
   }
 
@@ -178,21 +233,181 @@ public class IdpDiscoveryInformation {
   /**
    * Model for representing selectable IdP:s in the discovery view.
    */
-  @Data
-  @ToString
   public static class IdpModel {
 
     /** The IdP entityID. */
-    private String entityID;
+    private @Nullable String entityID;
 
     /** The IdP display name. */
-    private String displayName;
+    private @Nullable String displayName;
 
     /** The IdP description. */
-    private String description;
+    private @Nullable String description;
 
     /** The IdP logotype. */
-    private String logotype;
+    private @Nullable String logotype;
+
+    /** The protocol. */
+    private @Nullable Protocol protocol;
+
+    /**
+     * Tells whether this is an OpenID Provider.
+     *
+     * @return {@code true} for an OpenID Provider
+     */
+    public boolean isOidc() {
+      return this.protocol == Protocol.OIDC;
+    }
+
+    /**
+     * Gets the IdP entityID.
+     *
+     * @return the IdP entityID
+     */
+    public @Nullable String getEntityID() {
+      return this.entityID;
+    }
+
+    /**
+     * Assigns the IdP entityID.
+     *
+     * @param entityID the IdP entityID
+     */
+    public void setEntityID(final @Nullable String entityID) {
+      this.entityID = entityID;
+    }
+
+    /**
+     * Gets the IdP display name.
+     *
+     * @return the IdP display name
+     */
+    public @Nullable String getDisplayName() {
+      return this.displayName;
+    }
+
+    /**
+     * Assigns the IdP display name.
+     *
+     * @param displayName the IdP display name
+     */
+    public void setDisplayName(final @Nullable String displayName) {
+      this.displayName = displayName;
+    }
+
+    /**
+     * Gets the IdP description.
+     *
+     * @return the IdP description
+     */
+    public @Nullable String getDescription() {
+      return this.description;
+    }
+
+    /**
+     * Assigns the IdP description.
+     *
+     * @param description the IdP description
+     */
+    public void setDescription(final @Nullable String description) {
+      this.description = description;
+    }
+
+    /**
+     * Gets the IdP logotype.
+     *
+     * @return the IdP logotype
+     */
+    public @Nullable String getLogotype() {
+      return this.logotype;
+    }
+
+    /**
+     * Assigns the IdP logotype.
+     *
+     * @param logotype the IdP logotype
+     */
+    public void setLogotype(final @Nullable String logotype) {
+      this.logotype = logotype;
+    }
+
+    /**
+     * Gets the protocol.
+     *
+     * @return the protocol
+     */
+    public @Nullable Protocol getProtocol() {
+      return this.protocol;
+    }
+
+    /**
+     * Assigns the protocol.
+     *
+     * @param protocol the protocol
+     */
+    public void setProtocol(final @Nullable Protocol protocol) {
+      this.protocol = protocol;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String toString() {
+      return "IdpDiscoveryInformation.IdpModel(entityID=" + this.entityID
+          + ", displayName=" + this.displayName
+          + ", description=" + this.description
+          + ", logotype=" + this.logotype
+          + ", protocol=" + this.protocol
+          + ")";
+    }
+  }
+
+  /**
+   * Gets the entityID for the IdP.
+   *
+   * @return the entityID for the IdP
+   */
+  public @NonNull String getEntityID() {
+    return this.entityID;
+  }
+
+  /**
+   * Gets the sorting order for the IdP:s place in the list.
+   *
+   * @return the sort order
+   */
+  public @NonNull Integer getSortOrder() {
+    return this.sortOrder;
+  }
+
+  /**
+   * Gets the protocol (SAML for an IdP, OIDC for an OP).
+   *
+   * @return the protocol (SAML for an IdP, OIDC for an OP)
+   */
+  public @NonNull Protocol getProtocol() {
+    return this.protocol;
+  }
+
+  /**
+   * Tells whether the entry is statically configured.
+   *
+   * @return {@code true} if the entry is statically configured
+   */
+  public boolean isStaticEntry() {
+    return this.staticEntry;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toString() {
+    return "IdpDiscoveryInformation(entityID=" + this.entityID
+        + ", displayNames=" + this.displayNames
+        + ", descriptions=" + this.descriptions
+        + ", logotype=" + this.logotype
+        + ", sortOrder=" + this.sortOrder
+        + ", protocol=" + this.protocol
+        + ", staticEntry=" + this.staticEntry
+        + ")";
   }
 
 }

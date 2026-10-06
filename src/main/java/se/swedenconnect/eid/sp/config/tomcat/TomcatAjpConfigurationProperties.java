@@ -15,10 +15,8 @@
  */
 package se.swedenconnect.eid.sp.config.tomcat;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  * Configuration properties for Tomcat AJP.
@@ -29,23 +27,87 @@ import lombok.Setter;
 public class TomcatAjpConfigurationProperties {
 
   /** Is AJP enabled? */
-  @Getter
-  @Setter
   private boolean enabled = false;
 
   /** The Tomcat AJP port. */
-  @Getter
-  @Setter
   private int port = 8009;
 
   /** AJP secret. */
-  @Getter
-  @Setter
-  private String secret;
+  private @Nullable String secret;
 
   /** Is AJP secret required? */
-  @Getter
-  @Setter
   private boolean secretRequired = false;
+
+  /**
+   * Tells whether AJP is enabled.
+   *
+   * @return whether AJP is enabled
+   */
+  public boolean isEnabled() {
+    return this.enabled;
+  }
+
+  /**
+   * Assigns whether AJP is enabled.
+   *
+   * @param enabled whether AJP is enabled
+   */
+  public void setEnabled(final boolean enabled) {
+    this.enabled = enabled;
+  }
+
+  /**
+   * Gets the Tomcat AJP port.
+   *
+   * @return the AJP port
+   */
+  public int getPort() {
+    return this.port;
+  }
+
+  /**
+   * Assigns the Tomcat AJP port.
+   *
+   * @param port the AJP port
+   */
+  public void setPort(final int port) {
+    this.port = port;
+  }
+
+  /**
+   * Gets the AJP secret.
+   *
+   * @return the AJP secret
+   */
+  public @Nullable String getSecret() {
+    return this.secret;
+  }
+
+  /**
+   * Assigns the AJP secret.
+   *
+   * @param secret the AJP secret
+   */
+  public void setSecret(final @Nullable String secret) {
+    this.secret = secret;
+  }
+
+  /**
+   * Tells whether the AJP secret is required.
+   *
+   * @return whether the AJP secret is required
+   */
+  public boolean isSecretRequired() {
+    return this.secretRequired;
+  }
+
+  /**
+   * Assigns whether the AJP secret is required.
+   *
+   * @param secretRequired whether the AJP secret is required
+   */
+  public void setSecretRequired(final boolean secretRequired) {
+    this.secretRequired = secretRequired;
+  }
 
 }

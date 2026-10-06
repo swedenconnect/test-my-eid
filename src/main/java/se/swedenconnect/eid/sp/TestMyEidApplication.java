@@ -18,6 +18,7 @@ package se.swedenconnect.eid.sp;
 import java.time.Duration;
 import java.util.Locale;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -30,7 +31,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 
-import lombok.Setter;
 import se.swedenconnect.eid.sp.config.AlgorithmConfiguration.CustomAlgorithms;
 import se.swedenconnect.eid.sp.saml.CustomSwedishEidSecurityConfiguration;
 import se.swedenconnect.opensaml.OpenSAMLInitializer;
@@ -45,21 +45,27 @@ import se.swedenconnect.opensaml.OpenSAMLSecurityExtensionConfig;
 @SpringBootApplication
 public class TestMyEidApplication {
 
-  @Setter
+  /** The customized algorithm configuration. */
   @Autowired
-  CustomAlgorithms algorithmConfiguration;
+  @NonNull CustomAlgorithms algorithmConfiguration;
 
   /**
    * Program main.
    *
    * @param args program arguments
    */
-  public static void main(final String[] args) {
+  public static void main(final @NonNull String @NonNull [] args) {
     SpringApplication.run(TestMyEidApplication.class, args);
   }
 
+  /**
+   * Initializes OpenSAML with the customized security configuration.
+   *
+   * @return the OpenSAML initializer
+   * @throws Exception for initialization errors
+   */
   @Bean("openSAML")
-  OpenSAMLInitializer openSAML() throws Exception {
+  @NonNull OpenSAMLInitializer openSAML() throws Exception {
     OpenSAMLInitializer.getInstance()
         .initialize(
             new OpenSAMLSecurityDefaultsConfig(new CustomSwedishEidSecurityConfiguration(this.algorithmConfiguration)),
@@ -67,8 +73,15 @@ public class TestMyEidApplication {
     return OpenSAMLInitializer.getInstance();
   }
 
+  /**
+   * Creates a cookie based locale resolver.
+   *
+   * @param contextPath the servlet context path
+   * @return the locale resolver
+   */
   @Bean
-  LocaleResolver localeResolver(@Value("${server.servlet.context-path}") final String contextPath) {
+  @NonNull LocaleResolver localeResolver(
+      @Value("${server.servlet.context-path}") final @NonNull String contextPath) {
     final CookieLocaleResolver resolver = new CookieLocaleResolver();
     resolver.setDefaultLocale(Locale.ENGLISH);
     resolver.setCookiePath(contextPath);
@@ -76,21 +89,39 @@ public class TestMyEidApplication {
     return resolver;
   }
 
+  /**
+   * MVC configuration adding the locale change interceptor.
+   */
   @Configuration
   public static class WebMvcConfig implements WebMvcConfigurer {
 
+    /**
+     * Creates an interceptor that changes locale based on the {@code lang} request parameter.
+     *
+     * @return the interceptor
+     */
     @Bean
-    LocaleChangeInterceptor localeChangeInterceptor() {
+    @NonNull LocaleChangeInterceptor localeChangeInterceptor() {
       final LocaleChangeInterceptor interceptor = new LocaleChangeInterceptor();
       interceptor.setParamName("lang");
       return interceptor;
     }
 
+    /** {@inheritDoc} */
     @Override
-    public void addInterceptors(final InterceptorRegistry registry) {
+    public void addInterceptors(final @NonNull InterceptorRegistry registry) {
       registry.addInterceptor(this.localeChangeInterceptor());
     }
 
+  }
+
+  /**
+   * Assigns the customized algorithm configuration.
+   *
+   * @param algorithmConfiguration the customized algorithm configuration
+   */
+  public void setAlgorithmConfiguration(final @NonNull CustomAlgorithms algorithmConfiguration) {
+    this.algorithmConfiguration = algorithmConfiguration;
   }
 
 }

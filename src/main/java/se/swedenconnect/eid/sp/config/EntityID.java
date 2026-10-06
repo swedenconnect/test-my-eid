@@ -15,23 +15,62 @@
  */
 package se.swedenconnect.eid.sp.config;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * Representation of a SAML entityID.
  *
  * @author Martin Lindström (martin@idsec.se)
  */
-@Getter
-@AllArgsConstructor
-@ToString
-@EqualsAndHashCode
 public class EntityID {
 
   /** The entityID. */
-  private String entityID;
+  private final @NonNull String entityID;
+
+  /**
+   * Constructor.
+   *
+   * @param entityID the entityID
+   */
+  public EntityID(final @NonNull String entityID) {
+    this.entityID = entityID;
+  }
+
+  /**
+   * Gets the entityID.
+   *
+   * @return the entityID
+   */
+  public @NonNull String getEntityID() {
+    return this.entityID;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean equals(final @Nullable Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || this.getClass() != o.getClass()) {
+      return false;
+    }
+    final EntityID other = (EntityID) o;
+    return Objects.equals(this.entityID, other.entityID);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.entityID);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public @NonNull String toString() {
+    return "EntityID(entityID=" + this.entityID + ")";
+  }
 
 }

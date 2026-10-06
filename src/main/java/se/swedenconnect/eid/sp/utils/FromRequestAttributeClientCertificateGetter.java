@@ -19,6 +19,8 @@ import java.security.cert.X509Certificate;
 import java.util.Objects;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Implementation for {@link ClientCertificateGetter} that gets the certificate from a request attribute.
@@ -34,13 +36,13 @@ public class FromRequestAttributeClientCertificateGetter implements ClientCertif
    *
    * @param attributeName the attribute name
    */
-  public FromRequestAttributeClientCertificateGetter(final String attributeName) {
+  public FromRequestAttributeClientCertificateGetter(final @NonNull String attributeName) {
     this.attributeName = Objects.requireNonNull(attributeName, "attributeName must be set");
   }
 
   /** {@inheritDoc} */
   @Override
-  public X509Certificate getClientCertificate(final HttpServletRequest request) {
+  public @Nullable X509Certificate getClientCertificate(final @NonNull HttpServletRequest request) {
     // "javax.servlet.request.X509Certificate"
     final X509Certificate[] certs = (X509Certificate[]) request.getAttribute(this.attributeName);
     if (certs == null || certs.length == 0) {

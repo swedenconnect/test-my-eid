@@ -103,6 +103,12 @@
           </div>
         </div> <!-- /#assuranceLevel -->
 
+        <div th:if="${loaTrustMarkWarning != null && loaTrustMarkWarning}" class="row" id="loaTrustMarkWarning">
+          <div class="col-sm-12">
+            <p class="loa-warning" th:text="#{sp.msg.loa-trust-mark-warning}">Warning</p>
+          </div>
+        </div>
+
       </div> <!-- /.authn-listing -->
 
       <th:block th:if="${signIdp != null && pathSign != null}">
@@ -120,7 +126,7 @@
                 <input type="hidden" name="debug" th:value="${debug}"/>
                 <button class="provider-button" type="submit" name="idp" th:value="${signIdp.getEntityID()}">
                   <div class="provider">
-                    <img th:src="@{${signIdp.getLogotype()}}"/>
+                    <img th:if="${signIdp.getLogotype() != null}" th:src="@{${signIdp.getLogotype()}}"/>
                     <p><span th:text="#{sp.msg.sign-using}">Test signature using</span> <span
                         th:text='${signIdp.getDisplayName()}'>IdP Name</span></p>
                   </div>

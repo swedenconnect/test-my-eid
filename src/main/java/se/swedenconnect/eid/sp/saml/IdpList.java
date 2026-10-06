@@ -15,15 +15,19 @@
  */
 package se.swedenconnect.eid.sp.saml;
 
-import lombok.Data;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import net.shibboleth.shared.resolver.ResolverException;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 import se.swedenconnect.eid.sp.model.IdpDiscoveryInformation;
+import se.swedenconnect.eid.sp.model.Protocol;
+import se.swedenconnect.eid.sp.oidc.OpRegistry;
+import se.swedenconnect.eid.sp.oidc.OpenIdProvider;
 import se.swedenconnect.opensaml.saml2.metadata.EntityDescriptorUtils;
 import se.swedenconnect.opensaml.saml2.metadata.provider.MetadataProvider;
 import se.swedenconnect.opensaml.sweid.saml2.discovery.SwedishEidDiscoveryMatchingRules;
@@ -41,8 +45,10 @@ import java.util.stream.Collectors;
  *
  * @author Martin Lindström (martin@idsec.se)
  */
-@Slf4j
 public class IdpList {
+
+  /** The logger. */
+  private static final Logger log = LoggerFactory.getLogger(IdpList.class);
 
   /** The default time to keep an IdP list in the cache (10 minutes). */
   public static int DEFAULT_CACHE_TIME = 600;
@@ -74,7 +80,10 @@ public class IdpList {
   /** Setting that tells whether we should ignore contract entity categories when matching. */
   private boolean ignoreContracts = true;
 
-  /** The IdP list cache. */
+  /** The OP registry (may be null). */
+  private final @Nullable OpRegistry opRegistry;
+
+  /** The IdP list cache (SAML entries only). */
   private List<IdpDiscoveryInformation> cache = null;
 
   /** The last time the cache was updated. */
@@ -90,12 +99,34 @@ public class IdpList {
    * @param includeOnlyStatic should IdP:s we display only the static IdP entries?
    * @param hokActive is the Holder-of-key profile active?
    */
-  public IdpList(final MetadataProvider metadataProvider,
-      final EntityDescriptor spMetadata,
-      final List<StaticIdpDiscoEntry> staticIdps,
-      final List<String> blackList,
+  public IdpList(final @NonNull MetadataProvider metadataProvider,
+      final @NonNull EntityDescriptor spMetadata,
+      final @Nullable List<StaticIdpDiscoEntry> staticIdps,
+      final @Nullable List<String> blackList,
       final boolean includeOnlyStatic,
       final boolean hokActive) {
+    this(metadataProvider, spMetadata, staticIdps, blackList, includeOnlyStatic, hokActive, null);
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param metadataProvider the metadata provider
+   * @param spMetadata the SP metadata
+   * @param staticIdps statically configured IdP:s and OP:s
+   * @param blackList list of black listed IdPs
+   * @param includeOnlyStatic should we display only the static entries?
+   * @param hokActive is the Holder-of-key profile active?
+   * @param opRegistry the registry of OpenID Providers (may be {@code null})
+   */
+  public IdpList(final @NonNull MetadataProvider metadataProvider,
+      final @NonNull EntityDescriptor spMetadata,
+      final @Nullable List<StaticIdpDiscoEntry> staticIdps,
+      final @Nullable List<String> blackList,
+      final boolean includeOnlyStatic,
+      final boolean hokActive,
+      final @Nullable OpRegistry opRegistry) {
+    this.opRegistry = opRegistry;
     this.metadataProvider = Objects.requireNonNull(metadataProvider, "metadataProvider must be assigned");
     this.spMetadata = Objects.requireNonNull(spMetadata, "spMetadata must be assigned");
     this.staticIdps = Optional.ofNullable(staticIdps).orElse(Collections.emptyList());
@@ -112,11 +143,35 @@ public class IdpList {
   }
 
   /**
-   * Returns a list of IdP:s that should be displayed for the user.
+   * Returns a list of IdP:s and OP:s that should be displayed for the user. Statically configured entries come first,
+   * in the configured order, followed by the remaining IdP:s and then the remaining OP:s (unless only static entries
+   * should be displayed).
    *
-   * @return a list of IdPs
+   * @return a list of IdP:s and OP:s
    */
-  public synchronized List<IdpDiscoveryInformation> getIdps() {
+  public @NonNull List<IdpDiscoveryInformation> getIdps() {
+    final List<IdpDiscoveryInformation> samlEntries = this.getSamlEntries();
+    final List<IdpDiscoveryInformation> oidcEntries = this.getOidcEntries();
+
+    final List<IdpDiscoveryInformation> list = new ArrayList<>();
+    samlEntries.stream().filter(IdpDiscoveryInformation::isStaticEntry).forEach(list::add);
+    oidcEntries.stream().filter(IdpDiscoveryInformation::isStaticEntry).forEach(list::add);
+    list.sort(Comparator.comparing(IdpDiscoveryInformation::getSortOrder));
+
+    if (list.isEmpty() || !this.includeOnlyStatic) {
+      samlEntries.stream().filter(e -> !e.isStaticEntry()).forEach(list::add);
+      oidcEntries.stream().filter(e -> !e.isStaticEntry()).forEach(list::add);
+    }
+    log.trace("Returning IdP/OP list: {}", list);
+    return Collections.unmodifiableList(list);
+  }
+
+  /**
+   * Returns the SAML IdP:s that may be displayed (cached).
+   *
+   * @return a list of IdP:s
+   */
+  private synchronized @NonNull List<IdpDiscoveryInformation> getSamlEntries() {
     if (this.validCache()) {
       return this.cache;
     }
@@ -126,8 +181,11 @@ public class IdpList {
 
     // First read the statically configured IdP:s ...
     //
-    int pos = 0;
-    for (final StaticIdpDiscoEntry idpEntry : this.staticIdps) {
+    for (int pos = 0; pos < this.staticIdps.size(); pos++) {
+      final StaticIdpDiscoEntry idpEntry = this.staticIdps.get(pos);
+      if (idpEntry.getProtocol() != Protocol.SAML) {
+        continue;
+      }
       try {
         if (!idpEntry.isEnabled()) {
           log.debug("IdP '{}' is disabled in configuration and will be excluded from IdP list", idpEntry.getEntityId());
@@ -145,7 +203,7 @@ public class IdpList {
           continue;
         }
 
-        idpList.add(new IdpDiscoveryInformation(idp, idpEntry, pos++));
+        idpList.add(new IdpDiscoveryInformation(idp, idpEntry, pos));
       }
       catch (final ResolverException e) {
         log.error("Error getting IdP '%s' from metadata".formatted(idpEntry.getEntityId()));
@@ -153,37 +211,63 @@ public class IdpList {
     }
     // Next, add the rest of the IdP:s ...
     //
-    if (idpList.isEmpty() || !this.includeOnlyStatic) {
-
-      final Iterable<EntityDescriptor> it = this.metadataProvider.iterator(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
-      it.forEach(idp -> {
-        if (this.staticIdps.stream().anyMatch(e -> e.getEntityId().equals(idp.getEntityID()))) {
-          return;
-        }
-        if (this.blackList.contains(idp.getEntityID())) {
-          log.debug("IdP '{}' is black-listed in configuration and will be excluded from IdP list", idp.getEntityID());
-          return;
-        }
-        if (this.isValidIdP(idp)) {
-          idpList.add(new IdpDiscoveryInformation(idp));
-        }
-        else {
-          log.debug("IdP '{}' removed from IdP listing - no matching entity categories", idp.getEntityID());
-        }
-
-      });
-
-    }
-
-    // Sort the IdP list
-    //
-    idpList.sort(Comparator.comparing(IdpDiscoveryInformation::getSortOrder));
+    final Iterable<EntityDescriptor> it = this.metadataProvider.iterator(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
+    it.forEach(idp -> {
+      if (this.staticIdps.stream()
+          .anyMatch(e -> e.getProtocol() == Protocol.SAML && idp.getEntityID().equals(e.getEntityId()))) {
+        return;
+      }
+      if (this.blackList.contains(idp.getEntityID())) {
+        log.debug("IdP '{}' is black-listed in configuration and will be excluded from IdP list", idp.getEntityID());
+        return;
+      }
+      if (this.isValidIdP(idp)) {
+        idpList.add(new IdpDiscoveryInformation(idp));
+      }
+      else {
+        log.debug("IdP '{}' removed from IdP listing - no matching entity categories", idp.getEntityID());
+      }
+    });
 
     this.cache = Collections.unmodifiableList(idpList);
     this.lastUpdate = System.currentTimeMillis();
 
-    log.debug("Returning IdP list: {}", this.cache);
+    log.debug("IdP list: {}", this.cache);
     return this.cache;
+  }
+
+  /**
+   * Returns the OpenID Providers that may be displayed.
+   *
+   * @return a list of OP:s
+   */
+  private @NonNull List<IdpDiscoveryInformation> getOidcEntries() {
+    if (this.opRegistry == null) {
+      return List.of();
+    }
+    final List<OpenIdProvider> providers = this.opRegistry.getProviders();
+    final List<IdpDiscoveryInformation> entries = new ArrayList<>();
+    for (final OpenIdProvider op : providers) {
+      StaticIdpDiscoEntry staticEntry = null;
+      int pos = 0;
+      for (; pos < this.staticIdps.size(); pos++) {
+        final StaticIdpDiscoEntry e = this.staticIdps.get(pos);
+        if (e.getProtocol() == Protocol.OIDC && op.getIssuer().equals(e.getIssuer())) {
+          staticEntry = e;
+          break;
+        }
+      }
+      if (staticEntry == null) {
+        entries.add(new IdpDiscoveryInformation(op, IdpDiscoveryInformation.DEFAULT_LANGUAGE));
+      }
+      else if (!staticEntry.isEnabled()) {
+        log.trace("OP '{}' is disabled in configuration and will be excluded from list", op.getIssuer());
+      }
+      else {
+        entries.add(new IdpDiscoveryInformation(op, staticEntry, pos));
+      }
+    }
+    return entries;
   }
 
   /**
@@ -192,7 +276,7 @@ public class IdpList {
    * @param idp the IdP metadata
    * @return true if the IdP can be used, and false otherwise
    */
-  protected boolean isValidIdP(final EntityDescriptor idp) {
+  protected boolean isValidIdP(final @NonNull EntityDescriptor idp) {
     final List<String> idpEntityCategories = EntityDescriptorUtils.getEntityCategories(idp);
     if (!SwedishEidDiscoveryMatchingRules.isServiceEntityMatch(this.spEntityCategories, idpEntityCategories)) {
       return false;
@@ -217,7 +301,7 @@ public class IdpList {
     if (this.includeOnlyStatic) {
       return true;
     }
-    return System.currentTimeMillis() - this.lastUpdate > this.cacheTime * 1000L;
+    return System.currentTimeMillis() - this.lastUpdate < this.cacheTime * 1000L;
   }
 
   /**
@@ -241,8 +325,6 @@ public class IdpList {
   /**
    * Represents a IdP discovery info entry.
    */
-  @Data
-  @ToString
   public static class StaticIdpDiscoEntry implements InitializingBean {
 
     /**
@@ -251,48 +333,289 @@ public class IdpList {
     private boolean enabled = true;
 
     /**
-     * The entity ID for the IdP.
+     * The protocol of the entry ({@code saml} or {@code oidc}). Defaults to {@code saml}.
      */
-    private String entityId;
+    private @NonNull Protocol protocol = Protocol.SAML;
+
+    /**
+     * The entity ID for the IdP (for {@code saml} entries).
+     */
+    private @Nullable String entityId;
+
+    /**
+     * The issuer of the OP (for {@code oidc} entries).
+     */
+    private @Nullable String issuer;
 
     /**
      * The Swedish display name.
      */
-    private String displayNameSv;
+    private @Nullable String displayNameSv;
 
     /**
      * The Swedish description.
      */
-    private String descriptionSv;
+    private @Nullable String descriptionSv;
 
     /**
      * The English display name.
      */
-    private String displayNameEn;
+    private @Nullable String displayNameEn;
 
     /**
      * The English description.
      */
-    private String descriptionEn;
+    private @Nullable String descriptionEn;
 
     /**
      * The logotype URL.
      */
-    private String logoUrl;
+    private @Nullable String logoUrl;
 
     /**
      * Logotype width (in pixels).
      */
-    private Integer logoWidth;
+    private @Nullable Integer logoWidth;
 
     /**
      * Logotype height (in pixels).
      */
-    private Integer logoHeight;
+    private @Nullable Integer logoHeight;
 
+    /** {@inheritDoc} */
     @Override
     public void afterPropertiesSet() {
-      Assert.hasText(this.entityId, "entity-id for static IdP entry not assigned");
+      Assert.notNull(this.protocol, "protocol for static IdP entry must be 'saml' or 'oidc'");
+      if (this.protocol == Protocol.SAML) {
+        Assert.hasText(this.entityId, "entity-id for static IdP entry not assigned");
+      }
+      else {
+        Assert.hasText(this.issuer, "issuer for static OP entry not assigned");
+      }
+    }
+
+    /**
+     * Gets the key for the entry: the entity ID for a SAML entry and the issuer for an OIDC entry.
+     *
+     * @return the key
+     */
+    public @Nullable String getKey() {
+      return this.protocol == Protocol.OIDC ? this.issuer : this.entityId;
+    }
+
+    /**
+     * Tells whether the IdP entry is enabled.
+     *
+     * @return {@code true} if the entry is enabled
+     */
+    public boolean isEnabled() {
+      return this.enabled;
+    }
+
+    /**
+     * Assigns whether the IdP entry is enabled.
+     *
+     * @param enabled whether the entry is enabled
+     */
+    public void setEnabled(final boolean enabled) {
+      this.enabled = enabled;
+    }
+
+    /**
+     * Gets the protocol of the entry.
+     *
+     * @return the protocol of the entry
+     */
+    public @NonNull Protocol getProtocol() {
+      return this.protocol;
+    }
+
+    /**
+     * Assigns the protocol of the entry ({@code saml} or {@code oidc}).
+     *
+     * @param protocol the protocol of the entry ({@code saml} or {@code oidc})
+     */
+    public void setProtocol(final @NonNull Protocol protocol) {
+      this.protocol = protocol;
+    }
+
+    /**
+     * Gets the entity ID for the IdP.
+     *
+     * @return the entity ID for the IdP
+     */
+    public @Nullable String getEntityId() {
+      return this.entityId;
+    }
+
+    /**
+     * Assigns the entity ID for the IdP (for {@code saml} entries).
+     *
+     * @param entityId the entity ID for the IdP (for {@code saml} entries)
+     */
+    public void setEntityId(final @Nullable String entityId) {
+      this.entityId = entityId;
+    }
+
+    /**
+     * Gets the issuer of the OP.
+     *
+     * @return the issuer of the OP
+     */
+    public @Nullable String getIssuer() {
+      return this.issuer;
+    }
+
+    /**
+     * Assigns the issuer of the OP (for {@code oidc} entries).
+     *
+     * @param issuer the issuer of the OP (for {@code oidc} entries)
+     */
+    public void setIssuer(final @Nullable String issuer) {
+      this.issuer = issuer;
+    }
+
+    /**
+     * Gets the Swedish display name.
+     *
+     * @return the Swedish display name
+     */
+    public @Nullable String getDisplayNameSv() {
+      return this.displayNameSv;
+    }
+
+    /**
+     * Assigns the Swedish display name.
+     *
+     * @param displayNameSv the Swedish display name
+     */
+    public void setDisplayNameSv(final @Nullable String displayNameSv) {
+      this.displayNameSv = displayNameSv;
+    }
+
+    /**
+     * Gets the Swedish description.
+     *
+     * @return the Swedish description
+     */
+    public @Nullable String getDescriptionSv() {
+      return this.descriptionSv;
+    }
+
+    /**
+     * Assigns the Swedish description.
+     *
+     * @param descriptionSv the Swedish description
+     */
+    public void setDescriptionSv(final @Nullable String descriptionSv) {
+      this.descriptionSv = descriptionSv;
+    }
+
+    /**
+     * Gets the English display name.
+     *
+     * @return the English display name
+     */
+    public @Nullable String getDisplayNameEn() {
+      return this.displayNameEn;
+    }
+
+    /**
+     * Assigns the English display name.
+     *
+     * @param displayNameEn the English display name
+     */
+    public void setDisplayNameEn(final @Nullable String displayNameEn) {
+      this.displayNameEn = displayNameEn;
+    }
+
+    /**
+     * Gets the English description.
+     *
+     * @return the English description
+     */
+    public @Nullable String getDescriptionEn() {
+      return this.descriptionEn;
+    }
+
+    /**
+     * Assigns the English description.
+     *
+     * @param descriptionEn the English description
+     */
+    public void setDescriptionEn(final @Nullable String descriptionEn) {
+      this.descriptionEn = descriptionEn;
+    }
+
+    /**
+     * Gets the logotype URL.
+     *
+     * @return the logotype URL
+     */
+    public @Nullable String getLogoUrl() {
+      return this.logoUrl;
+    }
+
+    /**
+     * Assigns the logotype URL.
+     *
+     * @param logoUrl the logotype URL
+     */
+    public void setLogoUrl(final @Nullable String logoUrl) {
+      this.logoUrl = logoUrl;
+    }
+
+    /**
+     * Gets the logo width.
+     *
+     * @return the logo width
+     */
+    public @Nullable Integer getLogoWidth() {
+      return this.logoWidth;
+    }
+
+    /**
+     * Assigns the logo width.
+     *
+     * @param logoWidth the logo width
+     */
+    public void setLogoWidth(final @Nullable Integer logoWidth) {
+      this.logoWidth = logoWidth;
+    }
+
+    /**
+     * Gets the logo height.
+     *
+     * @return the logo height
+     */
+    public @Nullable Integer getLogoHeight() {
+      return this.logoHeight;
+    }
+
+    /**
+     * Assigns the logo height.
+     *
+     * @param logoHeight the logo height
+     */
+    public void setLogoHeight(final @Nullable Integer logoHeight) {
+      this.logoHeight = logoHeight;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String toString() {
+      return "IdpList.StaticIdpDiscoEntry(enabled=" + this.enabled
+          + ", protocol=" + this.protocol
+          + ", entityId=" + this.entityId
+          + ", issuer=" + this.issuer
+          + ", displayNameSv=" + this.displayNameSv
+          + ", descriptionSv=" + this.descriptionSv
+          + ", displayNameEn=" + this.displayNameEn
+          + ", descriptionEn=" + this.descriptionEn
+          + ", logoUrl=" + this.logoUrl
+          + ", logoWidth=" + this.logoWidth
+          + ", logoHeight=" + this.logoHeight
+          + ")";
     }
 
   }

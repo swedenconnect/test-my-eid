@@ -15,17 +15,19 @@
  */
 package se.swedenconnect.eid.sp.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.opensaml.saml.common.assertion.ValidationContext;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.Attribute;
 import org.opensaml.saml.saml2.core.AuthnRequest;
 import org.opensaml.saml.saml2.core.Status;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +44,7 @@ import se.swedenconnect.eid.sp.model.AttributeInfoRegistry;
 import se.swedenconnect.eid.sp.model.AuthenticationInfo;
 import se.swedenconnect.eid.sp.model.ErrorStatusInfo;
 import se.swedenconnect.eid.sp.model.LastAuthentication;
+import se.swedenconnect.eid.sp.model.LoaMessages;
 import se.swedenconnect.eid.sp.saml.HokSupport;
 import se.swedenconnect.eid.sp.saml.TestMyEidAuthnRequestGenerator;
 import se.swedenconnect.eid.sp.saml.TestMyEidAuthnRequestGeneratorContext;
@@ -55,7 +58,6 @@ import se.swedenconnect.opensaml.saml2.response.ResponseProcessingInput;
 import se.swedenconnect.opensaml.saml2.response.ResponseProcessingResult;
 import se.swedenconnect.opensaml.saml2.response.ResponseProcessor;
 import se.swedenconnect.opensaml.saml2.response.ResponseStatusErrorException;
-import se.swedenconnect.opensaml.sweid.saml2.authn.LevelOfAssuranceUris;
 
 import java.security.cert.X509Certificate;
 import java.time.Instant;
@@ -74,8 +76,10 @@ import java.util.stream.Collectors;
  */
 @Controller
 @RequestMapping("/saml2")
-@Slf4j
 public class SamlController extends BaseController {
+
+  /** The logger. */
+  private static final Logger log = LoggerFactory.getLogger(SamlController.class);
 
   /** For generating a SAML AuthnRequest message. */
   @Autowired
@@ -130,22 +134,18 @@ public class SamlController extends BaseController {
   @Autowired
   private ClientCertificateGetter clientCertificateGetter;
 
-  @Setter
   @Autowired
   @Qualifier("userMessages")
-  private Map<String, String> userMessages;
+  private @NonNull Map<String, String> userMessages;
 
-  @Setter
   @Value("${server.servlet.context-path}")
-  private String contextPath;
+  private @NonNull String contextPath;
 
-  @Setter
   @Value("${sp.base-uri}")
-  private String baseUri;
+  private @NonNull String baseUri;
 
-  @Setter
   @Value("${sp.debug-base-uri:}")
-  private String debugBaseUri;
+  private @Nullable String debugBaseUri;
 
   /**
    * Builds an {@code AuthnRequest}.
@@ -154,15 +154,18 @@ public class SamlController extends BaseController {
    * @param response the HTTP response
    * @param selectedIdp the selected IdP
    * @param country optional parameter for direct requests to an eIDAS country
+   * @param ping whether this is an eIDAS ping request
+   * @param useHok whether Holder-of-key should be used ({@code null} if not decided yet)
    * @return a model and view object
    * @throws ApplicationException for errors
    */
   @RequestMapping("/request")
-  public ModelAndView sendRequest(final HttpServletRequest request, final HttpServletResponse response,
-      @RequestParam("selectedIdp") final String selectedIdp,
-      @RequestParam(value = "country", required = false) final String country,
-      @RequestParam(value = "ping", required = false, defaultValue = "false") final Boolean ping,
-      @RequestParam(value = "useHok", required = false) final Boolean useHok) throws ApplicationException {
+  public @NonNull ModelAndView sendRequest(final @NonNull HttpServletRequest request,
+      final @NonNull HttpServletResponse response,
+      @RequestParam("selectedIdp") final @NonNull String selectedIdp,
+      @RequestParam(value = "country", required = false) final @Nullable String country,
+      @RequestParam(value = "ping", required = false, defaultValue = "false") final @NonNull Boolean ping,
+      @RequestParam(value = "useHok", required = false) final @Nullable Boolean useHok) throws ApplicationException {
 
     log.debug("Request for generating an AuthnRequest to '{}' [client-ip-address='{}', country='{}']",
         selectedIdp, request.getRemoteAddr(), country);
@@ -231,7 +234,8 @@ public class SamlController extends BaseController {
    * @throws ApplicationException for errors (session errors)
    */
   @RequestMapping("/request/next")
-  public ModelAndView sendNextRequest(final HttpServletRequest request, final HttpServletResponse response)
+  public @NonNull ModelAndView sendNextRequest(final @NonNull HttpServletRequest request,
+      final @NonNull HttpServletResponse response)
       throws ApplicationException {
 
     final HttpSession session = request.getSession();
@@ -252,19 +256,22 @@ public class SamlController extends BaseController {
    * @param response the HTTP response
    * @param idp the IdP entityID
    * @param personalIdentityNumber the personal identity number (optional)
+   * @param prid the PRID (optional)
    * @param givenName the user given name (optional)
    * @param loa the level of assurance (sig-message URI), optional
+   * @param hokUsed whether Holder-of-key was used for the authentication
    * @return a model and view object
    * @throws ApplicationException for errors
    */
   @RequestMapping("/request/sign")
-  public ModelAndView sendSignRequest(final HttpServletRequest request, final HttpServletResponse response,
-      @RequestParam("idp") final String idp,
-      @RequestParam(value = "pnr", required = false) final String personalIdentityNumber,
-      @RequestParam(value = "prid", required = false) final String prid,
-      @RequestParam(value = "givenName", required = false) final String givenName,
-      @RequestParam(value = "loa", required = false) final String loa,
-      @RequestParam(value = "hok", required = false, defaultValue = "false") final Boolean hokUsed)
+  public @NonNull ModelAndView sendSignRequest(final @NonNull HttpServletRequest request,
+      final @NonNull HttpServletResponse response,
+      @RequestParam("idp") final @NonNull String idp,
+      @RequestParam(value = "pnr", required = false) final @Nullable String personalIdentityNumber,
+      @RequestParam(value = "prid", required = false) final @Nullable String prid,
+      @RequestParam(value = "givenName", required = false) final @Nullable String givenName,
+      @RequestParam(value = "loa", required = false) final @Nullable String loa,
+      @RequestParam(value = "hok", required = false, defaultValue = "false") final @NonNull Boolean hokUsed)
       throws ApplicationException {
 
     log.debug(
@@ -327,17 +334,31 @@ public class SamlController extends BaseController {
    * @throws ApplicationException for application errors
    */
   @PostMapping("/post")
-  public ModelAndView processResponse(final HttpServletRequest request, final HttpServletResponse response,
-      @RequestParam("SAMLResponse") final String samlResponse,
-      @RequestParam(value = "RelayState", required = false) final String relayState) throws ApplicationException {
+  public @NonNull ModelAndView processResponse(final @NonNull HttpServletRequest request,
+      final @NonNull HttpServletResponse response,
+      @RequestParam("SAMLResponse") final @NonNull String samlResponse,
+      @RequestParam(value = "RelayState", required = false) final @Nullable String relayState)
+      throws ApplicationException {
 
     return this.processResponse(request, response, false, false, samlResponse, relayState);
   }
 
+  /**
+   * Endpoint for receiving and processing SAML responses when Holder-of-key is used.
+   *
+   * @param request the HTTP request
+   * @param response the HTTP response
+   * @param samlResponse the base64-encoded SAML response
+   * @param relayState the relay state
+   * @return a model and view
+   * @throws ApplicationException for application errors
+   */
   @PostMapping("/hok")
-  public ModelAndView processHokResponse(final HttpServletRequest request, final HttpServletResponse response,
-      @RequestParam("SAMLResponse") final String samlResponse,
-      @RequestParam(value = "RelayState", required = false) final String relayState) throws ApplicationException {
+  public @NonNull ModelAndView processHokResponse(final @NonNull HttpServletRequest request,
+      final @NonNull HttpServletResponse response,
+      @RequestParam("SAMLResponse") final @NonNull String samlResponse,
+      @RequestParam(value = "RelayState", required = false) final @Nullable String relayState)
+      throws ApplicationException {
 
     if (!this.hokActive) {
       throw new ApplicationException("sp.msg.error.no-hok");
@@ -356,17 +377,31 @@ public class SamlController extends BaseController {
    * @throws ApplicationException for application errors
    */
   @PostMapping("/sign")
-  public ModelAndView processSignResponse(final HttpServletRequest request, final HttpServletResponse response,
-      @RequestParam("SAMLResponse") final String samlResponse,
-      @RequestParam(value = "RelayState", required = false) final String relayState) throws ApplicationException {
+  public @NonNull ModelAndView processSignResponse(final @NonNull HttpServletRequest request,
+      final @NonNull HttpServletResponse response,
+      @RequestParam("SAMLResponse") final @NonNull String samlResponse,
+      @RequestParam(value = "RelayState", required = false) final @Nullable String relayState)
+      throws ApplicationException {
 
     return this.processResponse(request, response, true, false, samlResponse, relayState);
   }
 
+  /**
+   * Endpoint for receiving and processing SAML responses for "sign requests" when Holder-of-key is used.
+   *
+   * @param request the HTTP request
+   * @param response the HTTP response
+   * @param samlResponse the base64-encoded SAML response
+   * @param relayState the relay state
+   * @return a model and view
+   * @throws ApplicationException for application errors
+   */
   @PostMapping("/signhok")
-  public ModelAndView processHokSignResponse(final HttpServletRequest request, final HttpServletResponse response,
-      @RequestParam("SAMLResponse") final String samlResponse,
-      @RequestParam(value = "RelayState", required = false) final String relayState) throws ApplicationException {
+  public @NonNull ModelAndView processHokSignResponse(final @NonNull HttpServletRequest request,
+      final @NonNull HttpServletResponse response,
+      @RequestParam("SAMLResponse") final @NonNull String samlResponse,
+      @RequestParam(value = "RelayState", required = false) final @Nullable String relayState)
+      throws ApplicationException {
 
     if (!this.hokActive) {
       throw new ApplicationException("sp.msg.error.no-hok");
@@ -387,7 +422,8 @@ public class SamlController extends BaseController {
    * @return a model and view
    * @throws ApplicationException for application errors
    */
-  private ModelAndView processResponse(final HttpServletRequest request, final HttpServletResponse response,
+  private ModelAndView processResponse(final @NonNull HttpServletRequest request,
+      final @NonNull HttpServletResponse response,
       final boolean signFlag, final boolean hokFlag,
       final String samlResponse, final String relayState) throws ApplicationException {
 
@@ -502,120 +538,7 @@ public class SamlController extends BaseController {
     final AuthenticationInfo authenticationInfo = new AuthenticationInfo();
 
     final String loa = result.getAuthnContextClassUri();
-    boolean isEidas = false;
-
-    authenticationInfo.setLoaUri(loa);
-
-    if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_LOA3.equals(loa) ||
-        "http://id.elegnamnden.se/loa/1.0/loa3-sigmessage".equals(loa)) {
-      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa3");
-      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
-    }
-    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_UNCERTIFIED_LOA3.equals(loa) ||
-        "http://id.swedenconnect.se/loa/1.0/uncertified-loa3-sigmessage".equals(loa)) {
-      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa3-uncertified");
-      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
-    }
-    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_LOA3_NONRESIDENT.equals(loa)) {
-      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa3-nonresident");
-      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
-    }
-    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_LOA2.equals(loa) ||
-        "http://id.elegnamnden.se/loa/1.0/loa2-sigmessage".equals(loa)) {
-      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa2");
-      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
-    }
-    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_UNCERTIFIED_LOA2.equals(loa)) {
-      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa2-uncertified");
-      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
-    }
-    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_LOA2_NONRESIDENT.equals(loa)) {
-      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa2-nonresident");
-      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
-    }
-    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_LOA4.equals(loa) ||
-        "http://id.elegnamnden.se/loa/1.0/loa4-sigmessage".equals(loa)) {
-      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa4");
-      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
-    }
-    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_LOA4_NONRESIDENT.equals(loa)) {
-      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa4-nonresident");
-      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa.desc");
-    }
-    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_LOW.equals(loa)
-        || LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_LOW_NF.equals(loa)
-        || "http://id.elegnamnden.se/loa/1.0/eidas-low-sigm".equals(loa)
-        || "http://id.elegnamnden.se/loa/1.0/eidas-nf-low-sigm".equals(loa)
-        || LevelOfAssuranceUris.AUTHN_CONTEXT_URI_UNCERTIFIED_EIDAS_LOW.equals(loa)) {
-      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa-low");
-      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa-eidas.desc");
-      authenticationInfo.setEidasAssertion(true);
-      isEidas = true;
-
-      if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_LOW_NF.equals(loa)
-          || "http://id.elegnamnden.se/loa/1.0/eidas-nf-low-sigm".equals(loa)) {
-        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-notified");
-      }
-      else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_LOW.equals(loa)
-          || "http://id.elegnamnden.se/loa/1.0/eidas-nf-low-sigm".equals(loa)) {
-        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-non-notified");
-      }
-      else {
-        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-uncertified-eidas");
-      }
-    }
-    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_SUBSTANTIAL.equals(loa)
-        || LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_SUBSTANTIAL_NF.equals(loa)
-        || "http://id.elegnamnden.se/loa/1.0/eidas-sub-sigm".equals(loa)
-        || "http://id.elegnamnden.se/loa/1.0/eidas-nf-sub-sigm".equals(loa)
-        || LevelOfAssuranceUris.AUTHN_CONTEXT_URI_UNCERTIFIED_EIDAS_SUBSTANTIAL.equals(loa)) {
-      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa-substantial");
-      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa-eidas.desc");
-      authenticationInfo.setEidasAssertion(true);
-      isEidas = true;
-
-      if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_SUBSTANTIAL_NF.equals(loa)
-          || "http://id.elegnamnden.se/loa/1.0/eidas-nf-sub-sigm".equals(loa)) {
-        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-notified");
-      }
-      else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_SUBSTANTIAL.equals(loa)
-          || "http://id.elegnamnden.se/loa/1.0/eidas-nf-sub-sigm".equals(loa)) {
-        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-non-notified");
-      }
-      else {
-        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-uncertified-eidas");
-      }
-    }
-    else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_HIGH.equals(loa)
-        || LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_HIGH_NF.equals(loa)
-        || "http://id.elegnamnden.se/loa/1.0/eidas-high-sigm".equals(loa)
-        || "http://id.elegnamnden.se/loa/1.0/eidas-nf-high-sigm".equals(loa)
-        || LevelOfAssuranceUris.AUTHN_CONTEXT_URI_UNCERTIFIED_EIDAS_HIGH.equals(loa)) {
-      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-according-loa-high");
-      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-according-loa-eidas.desc");
-      authenticationInfo.setEidasAssertion(true);
-      isEidas = true;
-
-      if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_HIGH_NF.equals(loa)
-          || "http://id.elegnamnden.se/loa/1.0/eidas-nf-high-sigm".equals(loa)) {
-        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-notified");
-      }
-      else if (LevelOfAssuranceUris.AUTHN_CONTEXT_URI_EIDAS_HIGH.equals(loa)
-          || "http://id.elegnamnden.se/loa/1.0/eidas-nf-high-sigm".equals(loa)) {
-        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-non-notified");
-      }
-      else {
-        authenticationInfo.setNotifiedInfoMessageCode("sp.msg.authn-according-uncertified-eidas");
-      }
-    }
-    else if (TestMyEidAuthnRequestGeneratorContext.EIDAS_PING_LOA.equals(loa)) {
-      authenticationInfo.setLoaLevelMessageCode("sp.msg.authn-eidas-test");
-      authenticationInfo.setLoaLevelDescriptionCode("sp.msg.authn-eidas-test.desc");
-      isEidas = true;
-    }
-    else {
-      log.error("Uknown LoA: {}", loa);
-    }
+    final boolean isEidas = LoaMessages.apply(authenticationInfo, loa);
 
     final List<Attribute> unknownAttributes = new ArrayList<>();
     for (final Attribute a : result.getAttributes()) {
@@ -652,43 +575,79 @@ public class SamlController extends BaseController {
     private final AuthnRequest authnRequest;
     private final X509Certificate clientCertificate;
 
-    public ResponseProcessingInputImpl(final HttpServletRequest httpRequest,
-        final AuthnRequest authnRequest, final X509Certificate clientCertificate) {
+    public ResponseProcessingInputImpl(final @NonNull HttpServletRequest httpRequest,
+        final @NonNull AuthnRequest authnRequest, final @Nullable X509Certificate clientCertificate) {
       this.httpRequest = httpRequest;
       this.authnRequest = authnRequest;
       this.clientCertificate = clientCertificate;
     }
 
     @Override
-    public AuthnRequest getAuthnRequest(final String id) {
+    public @NonNull AuthnRequest getAuthnRequest(final @NonNull String id) {
       return this.authnRequest;
     }
 
     @Override
-    public String getRequestRelayState(final String id) {
+    public @Nullable String getRequestRelayState(final @NonNull String id) {
       return null;
     }
 
     @Override
-    public String getReceiveURL() {
+    public @NonNull String getReceiveURL() {
       return this.httpRequest.getRequestURL().toString();
     }
 
     @Override
-    public Instant getReceiveInstant() {
+    public @NonNull Instant getReceiveInstant() {
       return Instant.now();
     }
 
     @Override
-    public String getClientIpAddress() {
+    public @NonNull String getClientIpAddress() {
       return this.httpRequest.getRemoteAddr();
     }
 
     @Override
-    public X509Certificate getClientCertificate() {
+    public @Nullable X509Certificate getClientCertificate() {
       return this.clientCertificate;
     }
 
+  }
+
+  /**
+   * Assigns the user message templates.
+   *
+   * @param userMessages the user message templates
+   */
+  public void setUserMessages(final @NonNull Map<String, String> userMessages) {
+    this.userMessages = userMessages;
+  }
+
+  /**
+   * Assigns the context path.
+   *
+   * @param contextPath the context path
+   */
+  public void setContextPath(final @NonNull String contextPath) {
+    this.contextPath = contextPath;
+  }
+
+  /**
+   * Assigns the base uri.
+   *
+   * @param baseUri the base uri
+   */
+  public void setBaseUri(final @NonNull String baseUri) {
+    this.baseUri = baseUri;
+  }
+
+  /**
+   * Assigns the debug base uri.
+   *
+   * @param debugBaseUri the debug base uri
+   */
+  public void setDebugBaseUri(final @Nullable String debugBaseUri) {
+    this.debugBaseUri = debugBaseUri;
   }
 
 }

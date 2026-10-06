@@ -15,7 +15,10 @@
  */
 package se.swedenconnect.eid.sp.saml;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.opensaml.xmlsec.DecryptionConfiguration;
 import org.opensaml.xmlsec.EncryptionConfiguration;
 import org.opensaml.xmlsec.config.impl.DefaultSecurityConfigurationBootstrap;
@@ -38,8 +41,10 @@ import java.util.stream.Collectors;
  *
  * @author Martin Lindström (martin@idsec.se)
  */
-@Slf4j
 public class CustomSwedishEidSecurityConfiguration extends SwedishEidSecurityConfiguration {
+
+  /** The logger. */
+  private static final Logger log = LoggerFactory.getLogger(CustomSwedishEidSecurityConfiguration.class);
 
   /** Customized algorithm configuration. */
   private final CustomAlgorithms algorithmConfiguration;
@@ -49,13 +54,13 @@ public class CustomSwedishEidSecurityConfiguration extends SwedishEidSecurityCon
    *
    * @param algorithmConfiguration customized algorithm configuration
    */
-  public CustomSwedishEidSecurityConfiguration(final CustomAlgorithms algorithmConfiguration) {
+  public CustomSwedishEidSecurityConfiguration(final @NonNull CustomAlgorithms algorithmConfiguration) {
     this.algorithmConfiguration = algorithmConfiguration;
   }
 
   /** {@inheritDoc} */
   @Override
-  public String getProfileName() {
+  public @NonNull String getProfileName() {
     return this.algorithmConfiguration.isEmpty() ? super.getProfileName() : "custom-swedish-eid-framework";
   }
 
@@ -63,7 +68,7 @@ public class CustomSwedishEidSecurityConfiguration extends SwedishEidSecurityCon
    * Adds customized algorithm settings.
    */
   @Override
-  protected EncryptionConfiguration createDefaultEncryptionConfiguration() {
+  protected @NonNull EncryptionConfiguration createDefaultEncryptionConfiguration() {
     final BasicEncryptionConfiguration config =
         (BasicEncryptionConfiguration) super.createDefaultEncryptionConfiguration();
 
@@ -110,7 +115,7 @@ public class CustomSwedishEidSecurityConfiguration extends SwedishEidSecurityCon
    * Adds customized algorithm settings.
    */
   @Override
-  protected DecryptionConfiguration createDefaultDecryptionConfiguration() {
+  protected @Nullable DecryptionConfiguration createDefaultDecryptionConfiguration() {
     if (this.algorithmConfiguration.getBlacklistRsa15() != null) {
       BasicDecryptionConfiguration config = (BasicDecryptionConfiguration) super.createDefaultDecryptionConfiguration();
       if (config == null) {

@@ -15,10 +15,10 @@
  */
 package se.swedenconnect.eid.sp.config;
 
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import net.shibboleth.shared.component.ComponentInitializationException;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.saml.common.xml.SAMLConstants;
@@ -27,6 +27,8 @@ import org.opensaml.saml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml.saml2.metadata.EncryptionMethod;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.security.credential.UsageType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.opensaml.security.x509.X509Credential;
 import org.opensaml.xmlsec.EncryptionConfiguration;
 import org.opensaml.xmlsec.SecurityConfigurationSupport;
@@ -53,6 +55,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.util.StringUtils;
 import org.w3c.dom.Document;
 import se.swedenconnect.eid.sp.model.AttributeInfoRegistry;
+import se.swedenconnect.eid.sp.oidc.OpRegistry;
 import se.swedenconnect.eid.sp.saml.IdpList;
 import se.swedenconnect.eid.sp.saml.IdpList.StaticIdpDiscoEntry;
 import se.swedenconnect.eid.sp.saml.TestMyEidAuthnRequestGenerator;
@@ -92,6 +95,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -102,13 +106,14 @@ import java.util.Optional;
 @Configuration
 @EnableConfigurationProperties({ SpConfigurationProperties.class })
 @DependsOn("openSAML")
-@Slf4j
 public class SpConfiguration implements InitializingBean {
 
+  /** The logger. */
+  private static final Logger log = LoggerFactory.getLogger(SpConfiguration.class);
+
   /** For backwards compatibility. */
-  @Setter
   @Value("${sign-sp.entity-id:#{null}}")
-  private String signSpEntityId;
+  private @Nullable String signSpEntityId;
 
   /** Temporary directory for caches. */
   private final ApplicationTemp tempDir = new ApplicationTemp();
@@ -128,9 +133,19 @@ public class SpConfiguration implements InitializingBean {
    * @param properties the configuration properties
    * @param credentialFactory the credential factory
    */
-  public SpConfiguration(final SpConfigurationProperties properties, final PkiCredentialFactory credentialFactory) {
+  public SpConfiguration(final @NonNull SpConfigurationProperties properties,
+      final @NonNull PkiCredentialFactory credentialFactory) {
     this.properties = properties;
     this.credentialFactory = credentialFactory;
+  }
+
+  /**
+   * Assigns the sign service entityID given by the deprecated {@code sign-sp.entity-id} setting.
+   *
+   * @param signSpEntityId the entityID
+   */
+  public void setSignSpEntityId(final @Nullable String signSpEntityId) {
+    this.signSpEntityId = signSpEntityId;
   }
 
   /**
@@ -139,7 +154,7 @@ public class SpConfiguration implements InitializingBean {
    * @return {@link Boolean}
    */
   @Bean("DebugFlag")
-  Boolean debugFlag() {
+  @NonNull Boolean debugFlag() {
     return this.properties.isDebugMode() && StringUtils.hasText(this.properties.getDebugBaseUri());
   }
 
@@ -149,7 +164,7 @@ public class SpConfiguration implements InitializingBean {
    * @return {@link Boolean}
    */
   @Bean("hokActive")
-  Boolean hokActive() {
+  @NonNull Boolean hokActive() {
     return StringUtils.hasText(this.properties.getHokBaseUri())
         || StringUtils.hasText(this.properties.getDebugHokBaseUri());
   }
@@ -160,7 +175,7 @@ public class SpConfiguration implements InitializingBean {
    * @return SP entityID
    */
   @Bean(name = "spEntityID")
-  EntityID spEntityID() {
+  @NonNull EntityID spEntityID() {
     return new EntityID(this.properties.getEntityId());
   }
 
@@ -170,35 +185,58 @@ public class SpConfiguration implements InitializingBean {
    * @return sign service entityID
    */
   @Bean(name = "signSpEntityID")
-  EntityID signSpEntityID() {
+  @NonNull EntityID signSpEntityID() {
     if (StringUtils.hasText(this.properties.getSignEntityId())) {
       return new EntityID(this.properties.getSignEntityId());
     }
     else if (StringUtils.hasText(this.signSpEntityId)) {
-      log.warn("Use sp.sign-entity-id instead of sp-sign.entity-id");
+      log.warn("Use sp.sign-entity-id instead of sign-sp.entity-id");
       return new EntityID(this.signSpEntityId);
     }
     throw new BeanCreationException("Missing sp.sign-entity-id");
   }
 
+  /**
+   * Returns the entityID bean for the eIDAS connector.
+   *
+   * @return the eIDAS connector entityID
+   */
   @Bean(name = "eidasConnectorEntityID")
-  EntityID eidasConnectorEntityID() {
+  @NonNull EntityID eidasConnectorEntityID() {
     return new EntityID(this.properties.getEidasConnector().getEntityId());
   }
 
+  /**
+   * Returns the SP signing credential.
+   *
+   * @return the signing credential
+   * @throws Exception for errors creating the credential
+   */
   @Bean("signCredential")
-  X509Credential signCredential() throws Exception {
+  @NonNull X509Credential signCredential() throws Exception {
     return new OpenSamlCredential(this.credentialFactory.createCredential(this.properties.getCredential().getSign()));
   }
 
+  /**
+   * Returns the SP decryption credential.
+   *
+   * @return the decryption credential
+   * @throws Exception for errors creating the credential
+   */
   @Bean("encryptCredential")
-  X509Credential encryptCredential() throws Exception {
+  @NonNull X509Credential encryptCredential() throws Exception {
     return new OpenSamlCredential(
         this.credentialFactory.createCredential(this.properties.getCredential().getDecrypt()));
   }
 
+  /**
+   * Returns the credential used to sign SP metadata. Falls back to the signing credential if not configured.
+   *
+   * @return the metadata signing credential
+   * @throws Exception for errors creating the credential
+   */
   @Bean("mdSignCredential")
-  X509Credential mdSignCredential() throws Exception {
+  @NonNull X509Credential mdSignCredential() throws Exception {
     if (this.properties.getCredential().getMdSign() != null) {
       return new OpenSamlCredential(
           this.credentialFactory.createCredential(this.properties.getCredential().getMdSign()));
@@ -208,37 +246,68 @@ public class SpConfiguration implements InitializingBean {
     }
   }
 
+  /**
+   * Returns the selectable UI languages.
+   *
+   * @return a list of UI languages
+   */
   @Bean
-  List<UiLanguage> languages() {
+  @NonNull List<UiLanguage> languages() {
     return this.properties.getUi().getLang();
   }
 
+  /**
+   * Returns the registry for displaying attribute information.
+   *
+   * @return an {@link AttributeInfoRegistry}
+   */
   @Bean
-  AttributeInfoRegistry attributeInfoRegistry() {
+  @NonNull AttributeInfoRegistry attributeInfoRegistry() {
     return new AttributeInfoRegistry(this.properties.getUi().getAttributes());
   }
 
+  /**
+   * Returns a client certificate getter that reads the certificate from a request attribute (AJP).
+   *
+   * @return a {@link ClientCertificateGetter}
+   */
   @Bean
   @ConditionalOnProperty(name = "tomcat.ajp.enabled", havingValue = "true")
-  ClientCertificateGetter attributeBasedClientCertificateGetter() {
+  @NonNull ClientCertificateGetter attributeBasedClientCertificateGetter() {
     return new FromRequestAttributeClientCertificateGetter(this.properties.getMtls().getAttributeName());
   }
 
+  /**
+   * Returns a client certificate getter that reads the certificate from a request header.
+   *
+   * @return a {@link ClientCertificateGetter}
+   */
   @Bean
   @Profile("!local")
   @ConditionalOnProperty(name = "tomcat.ajp.enabled", matchIfMissing = true, havingValue = "false")
-  ClientCertificateGetter headerBasedClientCertificateGetter() {
+  @NonNull ClientCertificateGetter headerBasedClientCertificateGetter() {
     return new FromHeaderClientCertificateGetter(this.properties.getMtls().getHeaderName());
   }
 
+  /**
+   * Returns a client certificate getter that reads the certificate from a request attribute (local profile).
+   *
+   * @return a {@link ClientCertificateGetter}
+   */
   @Bean
   @Profile("local")
-  ClientCertificateGetter attributeBasedClientCertificateGetter2() {
+  @NonNull ClientCertificateGetter attributeBasedClientCertificateGetter2() {
     return new FromRequestAttributeClientCertificateGetter(this.properties.getMtls().getAttributeName());
   }
 
+  /**
+   * Returns the user message templates, mapped by language tag.
+   *
+   * @return a map of language tags and user message templates
+   * @throws IOException for errors reading the templates
+   */
   @Bean("userMessages")
-  Map<String, String> userMessages() throws IOException {
+  @NonNull Map<String, String> userMessages() throws IOException {
     final Map<String, String> userMessages = new HashMap<>();
     for (final Map.Entry<String, Resource> entry : this.properties.getUi().getUserMessageTemplate().entrySet()) {
 
@@ -249,11 +318,22 @@ public class SpConfiguration implements InitializingBean {
     return userMessages;
   }
 
+  /**
+   * Returns the IdP list used for discovery.
+   *
+   * @param metadataProvider the federation metadata provider
+   * @param staticIdps statically configured IdP:s from a separate file
+   * @param spMetadata the SP metadata
+   * @param hokActive whether Holder-of-key is active
+   * @param opRegistry the registry of OpenID Providers
+   * @return an {@link IdpList}
+   */
   @Bean
-  IdpList idpList(final MetadataProvider metadataProvider,
-      @Qualifier("staticIdps") final List<StaticIdpDiscoEntry> staticIdps,
-      @Qualifier("spMetadata") final EntityDescriptor spMetadata,
-      @Qualifier("hokActive") final Boolean hokActive) {
+  @NonNull IdpList idpList(final @NonNull MetadataProvider metadataProvider,
+      @Qualifier("staticIdps") final @NonNull List<StaticIdpDiscoEntry> staticIdps,
+      @Qualifier("spMetadata") final @NonNull EntityDescriptor spMetadata,
+      @Qualifier("hokActive") final @NonNull Boolean hokActive,
+      final @NonNull OpRegistry opRegistry) {
 
     // Merge static IdP:s from configuration and those supplied in separate file
     //
@@ -261,13 +341,14 @@ public class SpConfiguration implements InitializingBean {
         Optional.ofNullable(this.properties.getDiscovery().getIdp())
             .orElseGet(Collections::emptyList));
     staticIdps.stream()
-        .filter(i -> idps.stream().noneMatch(i2 -> i2.getEntityId().equals(i.getEntityId())))
+        .filter(i -> idps.stream()
+            .noneMatch(i2 -> i2.getProtocol() == i.getProtocol() && Objects.equals(i2.getKey(), i.getKey())))
         .forEach(idps::add);
 
     final IdpList idpList = new IdpList(metadataProvider, spMetadata, idps,
         this.properties.getDiscovery().getBlackList(),
         this.properties.getDiscovery().isIncludeOnlyStatic(),
-        hokActive);
+        hokActive, opRegistry);
 
     idpList.setCacheTime(this.properties.getDiscovery().getCacheTime());
     idpList.setIgnoreContracts(this.properties.getDiscovery().isIgnoreContracts());
@@ -275,9 +356,16 @@ public class SpConfiguration implements InitializingBean {
     return idpList;
   }
 
+  /**
+   * Returns the SAML response processor.
+   *
+   * @param metadataProvider the federation metadata provider
+   * @param encryptCredential the decryption credential
+   * @return a {@link ResponseProcessor}
+   */
   @Bean(initMethod = "initialize")
-  ResponseProcessor responseProcessor(final MetadataProvider metadataProvider,
-      @Qualifier("encryptCredential") final X509Credential encryptCredential) {
+  @NonNull ResponseProcessor responseProcessor(final @NonNull MetadataProvider metadataProvider,
+      @Qualifier("encryptCredential") final @NonNull X509Credential encryptCredential) {
 
     final SwedishEidResponseProcessorImpl responseProcessor = new SwedishEidResponseProcessorImpl();
     responseProcessor.setMetadataResolver(metadataProvider.getMetadataResolver());
@@ -286,8 +374,14 @@ public class SpConfiguration implements InitializingBean {
     return responseProcessor;
   }
 
+  /**
+   * Returns the federation metadata provider.
+   *
+   * @return a {@link MetadataProvider}
+   * @throws Exception for setup errors
+   */
   @Bean(initMethod = "initialize")
-  MetadataProvider metadataProvider() throws Exception {
+  @NonNull MetadataProvider metadataProvider() throws Exception {
 
     final X509Certificate cert = this.properties.getFederation().getMetadata().getValidationCertificate() != null
         ? (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(
@@ -328,12 +422,21 @@ public class SpConfiguration implements InitializingBean {
     return provider;
   }
 
+  /**
+   * Builds the SP metadata.
+   *
+   * @param contextPath the servlet context path
+   * @param serverPort the server port
+   * @param signCredential the signing credential
+   * @param encryptCredential the decryption credential
+   * @return an {@link EntityDescriptor}
+   */
   @Bean("spMetadata")
-  EntityDescriptor spMetadata(
-      @Value("${server.servlet.context-path}") final String contextPath,
+  @NonNull EntityDescriptor spMetadata(
+      @Value("${server.servlet.context-path}") final @NonNull String contextPath,
       @Value("${server.port}") final int serverPort,
-      @Qualifier("signCredential") final X509Credential signCredential,
-      @Qualifier("encryptCredential") final X509Credential encryptCredential) {
+      @Qualifier("signCredential") final @NonNull X509Credential signCredential,
+      @Qualifier("encryptCredential") final @NonNull X509Credential encryptCredential) {
 
     final List<AssertionConsumerService> acs = new ArrayList<>();
     int index = 0;
@@ -412,19 +515,35 @@ public class SpConfiguration implements InitializingBean {
         .build();
   }
 
+  /**
+   * Returns the container for signing and publishing the SP metadata.
+   *
+   * @param spMetadata the SP metadata
+   * @param mdSignCredential the metadata signing credential
+   * @return an {@link EntityDescriptorContainer}
+   */
   @Bean("spEntityDescriptorContainer")
-  EntityDescriptorContainer entityDescriptorContainer(
-      @Qualifier("spMetadata") final EntityDescriptor spMetadata,
-      @Qualifier("mdSignCredential") final X509Credential mdSignCredential) {
+  @NonNull EntityDescriptorContainer entityDescriptorContainer(
+      @Qualifier("spMetadata") final @NonNull EntityDescriptor spMetadata,
+      @Qualifier("mdSignCredential") final @NonNull X509Credential mdSignCredential) {
     return new EntityDescriptorContainer(spMetadata, mdSignCredential);
   }
 
+  /**
+   * Builds the metadata for the signature service SP.
+   *
+   * @param contextPath the servlet context path
+   * @param serverPort the server port
+   * @param signCredential the signing credential
+   * @param encryptCredential the decryption credential
+   * @return an {@link EntityDescriptor}
+   */
   @Bean("signSpMetadata")
-  EntityDescriptor signSpMetadata(
-      @Value("${server.servlet.context-path}") final String contextPath,
+  @NonNull EntityDescriptor signSpMetadata(
+      @Value("${server.servlet.context-path}") final @NonNull String contextPath,
       @Value("${server.port}") final int serverPort,
-      @Qualifier("signCredential") final X509Credential signCredential,
-      @Qualifier("encryptCredential") final X509Credential encryptCredential) {
+      @Qualifier("signCredential") final @NonNull X509Credential signCredential,
+      @Qualifier("encryptCredential") final @NonNull X509Credential encryptCredential) {
 
     final List<AssertionConsumerService> acs = new ArrayList<>();
     int index = 0;
@@ -509,28 +628,52 @@ public class SpConfiguration implements InitializingBean {
         .build();
   }
 
+  /**
+   * Returns the container for signing and publishing the signature service SP metadata.
+   *
+   * @param signSpMetadata the signature service SP metadata
+   * @param mdSignCredential the metadata signing credential
+   * @return an {@link EntityDescriptorContainer}
+   */
   @Bean("signSpEntityDescriptorContainer")
-  EntityDescriptorContainer signSpEntityDescriptorContainer(
-      @Qualifier("signSpMetadata") final EntityDescriptor signSpMetadata,
-      @Qualifier("mdSignCredential") final X509Credential mdSignCredential) {
+  @NonNull EntityDescriptorContainer signSpEntityDescriptorContainer(
+      @Qualifier("signSpMetadata") final @NonNull EntityDescriptor signSpMetadata,
+      @Qualifier("mdSignCredential") final @NonNull X509Credential mdSignCredential) {
     return new EntityDescriptorContainer(signSpMetadata, mdSignCredential);
   }
 
+  /**
+   * Returns the AuthnRequest generator for the SP.
+   *
+   * @param metadata the SP metadata
+   * @param signCredential the signing credential
+   * @param metadataProvider the federation metadata provider
+   * @return a {@link TestMyEidAuthnRequestGenerator}
+   */
   @Bean(name = "spAuthnRequestGenerator", initMethod = "initialize")
-  TestMyEidAuthnRequestGenerator spAuthnRequestGenerator(
-      @Qualifier("spMetadata") final EntityDescriptor metadata,
-      @Qualifier("signCredential") final X509Credential signCredential,
-      final MetadataProvider metadataProvider) {
+  @NonNull TestMyEidAuthnRequestGenerator spAuthnRequestGenerator(
+      @Qualifier("spMetadata") final @NonNull EntityDescriptor metadata,
+      @Qualifier("signCredential") final @NonNull X509Credential signCredential,
+      final @NonNull MetadataProvider metadataProvider) {
 
     return new TestMyEidAuthnRequestGenerator(metadata, signCredential, metadataProvider.getMetadataResolver());
   }
 
+  /**
+   * Returns the AuthnRequest generator for the signature service SP.
+   *
+   * @param metadata the signature service SP metadata
+   * @param signCredential the signing credential
+   * @param metadataProvider the federation metadata provider
+   * @param signMessageEncrypter for encrypting sign messages
+   * @return a {@link TestMyEidAuthnRequestGenerator}
+   */
   @Bean(name = "signSpAuthnRequestGenerator", initMethod = "initialize")
-  TestMyEidAuthnRequestGenerator signSpAuthnRequestGenerator(
-      @Qualifier("signSpMetadata") final EntityDescriptor metadata,
-      @Qualifier("signCredential") final X509Credential signCredential,
-      final MetadataProvider metadataProvider,
-      final SignMessageEncrypter signMessageEncrypter) {
+  @NonNull TestMyEidAuthnRequestGenerator signSpAuthnRequestGenerator(
+      @Qualifier("signSpMetadata") final @NonNull EntityDescriptor metadata,
+      @Qualifier("signCredential") final @NonNull X509Credential signCredential,
+      final @NonNull MetadataProvider metadataProvider,
+      final @NonNull SignMessageEncrypter signMessageEncrypter) {
 
     final TestMyEidAuthnRequestGenerator generator =
         new TestMyEidAuthnRequestGenerator(metadata, signCredential, metadataProvider.getMetadataResolver());
@@ -538,8 +681,15 @@ public class SpConfiguration implements InitializingBean {
     return generator;
   }
 
+  /**
+   * Returns the encrypter for sign messages.
+   *
+   * @param metadataProvider the federation metadata provider
+   * @return a {@link SignMessageEncrypter}
+   * @throws ComponentInitializationException for initialization errors
+   */
   @Bean
-  SignMessageEncrypter signMessageEncrypter(final MetadataProvider metadataProvider)
+  @NonNull SignMessageEncrypter signMessageEncrypter(final @NonNull MetadataProvider metadataProvider)
       throws ComponentInitializationException {
     return new SignMessageEncrypter(new SAMLObjectEncrypter(metadataProvider.getMetadataResolver()));
   }

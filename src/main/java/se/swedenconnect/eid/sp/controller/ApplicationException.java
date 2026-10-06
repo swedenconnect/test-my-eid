@@ -16,6 +16,8 @@
 package se.swedenconnect.eid.sp.controller;
 
 import org.springframework.util.Assert;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Serial;
 
@@ -31,14 +33,14 @@ public class ApplicationException extends Exception {
   private static final long serialVersionUID = 1564108817874835701L;
 
   /** The message code. */
-  private final String messageCode;
+  private final @NonNull String messageCode;
 
   /**
    * Constructor assigning the message code for the error.
    *
    * @param messageCode the message code
    */
-  public ApplicationException(final String messageCode) {
+  public ApplicationException(final @NonNull String messageCode) {
     Assert.hasText(messageCode, "messageCode must not be null or empty");
     this.messageCode = messageCode;
   }
@@ -49,7 +51,7 @@ public class ApplicationException extends Exception {
    * @param messageCode the message code
    * @param message the error message
    */
-  public ApplicationException(final String messageCode, final String message) {
+  public ApplicationException(final @NonNull String messageCode, final @Nullable String message) {
     super(message);
     this.messageCode = messageCode;
   }
@@ -60,7 +62,7 @@ public class ApplicationException extends Exception {
    * @param messageCode the message code
    * @param cause the cause of the error
    */
-  public ApplicationException(final String messageCode, final Throwable cause) {
+  public ApplicationException(final @NonNull String messageCode, final @NonNull Throwable cause) {
     super(cause.getMessage(), cause);
     this.messageCode = messageCode;
   }
@@ -72,7 +74,8 @@ public class ApplicationException extends Exception {
    * @param message the error message
    * @param cause the cause of the error
    */
-  public ApplicationException(final String messageCode, final String message, final Throwable cause) {
+  public ApplicationException(final @NonNull String messageCode, final @Nullable String message,
+      final @Nullable Throwable cause) {
     super(message, cause);
     this.messageCode = messageCode;
   }
@@ -82,7 +85,7 @@ public class ApplicationException extends Exception {
    *
    * @return the message code
    */
-  public String getMessageCode() {
+  public @NonNull String getMessageCode() {
     return this.messageCode;
   }
 

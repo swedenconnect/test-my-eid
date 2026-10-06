@@ -1,0 +1,13 @@
+#
+# Static IdP/OP configuration used by the tests
+#
+idp:
+  - protocol: oidc
+    issuer: https://op2.example.com
+    display-name-sv: Andra OP
+    display-name-en: Second OP
+    description-en: A renamed OP
+  - entity-id: https://idp.example.com/idp
+  - protocol: oidc
+    issuer: https://op4.example.com
+    enabled: false

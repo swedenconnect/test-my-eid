@@ -20,6 +20,10 @@ import org.apache.coyote.http11.Http11NioProtocol;
 import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.tomcat.util.net.SSLHostConfigCertificate;
 import org.apache.tomcat.util.net.SSLHostConfigCertificate.Type;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory;
@@ -31,21 +35,32 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ResourceUtils;
 
-import lombok.Data;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
-
+/**
+ * Adds an extra TLS connector (for mTLS) when running with the {@code local} profile.
+ */
 @Component
 @Profile("local")
-@Slf4j
 public class DebugTomcatWebServerConfiguration implements WebServerFactoryCustomizer<TomcatServletWebServerFactory> {
 
-  @Autowired(required = false)
-  @Setter
-  private AdditionalConnectorSettings additionalConnectorSettings;
+  /** The logger. */
+  private static final Logger log = LoggerFactory.getLogger(DebugTomcatWebServerConfiguration.class);
 
+  /** Settings for the additional connector. */
+  @Autowired(required = false)
+  private @Nullable AdditionalConnectorSettings additionalConnectorSettings;
+
+  /**
+   * Assigns the settings for the additional connector.
+   *
+   * @param additionalConnectorSettings the settings
+   */
+  public void setAdditionalConnectorSettings(final @Nullable AdditionalConnectorSettings additionalConnectorSettings) {
+    this.additionalConnectorSettings = additionalConnectorSettings;
+  }
+
+  /** {@inheritDoc} */
   @Override
-  public void customize(final TomcatServletWebServerFactory factory) {
+  public void customize(final @NonNull TomcatServletWebServerFactory factory) {
     if (this.additionalConnectorSettings != null && this.additionalConnectorSettings.getPort() != null) {
       try {
         factory.addAdditionalConnectors(this.createSslConnector());
@@ -104,20 +119,65 @@ public class DebugTomcatWebServerConfiguration implements WebServerFactoryCustom
     return connector;
   }
 
+  /**
+   * Configuration properties for the additional connector.
+   */
   @Configuration
   @ConfigurationProperties("server2")
-  @Data
   public static class AdditionalConnectorSettings {
 
     /**
      * Server HTTP port.
      */
-    private Integer port;
+    private @Nullable Integer port;
 
     /**
      * SSL settings.
      */
-    private Ssl ssl;
+    private @Nullable Ssl ssl;
+
+    /**
+     * Gets the server HTTP port.
+     *
+     * @return the port
+     */
+    public @Nullable Integer getPort() {
+      return this.port;
+    }
+
+    /**
+     * Assigns the server HTTP port.
+     *
+     * @param port the port
+     */
+    public void setPort(final @Nullable Integer port) {
+      this.port = port;
+    }
+
+    /**
+     * Gets the SSL settings.
+     *
+     * @return the SSL settings
+     */
+    public @Nullable Ssl getSsl() {
+      return this.ssl;
+    }
+
+    /**
+     * Assigns the SSL settings.
+     *
+     * @param ssl the SSL settings
+     */
+    public void setSsl(final @Nullable Ssl ssl) {
+      this.ssl = ssl;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public @NonNull String toString() {
+      return "DebugTomcatWebServerConfiguration.AdditionalConnectorSettings(port=" + this.port + ", ssl=" + this.ssl
+          + ")";
+    }
   }
 
 }

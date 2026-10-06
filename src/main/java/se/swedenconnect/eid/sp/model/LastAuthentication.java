@@ -15,9 +15,8 @@
  */
 package se.swedenconnect.eid.sp.model;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.opensaml.saml.saml2.core.Attribute;
 import se.swedenconnect.opensaml.saml2.attribute.AttributeUtils;
 import se.swedenconnect.opensaml.saml2.response.ResponseProcessingResult;
@@ -31,43 +30,32 @@ import java.util.Optional;
  *
  * @author Martin Lindström (martin@idsec.se)
  */
-@ToString
 public class LastAuthentication {
 
   /** The IdP that authenticated the user. */
-  @Getter
-  private final String idp;
+  private final @Nullable String idp;
 
   /** User's given name (may be null). */
-  @Getter
-  private final String givenName;
+  private final @Nullable String givenName;
 
   /** User's surname (may be null). */
-  @Getter
-  private final String surName;
+  private final @Nullable String surName;
 
   /** User display name (may be null). */
-  @Getter
-  private final String displayName;
+  private final @Nullable String displayName;
 
   /** The personal identity number (may be null). */
-  @Getter
-  private final String personalIdentityNumber;
+  private final @Nullable String personalIdentityNumber;
 
   /** The prid attribute (may be null). */
-  @Getter
-  private final String prid;
+  private final @Nullable String prid;
 
   /** The country attribute (may be null). */
-  @Getter
-  private final String country;
+  private final @Nullable String country;
 
   /** The AuthnContext to request. */
-  @Getter
-  private final String authnContextUri;
+  private final @Nullable String authnContextUri;
 
-  @Getter
-  @Setter
   private boolean hokUsed = false;
 
   /**
@@ -75,7 +63,7 @@ public class LastAuthentication {
    *
    * @param authnResult authentication result
    */
-  public LastAuthentication(final ResponseProcessingResult authnResult) {
+  public LastAuthentication(final @NonNull ResponseProcessingResult authnResult) {
     this.idp = authnResult.getIssuer();
     this.personalIdentityNumber = Optional.ofNullable(
             AttributeUtils.getAttribute(AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER,
@@ -112,7 +100,7 @@ public class LastAuthentication {
    * @param attributes attributes
    * @return {@code true} if we have a match for identities, and {@code false} otherwise
    */
-  public boolean isIdentityMatch(final List<Attribute> attributes) {
+  public boolean isIdentityMatch(final @NonNull List<Attribute> attributes) {
     for (final Attribute a : attributes) {
       if (this.personalIdentityNumber != null
           && AttributeConstants.ATTRIBUTE_NAME_PERSONAL_IDENTITY_NUMBER.equals(a.getName())) {
@@ -123,6 +111,111 @@ public class LastAuthentication {
       }
     }
     return false;
+  }
+
+  /**
+   * Gets the IdP that authenticated the user.
+   *
+   * @return the IdP that authenticated the user
+   */
+  public @Nullable String getIdp() {
+    return this.idp;
+  }
+
+  /**
+   * Gets the given name.
+   *
+   * @return the given name
+   */
+  public @Nullable String getGivenName() {
+    return this.givenName;
+  }
+
+  /**
+   * Gets the sur name.
+   *
+   * @return the sur name
+   */
+  public @Nullable String getSurName() {
+    return this.surName;
+  }
+
+  /**
+   * Gets the display name.
+   *
+   * @return the display name
+   */
+  public @Nullable String getDisplayName() {
+    return this.displayName;
+  }
+
+  /**
+   * Gets the personal identity number (may be null).
+   *
+   * @return the personal identity number (may be null)
+   */
+  public @Nullable String getPersonalIdentityNumber() {
+    return this.personalIdentityNumber;
+  }
+
+  /**
+   * Gets the prid attribute (may be null).
+   *
+   * @return the prid attribute (may be null)
+   */
+  public @Nullable String getPrid() {
+    return this.prid;
+  }
+
+  /**
+   * Gets the country attribute (may be null).
+   *
+   * @return the country attribute (may be null)
+   */
+  public @Nullable String getCountry() {
+    return this.country;
+  }
+
+  /**
+   * Gets the AuthnContext to request.
+   *
+   * @return the AuthnContext to request
+   */
+  public @Nullable String getAuthnContextUri() {
+    return this.authnContextUri;
+  }
+
+  /**
+   * Tells whether Holder-of-key was used for the authentication.
+   *
+   * @return {@code true} if Holder-of-key was used
+   */
+  public boolean isHokUsed() {
+    return this.hokUsed;
+  }
+
+  /**
+   * Assigns whether Holder-of-key was used for the authentication.
+   *
+   * @param hokUsed whether Holder-of-key was used
+   */
+  public void setHokUsed(final boolean hokUsed) {
+    this.hokUsed = hokUsed;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toString() {
+    return "LastAuthentication(idp=" + this.idp
+        + ", givenName=" + this.givenName
+        + ", surName=" + this.surName
+        + ", displayName=" + this.displayName
+        + ", personalIdentityNumber=" + this.personalIdentityNumber
+        + ", prid=" + this.prid
+        + ", country=" + this.country
+        + ", authnContextUri=" + this.authnContextUri
+        + ", hokUsed=" + this.hokUsed
+        + ")";
   }
 
 }
