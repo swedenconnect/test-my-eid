@@ -1,7 +1,7 @@
 # Creates a GitHub release when a version tag is pushed.
 #
-# Nothing is built and no assets are attached - the release is a pointer to the release notes. Publishing to Maven
-# Central and publishing the Docker image are left to maven-central-deploy.yml and docker-release.yml, which are
+# Nothing is built and no assets are attached - the release is a pointer to the release notes. Publishing to GitHub
+# Packages and publishing the Docker image are left to maven-github-deploy.yml and docker-release.yml, which are
 # triggered by the same tags.
 name: Create GitHub release
 

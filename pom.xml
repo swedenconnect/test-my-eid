@@ -42,6 +42,19 @@
     </developer>
   </developers>
 
+  <!--
+    Releases are published to the GitHub Packages Maven registry of this repository. The "release"
+    profile below adds what a release needs, and the GitHub Packages workflow runs it when a version
+    tag is pushed.
+  -->
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <name>GitHub Sweden Connect Apache Maven Packages</name>
+      <url>https://maven.pkg.github.com/swedenconnect/test-my-eid</url>
+    </repository>
+  </distributionManagement>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -457,22 +470,22 @@
       </properties>
     </profile>
 
+    <!--
+      Publishing a release. Attaches the sources, test sources and javadoc jars and signs every artifact
+      with GPG. The deploy plugin uploads to the repository in distributionManagement above, with the
+      credentials of the server with id "github" in settings.xml:
+
+          mvn -Prelease clean deploy
+
+      .github/workflows/maven-github-deploy.yml runs this, with -DskipTests, when a version tag is
+      pushed. It signs with the Bouncy Castle signer of the GPG plugin, selected with -Dgpg.signer=bc,
+      so the profile stays usable as it is from a developer machine.
+    -->
     <profile>
       <id>release</id>
 
       <build>
         <plugins>
-
-          <plugin>
-            <groupId>org.sonatype.central</groupId>
-            <artifactId>central-publishing-maven-plugin</artifactId>
-            <version>0.11.0</version>
-            <extensions>true</extensions>
-            <configuration>
-              <publishingServerId>central</publishingServerId>
-              <autoPublish>true</autoPublish>
-            </configuration>
-          </plugin>
 
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
