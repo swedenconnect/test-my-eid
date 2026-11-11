@@ -8,7 +8,9 @@
 
 ### Version 4.0.1
 
-**Date:** _Not yet released_
+**Date:** 2026-11-11
+
+- Releases are no longer published to Maven Central.
 
 - SVG logotypes drawn in white, made for dark backgrounds, are now displayed on a dark background so that they are visible.
 
