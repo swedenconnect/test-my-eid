@@ -24,9 +24,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import se.swedenconnect.eid.sp.config.RpConfigurationProperties;
 import se.swedenconnect.eid.sp.config.SpConfigurationProperties;
-import se.swedenconnect.eid.sp.config.SpConfigurationProperties.CredentialsConfiguration.PkiCredentialConfiguration;
 import se.swedenconnect.opensaml.common.utils.LocalizedString;
 import se.swedenconnect.security.credential.PkiCredential;
+import se.swedenconnect.security.credential.config.properties.PkiCredentialConfigurationProperties;
 
 import java.util.List;
 import java.util.Map;
@@ -41,7 +41,7 @@ class RelyingPartyFactoryTest {
 
   private RelyingParty create(final SpConfigurationProperties sp, final RpConfigurationProperties rp,
       final PkiCredential sign, final PkiCredential decrypt,
-      final Map<PkiCredentialConfiguration, PkiCredential> others) {
+      final Map<PkiCredentialConfigurationProperties, PkiCredential> others) {
     return RelyingPartyFactory.create(sp, rp, "/", TestSupport.loader(sp, sign, decrypt, others));
   }
 
@@ -105,7 +105,7 @@ class RelyingPartyFactoryTest {
   void oidcCredentialsOverrideSpCredentials() {
     final SpConfigurationProperties sp = TestSupport.spProperties();
     final RpConfigurationProperties props = new RpConfigurationProperties();
-    final PkiCredentialConfiguration signConfig = new PkiCredentialConfiguration();
+    final PkiCredentialConfigurationProperties signConfig = new PkiCredentialConfigurationProperties();
     props.getCredential().setSign(signConfig);
     final PkiCredential ec = TestSupport.ecCredential("secp256r1");
     final RelyingParty rp = this.create(sp, props, TestSupport.rsaCredential(), TestSupport.rsaCredential(),
@@ -126,7 +126,7 @@ class RelyingPartyFactoryTest {
   void federationKeyIsUsedWhenGiven() {
     final RpConfigurationProperties props = new RpConfigurationProperties();
     props.getFederation().setEnabled(true);
-    final PkiCredentialConfiguration fedConfig = new PkiCredentialConfiguration();
+    final PkiCredentialConfigurationProperties fedConfig = new PkiCredentialConfigurationProperties();
     props.getCredential().setFederation(fedConfig);
     final PkiCredential fed = TestSupport.newRsaCredential();
     final RelyingParty rp = this.create(TestSupport.spProperties(), props, TestSupport.rsaCredential(),

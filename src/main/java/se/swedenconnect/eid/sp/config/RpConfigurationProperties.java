@@ -24,8 +24,8 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-import se.swedenconnect.eid.sp.config.SpConfigurationProperties.CredentialsConfiguration.PkiCredentialConfiguration;
 import se.swedenconnect.opensaml.common.utils.LocalizedString;
+import se.swedenconnect.security.credential.config.properties.PkiCredentialConfigurationProperties;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -286,14 +286,14 @@ public class RpConfigurationProperties implements InitializingBean {
     /**
      * The OIDC signing credential. Defaults to {@code sp.credential.sign}.
      */
-    private @Nullable PkiCredentialConfiguration sign;
+    private @Nullable PkiCredentialConfigurationProperties sign;
 
     /**
      * Gets the OIDC signing credential.
      *
      * @return the OIDC signing credential
      */
-    public @Nullable PkiCredentialConfiguration getSign() {
+    public @Nullable PkiCredentialConfigurationProperties getSign() {
       return this.sign;
     }
 
@@ -302,21 +302,21 @@ public class RpConfigurationProperties implements InitializingBean {
      *
      * @param sign the OIDC signing credential
      */
-    public void setSign(final @Nullable PkiCredentialConfiguration sign) {
+    public void setSign(final @Nullable PkiCredentialConfigurationProperties sign) {
       this.sign = sign;
     }
 
     /**
      * The OIDC decryption credential. Defaults to {@code sp.credential.decrypt}.
      */
-    private @Nullable PkiCredentialConfiguration decrypt;
+    private @Nullable PkiCredentialConfigurationProperties decrypt;
 
     /**
      * Gets the OIDC decryption credential.
      *
      * @return the OIDC decryption credential
      */
-    public @Nullable PkiCredentialConfiguration getDecrypt() {
+    public @Nullable PkiCredentialConfigurationProperties getDecrypt() {
       return this.decrypt;
     }
 
@@ -325,7 +325,7 @@ public class RpConfigurationProperties implements InitializingBean {
      *
      * @param decrypt the OIDC decryption credential
      */
-    public void setDecrypt(final @Nullable PkiCredentialConfiguration decrypt) {
+    public void setDecrypt(final @Nullable PkiCredentialConfigurationProperties decrypt) {
       this.decrypt = decrypt;
     }
 
@@ -333,14 +333,14 @@ public class RpConfigurationProperties implements InitializingBean {
      * The federation entity key used to sign the entity configuration. Required when federation is enabled. Defaults
      * to the OIDC signing credential when federation is disabled.
      */
-    private @Nullable PkiCredentialConfiguration federation;
+    private @Nullable PkiCredentialConfigurationProperties federation;
 
     /**
      * Gets the federation entity key used to sign the entity configuration.
      *
      * @return the federation
      */
-    public @Nullable PkiCredentialConfiguration getFederation() {
+    public @Nullable PkiCredentialConfigurationProperties getFederation() {
       return this.federation;
     }
 
@@ -349,7 +349,7 @@ public class RpConfigurationProperties implements InitializingBean {
      *
      * @param federation the federation
      */
-    public void setFederation(final @Nullable PkiCredentialConfiguration federation) {
+    public void setFederation(final @Nullable PkiCredentialConfigurationProperties federation) {
       this.federation = federation;
     }
   }

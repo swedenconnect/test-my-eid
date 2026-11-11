@@ -18,11 +18,11 @@ package se.swedenconnect.eid.sp.oidc;
 import org.opensaml.saml.saml2.metadata.ContactPersonTypeEnumeration;
 import se.swedenconnect.eid.sp.config.RpConfigurationProperties;
 import se.swedenconnect.eid.sp.config.SpConfigurationProperties;
-import se.swedenconnect.eid.sp.config.SpConfigurationProperties.CredentialsConfiguration.PkiCredentialConfiguration;
 import se.swedenconnect.eid.sp.config.SpConfigurationProperties.MetadataConfiguration;
 import se.swedenconnect.opensaml.common.utils.LocalizedString;
 import se.swedenconnect.security.credential.BasicCredential;
 import se.swedenconnect.security.credential.PkiCredential;
+import se.swedenconnect.security.credential.config.properties.PkiCredentialConfigurationProperties;
 
 import java.security.KeyPairGenerator;
 import java.security.spec.ECGenParameterSpec;
@@ -100,8 +100,8 @@ public final class TestSupport {
     final SpConfigurationProperties sp = new SpConfigurationProperties();
     sp.setBaseUri("https://test.example.com");
     sp.setEntityId("http://test.example.com/testmyeid");
-    sp.getCredential().setSign(new PkiCredentialConfiguration());
-    sp.getCredential().setDecrypt(new PkiCredentialConfiguration());
+    sp.getCredential().setSign(new PkiCredentialConfigurationProperties());
+    sp.getCredential().setDecrypt(new PkiCredentialConfigurationProperties());
 
     final MetadataConfiguration md = sp.getMetadata();
     md.setServiceNames(List.of(new LocalizedString("Testa ditt eID", "sv"),
@@ -137,10 +137,10 @@ public final class TestSupport {
    * @param others other mappings
    * @return a loader
    */
-  public static Function<PkiCredentialConfiguration, PkiCredential> loader(final SpConfigurationProperties sp,
+  public static Function<PkiCredentialConfigurationProperties, PkiCredential> loader(final SpConfigurationProperties sp,
       final PkiCredential sign, final PkiCredential decrypt,
-      final Map<PkiCredentialConfiguration, PkiCredential> others) {
-    final Map<PkiCredentialConfiguration, PkiCredential> map = new IdentityHashMap<>(others);
+      final Map<PkiCredentialConfigurationProperties, PkiCredential> others) {
+    final Map<PkiCredentialConfigurationProperties, PkiCredential> map = new IdentityHashMap<>(others);
     map.put(sp.getCredential().getSign(), sign);
     if (sp.getCredential().getDecrypt() != null) {
       map.put(sp.getCredential().getDecrypt(), decrypt);

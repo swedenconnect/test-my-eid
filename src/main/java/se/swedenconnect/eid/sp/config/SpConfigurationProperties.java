@@ -28,7 +28,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import se.swedenconnect.eid.sp.saml.IdpList.StaticIdpDiscoEntry;
 import se.swedenconnect.opensaml.common.utils.LocalizedString;
-import se.swedenconnect.security.credential.factory.PkiCredentialConfigurationProperties;
+import se.swedenconnect.security.credential.config.properties.PkiCredentialConfigurationProperties;
 
 import java.util.List;
 import java.util.Map;
@@ -395,14 +395,14 @@ public class SpConfigurationProperties implements InitializingBean {
     /**
      * The SP signing credentials.
      */
-    private @NonNull PkiCredentialConfiguration sign;
+    private @NonNull PkiCredentialConfigurationProperties sign;
 
     /**
      * Gets the SP signing credentials.
      *
      * @return the SP signing credentials
      */
-    public @NonNull PkiCredentialConfiguration getSign() {
+    public @NonNull PkiCredentialConfigurationProperties getSign() {
       return this.sign;
     }
 
@@ -411,21 +411,21 @@ public class SpConfigurationProperties implements InitializingBean {
      *
      * @param sign the SP signing credentials
      */
-    public void setSign(final @NonNull PkiCredentialConfiguration sign) {
+    public void setSign(final @NonNull PkiCredentialConfigurationProperties sign) {
       this.sign = sign;
     }
 
     /**
      * The SP decryption (encryption) credentials.
      */
-    private @NonNull PkiCredentialConfiguration decrypt;
+    private @NonNull PkiCredentialConfigurationProperties decrypt;
 
     /**
      * Gets the SP decryption (encryption) credentials.
      *
      * @return the SP decryption (encryption) credentials
      */
-    public @NonNull PkiCredentialConfiguration getDecrypt() {
+    public @NonNull PkiCredentialConfigurationProperties getDecrypt() {
       return this.decrypt;
     }
 
@@ -434,21 +434,21 @@ public class SpConfigurationProperties implements InitializingBean {
      *
      * @param decrypt the SP decryption (encryption) credentials
      */
-    public void setDecrypt(final @NonNull PkiCredentialConfiguration decrypt) {
+    public void setDecrypt(final @NonNull PkiCredentialConfigurationProperties decrypt) {
       this.decrypt = decrypt;
     }
 
     /**
      * The SP metadata signing credentials.
      */
-    private @Nullable PkiCredentialConfiguration mdSign;
+    private @Nullable PkiCredentialConfigurationProperties mdSign;
 
     /**
      * Gets the SP metadata signing credentials.
      *
      * @return the SP metadata signing credentials
      */
-    public @Nullable PkiCredentialConfiguration getMdSign() {
+    public @Nullable PkiCredentialConfigurationProperties getMdSign() {
       return this.mdSign;
     }
 
@@ -457,7 +457,7 @@ public class SpConfigurationProperties implements InitializingBean {
      *
      * @param mdSign the SP metadata signing credentials
      */
-    public void setMdSign(final @Nullable PkiCredentialConfiguration mdSign) {
+    public void setMdSign(final @Nullable PkiCredentialConfigurationProperties mdSign) {
       this.mdSign = mdSign;
     }
 
@@ -466,21 +466,6 @@ public class SpConfigurationProperties implements InitializingBean {
     public void afterPropertiesSet() {
       Assert.notNull(this.sign, "sp.credential.sign must be assigned");
       Assert.notNull(this.decrypt, "sp.credential.decrypt must be assigned");
-    }
-
-    /**
-     * Needed to be backwards compatible where we used the {@code file} property instead of {@code resource}.
-     */
-    public static class PkiCredentialConfiguration extends PkiCredentialConfigurationProperties {
-
-      /**
-       * See {@link PkiCredentialConfigurationProperties#setResource(Resource)}.
-       *
-       * @param resource the file resource pointing at the JKS/P12
-       */
-      public void setFile(final @NonNull Resource resource) {
-        this.setResource(resource);
-      }
     }
   }
 
