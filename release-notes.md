@@ -6,6 +6,14 @@
 
 -----
 
+### Version 4.0.2
+
+**Date:** _Not yet released_
+
+-
+
+-----
+
 ### Version 4.0.1
 
 **Date:** 2026-11-11
