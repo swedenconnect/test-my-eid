@@ -17,7 +17,7 @@ jQuery(function ($) {
 
     $(document).ready(function () {
 
-        $('.drop-down > p').click(function () {
+        $('.drop-down > p').on('click', function () {
             $(this).parent('.drop-down').toggleClass('open');
         });
 
@@ -30,7 +30,7 @@ jQuery(function ($) {
             $('#advancedAttributes').hide();
         }
 
-        $('#more-attributes-div').click(function () {
+        $('#more-attributes-div').on('click', function () {
             $('#more-attributes-div').hide();
             $('#advancedAttributes').show();
         });

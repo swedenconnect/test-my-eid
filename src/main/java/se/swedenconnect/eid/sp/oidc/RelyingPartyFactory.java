@@ -36,10 +36,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.swedenconnect.eid.sp.config.RpConfigurationProperties;
 import se.swedenconnect.eid.sp.config.SpConfigurationProperties;
-import se.swedenconnect.eid.sp.config.SpConfigurationProperties.CredentialsConfiguration.PkiCredentialConfiguration;
 import se.swedenconnect.eid.sp.config.SpConfigurationProperties.MetadataConfiguration;
 import se.swedenconnect.opensaml.common.utils.LocalizedString;
 import se.swedenconnect.security.credential.PkiCredential;
+import se.swedenconnect.security.credential.config.properties.PkiCredentialConfigurationProperties;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -90,7 +90,7 @@ public final class RelyingPartyFactory {
    */
   public static @NonNull RelyingParty create(final @NonNull SpConfigurationProperties sp,
       final @NonNull RpConfigurationProperties rp, final @NonNull String contextPath,
-      final @NonNull Function<PkiCredentialConfiguration, PkiCredential> credentialLoader) {
+      final @NonNull Function<PkiCredentialConfigurationProperties, PkiCredential> credentialLoader) {
 
     final String appUri = applicationUri(sp.getBaseUri(), contextPath);
     final String entityId = StringUtils.hasText(rp.getEntityId()) ? rp.getEntityId() : appUri;
@@ -100,7 +100,7 @@ public final class RelyingPartyFactory {
     //
     final PkiCredential signCredential = credentialLoader.apply(
         Optional.ofNullable(rp.getCredential().getSign()).orElse(sp.getCredential().getSign()));
-    final PkiCredentialConfiguration decryptConfig =
+    final PkiCredentialConfigurationProperties decryptConfig =
         Optional.ofNullable(rp.getCredential().getDecrypt()).orElse(sp.getCredential().getDecrypt());
     final PkiCredential decryptCredential = decryptConfig != null ? credentialLoader.apply(decryptConfig) : null;
 
